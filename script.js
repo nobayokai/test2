@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzoa9ne43bhfZFD-lJ0zejgc4i2iEfM0fwsmo8q6sUgFqyMQndsnm8ufxVp-ptgFzo-/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIREhIXZhmoTPjIiIztor0dNFL4VLL8_Q4jyI5AzULH9iVAeFHAqt43lK6zge4m58/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
@@ -478,6 +478,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 detail_jawaban: finalDetailJawaban
             };
 
+            // Beri tahu siswa bahwa AI sedang bekerja
+            btnSelesai.innerText = "Mengirim & Menganalisis dengan AI...";
+
             const response = await fetch(SCRIPT_URL, {
                 method: "POST",
                 body: JSON.stringify(payload)
@@ -487,21 +490,50 @@ document.addEventListener("DOMContentLoaded", () => {
             
             if(result.status === "sukses") {
                 areaUjian.style.display = "none";
+                
+                // Isi data ke dalam template PDF yang tersembunyi
+                document.getElementById("pdf-nama-siswa").innerText = payload.nama_siswa;
+                document.getElementById("pdf-kode-ujian").innerText = currentExamCode;
+                document.getElementById("pdf-skor-objektif").innerText = totalSkor;
+                document.getElementById("pdf-analisis-ai").innerText = result.ai_feedback;
+
+                // Tampilkan alert sukses dan tombol download PDF
                 hasilAlert.style.backgroundColor = "#d1e7dd";
                 hasilAlert.style.color = "#0f5132";
                 hasilAlert.innerHTML = `
                     <h3 style="margin-bottom:10px; font-size:1.8rem;">Luar Biasa!</h3>
-                    <p>Jawaban untuk kode <b>${currentExamCode}</b> berhasil dikumpulkan.</p>
+                    <p>Jawaban untuk kode <b>${currentExamCode}</b> berhasil dikumpulkan dan telah dianalisis.</p>
                     <hr style="border-top:2px dashed #198754; margin:15px 0;">
                     <p>Skor Pilihan Ganda/Objektif Anda:</p>
-                    <span style="font-size:48px; color:#198754; display:block; margin:15px 0; font-weight:bold;">${totalSkor}</span>
-                    <span style="font-size:12px; font-weight:normal; color:#666;">(Skor Esai menunggu pemeriksaan Bapak/Ibu Guru)</span>
+                    <span style="font-size:48px; color:#198754; display:block; margin:10px 0; font-weight:bold;">${totalSkor}</span>
+                    <button id="btn-download-pdf" style="margin-top: 15px; padding: 12px 20px; background-color: #0dcaf0; color: #000; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                        <i class="fa-solid fa-file-pdf"></i> Unduh Analisis Rapor PDF
+                    </button>
                 `;
                 hasilAlert.style.display = "block";
                 window.scrollTo(0, 0);
+
+                // --- LOGIKA PEMBUATAN PDF ---
+                document.getElementById("btn-download-pdf").addEventListener("click", function() {
+                    const elemenPdf = document.getElementById("wadah-rapor-pdf");
+                    elemenPdf.style.display = "block"; // Munculkan sebentar untuk di-capture
+                    
+                    const opt = {
+                      margin:       0.5,
+                      filename:     `Rapor_${currentExamCode}_${payload.nama_siswa.replace(/\s+/g, '_')}.pdf`,
+                      image:        { type: 'jpeg', quality: 0.98 },
+                      html2canvas:  { scale: 2 },
+                      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                    };
+
+                    // Generate PDF, lalu sembunyikan lagi elemennya
+                    html2pdf().set(opt).from(elemenPdf).save().then(() => {
+                        elemenPdf.style.display = "none";
+                    });
+                });
             }
         } catch (error) {
-            alert("Terjadi kesalahan koneksi saat mengirim hasil. Silakan coba klik Selesai lagi.");
+            alert("Terjadi kesalahan saat memproses hasil ujian.");
             btnSelesai.innerText = "Selesai";
             btnSelesai.disabled = false;
         }
