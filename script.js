@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (page === "nilai") {
                 contentArea.innerHTML = `
                     <iframe 
-                        src="nilai/index.html" 
+                        src="Nilai/index.html" 
                         style="width: 100%; height: 85vh; border: none; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" 
                         title="Aplikasi e-Rapor">
                     </iframe>
