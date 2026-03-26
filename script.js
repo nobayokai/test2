@@ -10,10 +10,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const navItems = document.querySelectorAll(".nav-item");
     const btnLogoutNav = document.getElementById("tombol-logout-nav");
 
-    mobileMenuBtn.addEventListener("click", () => {
-        // Menambah/menghapus class 'active' untuk memunculkan/menyembunyikan menu
-        navMenu.classList.toggle("active");
-    });
+    if (mobileMenuBtn && navMenu) {
+        mobileMenuBtn.addEventListener("click", () => {
+            navMenu.classList.toggle("active");
+        });
+    }
 
     // Menutup menu otomatis setelah salah satu link diklik (khusus di HP)
     navItems.forEach(item => {
