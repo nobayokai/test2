@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cetak Legger Nilai</title>
+    <link rel="icon" type="image/x-icon" href="https://lh3.googleusercontent.com/d/16rll5zsRdwTbR3nF_NmPKwY51tg4tnOn">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Menambahkan Library SheetJS untuk Export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+    /* Standarisasi & Reset (Tema Desain Terpadu) */
+    :root {
+        --primary-color: #007aff;
+        --success-color: #28a745;
+        --secondary-color: #586474;
+        --danger-color: #df4759;
+        --warning-color: #ffc107;
+        --bg-color: #eef2f5;
+        --font-color: #3e4a59;
+        --light-shadow: #ffffff;
+        --dark-shadow: #d1d9e6;
+        --border-radius-lg: 15px;
+        --border-radius-md: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--font-color);
+        margin: 0;
+        padding: 20px;
+    }
+    .container { max-width: 98%; margin: auto; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Header */
+    .title-wrapper {
+        display: flex; align-items: center; gap: 20px;
+        padding-bottom: 15px; margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+    .title-wrapper h1 { margin: 0; padding: 0; font-size: 2em; color: var(--primary-color); flex-grow: 1; }
+    .home-link { color: var(--secondary-color); transition: all 0.2s ease; text-decoration: none; }
+    .home-link:hover { transform: scale(1.1); color: var(--primary-color); }
+    .home-link svg { width: 36px; height: 36px; }
+
+    /* Desain Tombol (Neumorphism) */
+    .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        gap: 10px; padding: 10px 20px; font-size: 0.9em; font-weight: 600;
+        font-family: 'Poppins', sans-serif; border-radius: var(--border-radius-md);
+        border: none; cursor: pointer; background: var(--bg-color);
+        color: var(--secondary-color); transition: all 0.2s ease-out;
+        box-shadow: 5px 5px 10px var(--dark-shadow), -5px -5px 10px var(--light-shadow);
+        text-decoration: none;
+    }
+    .btn:hover { color: var(--primary-color); }
+    .btn:active {
+        box-shadow: inset 3px 3px 6px var(--dark-shadow), inset -3px -3px 6px var(--light-shadow);
+        color: var(--primary-color);
+    }
+    .btn.success { color: var(--success-color); }
+    .btn.success:hover, .btn.success:active { color: var(--success-color); }
+    
+    /* Tombol Excel khusus (Hijau Gelap ala Excel) */
+    .btn.excel { color: #1D6F42; }
+    .btn.excel:hover, .btn.excel:active { color: #1D6F42; }
+    .btn.excel svg { stroke: #1D6F42; }
+    
+    .btn svg {
+        width: 18px; height: 18px; stroke-width: 2.5; transition: all 0.2s ease-out;
+    }
+    .btn:hover svg { stroke: var(--primary-color); }
+    .btn.success:hover svg { stroke: var(--success-color); }
+
+    /* Tabel Legger */
+    .table-wrapper {
+        width: 100%;
+        max-height: 75vh;
+        overflow: auto;
+        border-radius: var(--border-radius-lg);
+        box-shadow: 5px 5px 10px var(--dark-shadow), -5px -5px 10px var(--light-shadow);
+        padding: 10px;
+        background: var(--bg-color);
+    }
+    table { border-collapse: collapse; white-space: nowrap; width: 100%; }
+    th, td {
+        text-align: center;
+        padding: 10px 12px;
+        border: none;
+        border-bottom: 1px solid #d8dde3;
+        vertical-align: middle;
+        font-size: 0.9em;
+    }
+    tr:last-child td { border-bottom: none; }
+    thead th {
+        position: sticky;
+        background-color: #e8edf2;
+        color: var(--primary-color);
+        z-index: 3;
+    }
+    thead tr:first-child th { top: 0; }
+    thead tr:last-child th { top: 41px; /* Sesuaikan dengan tinggi baris header pertama */ }
+    
+    #headerKeterangan select {
+        padding: 5px 8px;
+        border-radius: var(--border-radius-md);
+        border: none;
+        background: var(--bg-color);
+        box-shadow: inset 2px 2px 4px var(--dark-shadow), inset -2px -2px 4px var(--light-shadow);
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        color: var(--primary-color);
+        font-size: 1em;
+    }
+    #headerKeterangan select:focus { outline: none; }
+
+
+    /* Kolom Sticky */
+    .col-no, .col-nama {
+        position: sticky;
+        left: 0;
+        background: var(--bg-color);
+        z-index: 1;
+    }
+    .col-nama {
+        left: 55px; /* Sesuaikan dengan lebar kolom No */
+        text-align: left;
+        white-space: normal;
+        min-width: 220px;
+        border-right: 2px solid #d8dde3;
+    }
+    thead .col-no, thead .col-nama { z-index: 4; }
+    tbody tr:nth-child(even) { background-color: #f7f9fc; }
+    tbody tr:nth-child(even) .col-no,
+    tbody tr:nth-child(even) .col-nama { background-color: #f7f9fc; }
+    
+    /* Sel Spesial */
+    td[contenteditable="true"] {
+        cursor: cell;
+        background-color: transparent;
+        transition: all 0.2s ease;
+    }
+    td[contenteditable="true"]:hover, td[contenteditable="true"]:focus {
+        box-shadow: inset 2px 2px 4px var(--dark-shadow), inset -2px -2px 4px var(--light-shadow);
+        outline: none;
+    }
+    td input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+    .col-total {
+        font-weight: bold;
+        background-color: rgba(0, 122, 255, 0.08);
+    }
+    .action-buttons { margin: 20px 0; display: flex; gap: 15px; }
+    </style>
+</head>
+<body>
+<svg width="0" height="0" style="display:none;" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="icon-save" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></symbol>
+    <symbol id="icon-download" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></symbol>
+    <symbol id="icon-excel" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></symbol>
+</svg>
+    <div class="container">
+        <div class="title-wrapper">
+             <a href="./" class="home-link" title="Kembali ke Menu Utama">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" />
+                </svg>
+            </a>
+            <h1 id="judulLegger">Memuat Legger Nilai...</h1>
+        </div>
+        <p>Halaman ini mengakumulasi semua nilai siswa. Gunakan *dropdown* di *header* untuk menampilkan Peringkat. Gunakan tombol 'Simpan Status' untuk menyimpan data Kenaikan Kelas.</p>
+
+        <div class="table-wrapper">
+            <table id="tabelLegger">
+                <thead id="leggerHead"></thead>
+                <tbody id="leggerBody"></tbody>
+            </table>
+        </div>
+
+        <div class="action-buttons">
+            <button id="simpanStatusButton" class="btn success" style="display: none;"><svg><use href="#icon-save"/></svg><span>Simpan Status Akhir</span></button>
+            <button id="cetakButton" class="btn"><svg><use href="#icon-download"/></svg><span>Cetak/Simpan ke PDF</span></button>
+            <!-- Tombol Download Excel Baru -->
+            <button id="excelButton" class="btn excel"><svg><use href="#icon-excel"/></svg><span>Download Excel</span></button>
+        </div>
+    </div>
+
+    <script src="bangbin_uhuuyy.js"></script>
+    <script>
+
+    const _0x417b94=_0x4339;(function(_0xfafe31,_0x922058){const _0x44a3f2=_0x4339,_0x268ee2=_0xfafe31();while(!![]){try{const _0x42758e=-parseInt(_0x44a3f2(0x173))/0x1*(-parseInt(_0x44a3f2(0x16e))/0x2)+-parseInt(_0x44a3f2(0x180))/0x3*(-parseInt(_0x44a3f2(0x1ac))/0x4)+-parseInt(_0x44a3f2(0x1a6))/0x5+-parseInt(_0x44a3f2(0x16a))/0x6+parseInt(_0x44a3f2(0x185))/0x7+-parseInt(_0x44a3f2(0x190))/0x8*(-parseInt(_0x44a3f2(0x18e))/0x9)+-parseInt(_0x44a3f2(0x1b6))/0xa;if(_0x42758e===_0x922058)break;else _0x268ee2['push'](_0x268ee2['shift']());}catch(_0x188f10){_0x268ee2['push'](_0x268ee2['shift']());}}}(_0x3ac9,0x791ac),document[_0x417b94(0x16b)](_0x417b94(0x197),()=>{const _0x6f5847=_0x417b94,_0x42c87c=loadData(),{infoDasar:_0xa838af,dataSiswa:_0x659a30,mataPelajaran:_0x4b4c82,ekstrakurikuler:_0x766409,kokurikuler:_0x375a4b,nilai:_0x31afeb,pelengkap:_0x2ce6b2,nilaiKokurikuler:_0x4566a7}=_0x42c87c,_0x3ad7c3=_0xa838af[_0x6f5847(0x199)],_0x4cda0f=document['getElementById'](_0x6f5847(0x169)),_0x312695=document[_0x6f5847(0x168)](_0x6f5847(0x1af)),_0x58fe14=document['getElementById'](_0x6f5847(0x1c9)),_0x2272aa=document['getElementById'](_0x6f5847(0x17e)),_0x233286=document[_0x6f5847(0x168)](_0x6f5847(0x166));_0x58fe14[_0x6f5847(0x1bc)]='Legger\x20Nilai\x20Kelas\x20'+_0xa838af[_0x6f5847(0x1b8)]+_0x6f5847(0x184)+_0xa838af[_0x6f5847(0x1c4)]+_0x6f5847(0x179)+_0xa838af[_0x6f5847(0x18c)];const _0x11bd49=_0xa838af[_0x6f5847(0x1c4)]==='2',_0x3f5d17=_0xa838af['kelas']||'',_0x2f9d7c=_0x3f5d17['includes']('6')||_0x3f5d17[_0x6f5847(0x1b5)]()['includes']('VI'),_0x5ba856=_0x2f9d7c?_0x6f5847(0x1b7):_0x6f5847(0x1bf);_0x11bd49&&(_0x2272aa[_0x6f5847(0x1ba)][_0x6f5847(0x1c2)]='inline-flex');const _0x2a401d={'Sangat\x20Baik':'SB','Baik':'B','Cukup':'C','Perlu\x20Peningkatan':'K'},_0xe5896e={'Sangat\x20Baik':0x4,'Baik':0x3,'Cukup':0x2,'Perlu\x20Peningkatan':0x1},_0x20172a=_0x4b4c82[_0x6f5847(0x1c8)](_0x22d945=>!_0x22d945[_0x6f5847(0x198)]['includes'](_0x6f5847(0x195))),_0x118997=[..._0x4b4c82[_0x6f5847(0x1c8)](_0x516ecb=>_0x516ecb[_0x6f5847(0x198)][_0x6f5847(0x191)](_0x6f5847(0x195))),..._0x20172a],_0x751f7b=()=>{const _0x18c26f=_0x6f5847,_0x2f71de=_0x20172a[_0x18c26f(0x1b2)],_0x1abcbf=_0x375a4b[_0x18c26f(0x1b2)],_0x3babd2=_0x766409['length'];let _0x551182=_0x18c26f(0x162)+(_0x2f71de+0x3)+_0x18c26f(0x165);if(_0x1abcbf>0x0)_0x551182+='<th\x20colspan=\x22'+_0x1abcbf+_0x18c26f(0x1c0);if(_0x3babd2>0x0)_0x551182+=_0x18c26f(0x19f)+_0x3babd2+_0x18c26f(0x17f);if(_0x11bd49)_0x551182+=_0x18c26f(0x193)+_0x5ba856[_0x18c26f(0x1b5)]()+'</th>';_0x551182+=_0x18c26f(0x181);let _0x5b3023='<tr>';_0x5b3023+='<th\x20title=\x22Pendidikan\x22Agama\x22>Agama</th>',_0x20172a['forEach'](_0x4174e3=>{const _0x1bdf01=_0x18c26f;_0x5b3023+=_0x1bdf01(0x1b0)+_0x4174e3[_0x1bdf01(0x198)]+'\x22>'+(_0x4174e3[_0x1bdf01(0x1a3)]||'??')+_0x1bdf01(0x15e);}),_0x5b3023+='<th\x20class=\x22col-total\x22\x20title=\x22Jumlah\x20Nilai\x22>JML</th>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th\x20class=\x22col-total\x22\x20title=\x22Rata-Rata\x20Rapor\x22>RR</th>',_0x5b3023+=_0x18c26f(0x17c),_0x375a4b[_0x18c26f(0x187)](_0x3e9eaf=>{const _0x5550d4=_0x18c26f;_0x5b3023+='<th>'+_0x3e9eaf[_0x5550d4(0x198)]+_0x5550d4(0x15e);}),_0x766409['forEach'](_0x4ef2f7=>{const _0x1c7195=_0x18c26f;_0x5b3023+='<th>'+_0x4ef2f7[_0x1c7195(0x198)]+_0x1c7195(0x15e);}),_0x5b3023+=_0x18c26f(0x1c5),_0x4cda0f[_0x18c26f(0x1a4)]=_0x551182+_0x5b3023;},_0x574f51=()=>{const _0x1fd817=_0x6f5847,_0x39d670=_0x659a30[_0x1fd817(0x1c8)](_0x3e3017=>_0x3e3017[_0x1fd817(0x198)]&&_0x3e3017[_0x1fd817(0x198)][_0x1fd817(0x178)]()!=='');let _0x5ef339='';_0x39d670[_0x1fd817(0x187)]((_0x88822e,_0xf48692)=>{const _0x2d7525=_0x1fd817;let _0x3da648=_0x2d7525(0x18b)+_0x88822e['id']+_0x2d7525(0x16f)+(_0xf48692+0x1)+_0x2d7525(0x1a1)+_0x88822e[_0x2d7525(0x198)]+_0x2d7525(0x15f),_0x414dc0=0x0,_0x5d4a26=0x0;const _0x52447a=_0x2b1f5e=>{const _0x5778b4=_0x2d7525,_0x254242=_0x31afeb[_0x88822e['id']]?.[_0x3ad7c3]?.[_0x2b1f5e];if(_0x254242&&typeof _0x254242[_0x5778b4(0x160)]==='number'){const _0x381bcf=_0x254242[_0x5778b4(0x160)];return _0x414dc0+=_0x381bcf,_0x5d4a26++,_0x381bcf;}return'-';},_0x431bcb=_0x88822e['agama'],_0x48f486=_0x4b4c82['find'](_0x4e9bfa=>_0x4e9bfa[_0x2d7525(0x198)][_0x2d7525(0x191)](_0x431bcb)),_0x25a269=_0x48f486?_0x52447a(_0x48f486['id']):'-';_0x3da648+=_0x2d7525(0x172)+_0x25a269+'</td>',_0x20172a[_0x2d7525(0x187)](_0x347ea7=>{const _0x1067f2=_0x2d7525;_0x3da648+=_0x1067f2(0x172)+_0x52447a(_0x347ea7['id'])+_0x1067f2(0x15f);});const _0x2aaa4a=_0x5d4a26>0x0?Math[_0x2d7525(0x164)](_0x414dc0/_0x5d4a26):0x0;_0x3da648+=_0x2d7525(0x1b4)+_0x414dc0+'</td>',_0x3da648+=_0x2d7525(0x1b4)+_0x2aaa4a+_0x2d7525(0x15f);const _0x5b36bf=_0x2ce6b2[_0x2d7525(0x1aa)]?.[_0x88822e['id']]||{'sakit':0x0,'izin':0x0,'alpha':0x0},_0x15be1b=parseInt(_0x5b36bf[_0x2d7525(0x19b)]||0x0)+parseInt(_0x5b36bf[_0x2d7525(0x17a)]||0x0)+parseInt(_0x5b36bf[_0x2d7525(0x1cb)]||0x0);_0x3da648+=_0x2d7525(0x172)+(_0x5b36bf[_0x2d7525(0x19b)]||0x0)+_0x2d7525(0x17b)+(_0x5b36bf[_0x2d7525(0x17a)]||0x0)+_0x2d7525(0x17b)+(_0x5b36bf[_0x2d7525(0x1cb)]||0x0)+_0x2d7525(0x17b)+_0x15be1b+_0x2d7525(0x15f),_0x375a4b[_0x2d7525(0x187)](_0x2b9985=>{const _0x40f425=_0x2d7525,_0x3fcc99=_0x4566a7?.[_0x88822e['id']]?.[_0x2b9985['id']]||{},_0x5147fd=Object[_0x40f425(0x1cc)](_0x3fcc99)[_0x40f425(0x19d)](_0x5c254c=>_0x2a401d[_0x5c254c]||_0x5c254c[_0x40f425(0x1a7)](0x0))[_0x40f425(0x18d)]('/');_0x3da648+=_0x40f425(0x172)+(_0x5147fd||'-')+_0x40f425(0x15f);}),_0x766409[_0x2d7525(0x187)](_0x3abdf9=>{const _0xc6e9cd=_0x2d7525,_0x87918c=_0x2ce6b2['ekstrakurikuler']?.[_0x88822e['id']]?.[_0x3abdf9['id']]?.[_0xc6e9cd(0x1a0)]||'-',_0x21dd5c=_0x2a401d[_0x87918c]||'-';_0x3da648+=_0xc6e9cd(0x172)+_0x21dd5c+_0xc6e9cd(0x15f);});if(_0x11bd49){const _0x143ddf=_0x2ce6b2[_0x2d7525(0x194)]?.[_0x88822e['id']]||'',_0x28e13e=_0x143ddf===_0x5ba856;_0x3da648+=_0x2d7525(0x1a8)+_0x88822e['id']+'\x22\x20'+(_0x28e13e?'checked':'')+_0x2d7525(0x1ab);}_0x3da648+=_0x2d7525(0x1bb),_0x5ef339+=_0x3da648;}),_0x312695['innerHTML']=_0x5ef339;},_0x1354e2=()=>{const _0xa0e7d=_0x6f5847,_0x40eb3f=[],_0x49ea2b=_0x312695[_0xa0e7d(0x167)]('tr');_0x49ea2b[_0xa0e7d(0x187)](_0x1855b=>{const _0xbb18ff=_0xa0e7d,_0xfda95b=_0x1855b['dataset'][_0xbb18ff(0x182)],_0x32c5ae=_0x659a30[_0xbb18ff(0x1a9)](_0x3223c6=>_0x3223c6['id']===_0xfda95b);if(!_0x32c5ae)return;const _0x2813b9=_0x1855b['querySelectorAll']('.col-total')[0x0],_0x118ab9=parseFloat(_0x2813b9[_0xbb18ff(0x1bc)])||0x0;let _0x498852=0x0;_0x375a4b[_0xbb18ff(0x187)](_0x38155f=>{const _0x1862c7=_0xbb18ff,_0x48b91a=_0x4566a7?.[_0xfda95b]?.[_0x38155f['id']]||{};Object[_0x1862c7(0x1cc)](_0x48b91a)[_0x1862c7(0x187)](_0x521fa3=>{_0x498852+=_0xe5896e[_0x521fa3]||0x0;});});let _0xb2988d=0x0;_0x766409[_0xbb18ff(0x187)](_0x2016f1=>{const _0x4aaa51=_0xbb18ff,_0x450d07=_0x2ce6b2['ekstrakurikuler']?.[_0xfda95b]?.[_0x2016f1['id']]?.[_0x4aaa51(0x1a0)];_0x450d07&&(_0xb2988d+=_0xe5896e[_0x450d07]||0x0);});const _0x313905=_0x118ab9+_0x498852+_0xb2988d;_0x40eb3f['push']({'siswaId':_0xfda95b,'skor':_0x313905});}),_0x40eb3f[_0xa0e7d(0x1ae)]((_0x4c6d1f,_0x5d4cb6)=>_0x5d4cb6[_0xa0e7d(0x1a5)]-_0x4c6d1f[_0xa0e7d(0x1a5)]);const _0x3e5aac=new Map();_0x40eb3f[_0xa0e7d(0x187)]((_0x8099ca,_0x12d1b7)=>{const _0x2b8ced=_0xa0e7d;_0x3e5aac[_0x2b8ced(0x16d)](_0x8099ca[_0x2b8ced(0x182)],_0x12d1b7+0x1);}),_0x49ea2b[_0xa0e7d(0x187)](_0x3162b5=>{const _0x2c9eb7=_0xa0e7d,_0x2b2114=_0x3162b5[_0x2c9eb7(0x189)][_0x2c9eb7(0x182)],_0x3ded14=_0x3162b5[_0x2c9eb7(0x1c3)](_0x2c9eb7(0x163)),_0x39294e=_0x3e5aac[_0x2c9eb7(0x186)](_0x2b2114);_0x3ded14&&(_0x3ded14['textContent']=_0x39294e,_0x3ded14[_0x2c9eb7(0x1b1)]('contenteditable',_0x2c9eb7(0x1be)));});},_0x54ea24=()=>{const _0x31a6d3=_0x6f5847,_0x36bc5d=_0x312695['querySelectorAll']('tr');_0x36bc5d[_0x31a6d3(0x187)](_0x23799f=>{const _0x377767=_0x31a6d3,_0x570071=_0x23799f['querySelector'](_0x377767(0x163));_0x570071&&(_0x570071[_0x377767(0x1bc)]='',_0x570071[_0x377767(0x1b1)](_0x377767(0x18a),'true'));});};_0x2272aa[_0x6f5847(0x16b)](_0x6f5847(0x161),async()=>{const _0x371788=_0x6f5847;if(!_0x11bd49)return;const _0x3930be=_0x312695[_0x371788(0x167)](_0x371788(0x19a));_0x3930be[_0x371788(0x187)](_0x24b307=>{const _0x19860f=_0x371788,_0x5a6f86=_0x24b307[_0x19860f(0x189)]['siswaId'];if(!_0x2ce6b2[_0x19860f(0x194)])_0x2ce6b2[_0x19860f(0x194)]={};const _0x2624fc=_0x2f9d7c?_0x19860f(0x171):_0x19860f(0x170);_0x2ce6b2[_0x19860f(0x194)][_0x5a6f86]=_0x24b307[_0x19860f(0x196)]?_0x5ba856:_0x2624fc;}),saveData(_0x42c87c),await showModal('Berhasil',_0x371788(0x16c));}),_0x233286[_0x6f5847(0x16b)](_0x6f5847(0x161),()=>{const _0x4327c7=_0x6f5847,_0x5b0ccc=document[_0x4327c7(0x168)](_0x4327c7(0x19e))[_0x4327c7(0x192)](!![]),_0x5eab3d=_0x5b0ccc[_0x4327c7(0x1c3)](_0x4327c7(0x17d));if(_0x5eab3d){const _0x42bffc=_0x5eab3d['parentElement'];_0x42bffc[_0x4327c7(0x1bc)]=_0x5eab3d['options'][_0x5eab3d[_0x4327c7(0x183)]][_0x4327c7(0x177)];}const _0x4c4f3d=document[_0x4327c7(0x168)](_0x4327c7(0x1c9))['textContent'],_0x54805e=window[_0x4327c7(0x1b9)]('','',_0x4327c7(0x1ca));_0x54805e[_0x4327c7(0x19c)]['write'](_0x4327c7(0x1b3)),_0x54805e[_0x4327c7(0x19c)]['write'](_0x4327c7(0x1c7)),_0x54805e[_0x4327c7(0x19c)][_0x4327c7(0x174)](_0x4327c7(0x1a2)),_0x54805e['document'][_0x4327c7(0x174)](_0x4327c7(0x188)+_0x4c4f3d+_0x4327c7(0x1bd)),_0x54805e['document'][_0x4327c7(0x174)](_0x5b0ccc[_0x4327c7(0x1c6)]),_0x54805e[_0x4327c7(0x19c)][_0x4327c7(0x174)](_0x4327c7(0x176)),_0x54805e['document'][_0x4327c7(0x1c1)](),_0x54805e[_0x4327c7(0x175)](),setTimeout(()=>{_0x54805e['print']();},0x1f4);}),_0x751f7b(),_0x574f51();const _0x2eb986=document[_0x6f5847(0x168)](_0x6f5847(0x18f));_0x2eb986&&_0x2eb986[_0x6f5847(0x16b)]('change',_0x3c815a=>{const _0x38c44f=_0x6f5847;_0x3c815a[_0x38c44f(0x1ad)]['value']==='peringkat'?_0x1354e2():_0x54ea24();});}));function _0x4339(_0x23cf54,_0x8ac793){const _0x3ac902=_0x3ac9();return _0x4339=function(_0x4339bd,_0x1644ce){_0x4339bd=_0x4339bd-0x15e;let _0x33c01d=_0x3ac902[_0x4339bd];return _0x33c01d;},_0x4339(_0x23cf54,_0x8ac793);}function _0x3ac9(){const _0x166efc=['round','\x22>NILAI\x20AKADEMIK</th>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th\x20colspan=\x224\x22>ABSENSI</th>','cetakButton','querySelectorAll','getElementById','leggerHead','5043126xWaCgD','addEventListener','Status\x20akhir\x20tahun\x20siswa\x20telah\x20berhasil\x20disimpan.','set','12TzMKSs','\x22><td\x20class=\x22col-no\x22>','Tidak\x20Naik\x20Kelas','Mengulang','<td>','121291JuwdJB','write','focus','</body></html>','text','trim','\x20T.A\x20','izin','</td><td>','<th>S</th><th>I</th><th>A</th><th>JL</th>','#pilihanKeterangan','simpanStatusButton','\x22>KEGIATAN\x20EKSTRAKURIKULER</th>','1624407WpHeqg','<th\x20rowspan=\x222\x22\x20id=\x22headerKeterangan\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<select\x20id=\x22pilihanKeterangan\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<option\x20value=\x22manual\x22>KETERANGAN</option>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<option\x20value=\x22peringkat\x22>PERINGKAT</option>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</select>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</th></tr>','siswaId','selectedIndex','\x20-\x20Semester\x20','355579cfgMYw','get','forEach','<h2>','dataset','contenteditable','<tr\x20data-siswa-id=\x22','tahunAjaran','join','9mWRqFL','pilihanKeterangan','5846056Qmelum','includes','cloneNode','<th\x20rowspan=\x222\x22>','kenaikanKelas','Pendidikan\x20Agama','checked','DOMContentLoaded','nama','kelasAktif','input[type=\x22checkbox\x22]','sakit','document','map','tabelLegger','<th\x20colspan=\x22','predikat','</td><td\x20class=\x22col-nama\x22>','</head><body>','singkat','innerHTML','skor','1202785KGNJpd','charAt','<td><input\x20type=\x22checkbox\x22\x20data-siswa-id=\x22','find','absensi','></td>','4QLQZFe','target','sort','leggerBody','<th\x20title=\x22','setAttribute','length','<html><head><title>Cetak\x20Legger</title>','<td\x20class=\x22col-total\x22>','toUpperCase','4736470lhdeuI','Lulus','kelas','open','style','<td\x20contenteditable=\x22true\x22></td></tr>','textContent','</h2>','false','Naik\x20Kelas','\x22>KEGIATAN\x20KOKURIKULER</th>','close','display','querySelector','semester','</tr>','outerHTML','<style>body{font-family:\x20Poppins,\x20sans-serif;\x20font-size:\x2010pt;}\x20h2{text-align:center;}\x20table{border-collapse:collapse;\\x20width:100%;}\x20th,td{border:1px\x20solid\x20#333;\x20padding:5px;\x20text-align:center;\x20vertical-align:middle;}\x20th{background-color:#f2f2f2;\x20font-weight:600;}\x20.col-nama{text-align:left;\x20white-space:normal;}\x20.col-total{font-weight:bold;}</style>','filter','judulLegger','height=800,width=1200','alpha','values','</th>','</td>','nilaiAkhir','click','<tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th\x20rowspan=\x222\x22\x20class=\x22col-no\x22>No</th>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th\x20rowspan=\x222\x22\x20class=\x22col-nama\x22>Nama\x20Siswa</th>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th\x20colspan=\x22','td:last-child'];_0x3ac9=function(){return _0x166efc;};return _0x3ac9();}
+    </script>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const excelBtn = document.getElementById('excelButton');
+        if(excelBtn) {
+            excelBtn.addEventListener('click', function() {
+                const table = document.getElementById('tabelLegger');
+                const titleElement = document.getElementById('judulLegger');
+                const filename = titleElement ? titleElement.textContent.trim() + '.xlsx' : 'Legger_Bangbin.xlsx';
+
+                if (table) {
+                    const wb = XLSX.utils.table_to_book(table, {sheet: "BangbinLegger"});
+                    XLSX.writeFile(wb, filename);
+                } else {
+                    console.error("Tabel data tidak ditemukan.");
+                }
+            });
+        }
+    });
+    </script>
+</body>
+</html>

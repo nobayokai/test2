@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bangbin-6.0</title>
+
+    <link rel="icon" type="image/x-icon" href="https://lh3.googleusercontent.com/d/16rll5zsRdwTbR3nF_NmPKwY51tg4tnOn" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <style>
+      :root {
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);
+        --primary-color: #0d6efd;
+        --secondary-color: #6c757d;
+        --danger-color: #dc3545;
+        --success-color: #198754;
+        --warning-color: #ffc107;
+        --sidebar-width: 270px;
+        --bg-light: #f0f2f5;
+        --card-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        --card-hover-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        --transition-speed: 0.3s;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Poppins', sans-serif; /* Font lebih modern */
+        background-color: var(--bg-light);
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        color: #444;
+      }
+
+      /* --- SCROLLBAR CUSTOMIZATION --- */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #ccc; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #aaa; 
+      }
+
+      /* --- SIDEBAR STYLING --- */
+      .sidebar {
+        width: var(--sidebar-width);
+        background: var(--primary-gradient);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        flex-shrink: 0;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+        z-index: 100;
+      }
+
+      .sidebar-header {
+        padding: 30px 20px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      .sidebar-brand {
+        font-size: 1.4rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        letter-spacing: 0.5px;
+      }
+      
+      .sidebar-brand i {
+        font-size: 1.6rem;
+      }
+
+      .sidebar-menu {
+        list-style: none;
+        padding: 20px 15px;
+        margin: 0;
+        flex-grow: 1;
+        overflow-y: auto;
+      }
+
+      .sidebar-link {
+        display: flex;
+        align-items: center;
+        padding: 14px 20px;
+        color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+        transition: all 0.3s;
+        border-radius: 12px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.95rem;
+      }
+
+      .sidebar-link:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        transform: translateX(5px);
+      }
+
+      .sidebar-link.active {
+        background: #fff;
+        color: var(--primary-color);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        font-weight: 600;
+      }
+
+      .sidebar-link i {
+        width: 28px;
+        margin-right: 12px;
+        text-align: center;
+        font-size: 1.1rem;
+      }
+
+      .sidebar-footer {
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      .btn-back-home {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.3s;
+        font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+      .btn-back-home:hover {
+        background: #fff;
+        color: var(--primary-color);
+        transform: translateY(-2px);
+      }
+
+      /* --- MAIN CONTENT STYLING --- */
+      .main-wrapper {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* Background Pattern Decoration */
+      .main-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 300px;
+        background: linear-gradient(180deg, #e0e7ff 0%, rgba(240,242,245,0) 100%);
+        z-index: -1;
+      }
+
+      .top-bar {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 15px 40px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+      }
+
+      .top-bar h3 {
+        font-weight: 700;
+        color: #333;
+        font-size: 1.2rem;
+      }
+
+      .toggle-btn {
+        display: none;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--primary-color);
+        padding: 5px;
+        transition: transform 0.2s;
+      }
+      .toggle-btn:active { transform: scale(0.9); }
+
+      .content-area {
+        flex-grow: 1;
+        padding: 30px 40px;
+        overflow-y: auto;
+        position: relative;
+      }
+
+      /* --- CONTENT SECTIONS ANIMATION --- */
+      .content-section {
+        display: none;
+      }
+      .content-section.active {
+        display: block;
+        animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      }
+
+      @keyframes slideUpFade {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .section-header {
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px dashed #e0e0e0;
+      }
+      .section-header h2 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.8rem;
+        font-weight: 700;
+        position: relative;
+        display: inline-block;
+      }
+      .section-header h2::after {
+        content: '';
+        position: absolute;
+        bottom: -17px;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: var(--primary-color);
+        border-radius: 2px;
+      }
+
+      /* --- DASHBOARD CARDS --- */
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+      }
+      .card {
+        background: #fff;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        display: flex;
+        align-items: center;
+        gap: 25px;
+        border-left: none; /* Removed existing border */
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 6px;
+      }
+      
+      /* Card Colors */
+      .card.blue::before { background: var(--primary-color); }
+      .card.green::before { background: var(--success-color); }
+      .card.yellow::before { background: var(--warning-color); }
+
+      .card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--card-hover-shadow);
+      }
+
+      .card-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        transition: transform 0.3s;
+      }
+      .card:hover .card-icon {
+        transform: scale(1.1) rotate(5deg);
+      }
+
+      .card-info h3 {
+        margin: 0;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #333;
+      }
+      .card-info p {
+        margin: 5px 0 0;
+        color: #888;
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+
+      /* --- FORMS & INPUTS --- */
+      form {
+        background: #fff;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 30px;
+        border: 1px solid rgba(0,0,0,0.02);
+      }
+
+      .form-mapel,
+      .form-generic {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: 1fr;
+      }
+      
+      label {
+        font-weight: 500;
+        color: #555;
+        margin-bottom: 8px;
+        display: block;
+        font-size: 0.9rem;
+      }
+
+      input[type='text'] {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        background: #f9fbfd;
+      }
+
+      input[type='text']:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+      }
+
+      .icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 45px;
+        height: 45px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        font-size: 1rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      
+      .primary {
+        background: var(--primary-gradient);
+        color: white;
+      }
+      .primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 14px rgba(13, 110, 253, 0.3);
+      }
+      .primary:active { transform: translateY(-1px); }
+
+      .danger {
+        background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+        color: white;
+      }
+      .danger:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 14px rgba(220, 53, 69, 0.3);
+      }
+
+      .secondary {
+        background: #e9ecef;
+        color: #495057;
+      }
+      .secondary:hover {
+        background: #dee2e6;
+        transform: translateY(-2px);
+      }
+
+      @media (min-width: 768px) {
+        .form-mapel {
+          grid-template-columns: 2fr 1fr auto;
+          align-items: end;
+        }
+        .form-generic {
+          grid-template-columns: 1fr auto;
+          align-items: end;
+        }
+      }
+
+      /* --- TABLE STYLING --- */
+      table {
+        width: 100%;
+        background: #fff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border-collapse: separate; /* Required for border-radius on tables */
+        border-spacing: 0;
+      }
+      
+      th {
+        background: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 2px solid #e9ecef;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+      }
+      
+      td {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f1f3f5;
+        vertical-align: middle;
+        color: #444;
+      }
+      
+      tr:last-child td { border-bottom: none; }
+      
+      tr { transition: background-color 0.2s; }
+      tr:hover td { background-color: #f8faff; }
+
+      /* Action Column */
+      table th:last-child,
+      table td:last-child {
+        width: 140px;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      /* Chips/Tags styling */
+      .tag-chip {
+        background: #e7f1ff;
+        color: var(--primary-color);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-block;
+      }
+
+      /* --- TUTORIAL STYLING --- */
+      .tutorial-card {
+        background: #fff;
+        padding: 30px;
+        border-radius: 16px;
+        margin-bottom: 25px;
+        box-shadow: var(--card-shadow);
+        border-left: 5px solid var(--secondary-color);
+        transition: transform 0.3s;
+      }
+      .tutorial-card:hover { transform: translateX(5px); }
+
+      .tutorial-card h3 {
+        margin-top: 0;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-size: 1.3rem;
+      }
+      .tutorial-card h3 i {
+        background: #f8f9fa;
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+      }
+
+      .step-list {
+        padding-left: 20px;
+        line-height: 1.8;
+        color: #555;
+      }
+      .step-list li {
+        margin-bottom: 12px;
+        position: relative;
+      }
+
+      /* --- RESPONSIVE MOBILE --- */
+      @media (max-width: 768px) {
+        .sidebar {
+          position: fixed;
+          left: -270px;
+        }
+        .sidebar.active { left: 0; }
+        .toggle-btn { display: block; }
+        .content-area { padding: 20px; }
+        .top-bar { padding: 15px 20px; }
+        
+        .overlay {
+          display: none;
+          position: fixed;
+          top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(3px);
+          z-index: 99;
+          opacity: 0;
+          transition: opacity 0.3s;
+        }
+        .overlay.active {
+          display: block;
+          opacity: 1;
+        }
+        
+        .card { flex-direction: column; text-align: center; }
+        .card-icon { margin-bottom: 10px; }
+      }
+
+      /* --- MODAL ANIMATED --- */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1100;
+        left: 0; top: 0;
+        width: 100%; height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .modal.show {
+        display: flex !important;
+        opacity: 1 !important;
+      }
+      
+      .modal-content {
+        background-color: #fff;
+        padding: 35px;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        position: relative;
+        transform: scale(0.7);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      
+      .modal.show .modal-content {
+        transform: scale(1);
+      }
+
+      .close-button {
+        position: absolute;
+        top: 20px; right: 25px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #ccc;
+        transition: color 0.2s;
+      }
+      .close-button:hover { color: #dc3545; }
+
+      .button-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 25px;
+      }
+      .btn-confirm {
+        padding: 10px 24px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.95rem;
+      }
+
+      /* Modal Konfirmasi Styles */
+      .modal-confirm-icon {
+        font-size: 3.5rem;
+        margin-bottom: 20px;
+        color: var(--danger-color);
+        text-align: center;
+        animation: pulseWarning 2s infinite;
+      }
+      
+      @keyframes pulseWarning {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+
+      .modal-confirm-title { margin: 0 0 10px; text-align: center; color: #333; }
+      .modal-confirm-msg { text-align: center; color: #666; margin-bottom: 30px; line-height: 1.5; }
+      .modal-confirm-actions { display: flex; justify-content: center; gap: 15px; }
+
+      /* Empty State Illustration Placeholder */
+      .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #aaa;
+      }
+      .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Overlay untuk Mobile -->
+    <div class="overlay" id="mobileOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="mainSidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Bangbin 6.0
+        </div>
+      </div>
+
+      <ul class="sidebar-menu">
+        <li>
+          <a onclick="switchSection('home')" id="link-home" class="sidebar-link active"> 
+            <i class="fa-solid fa-gauge-high"></i> Dashboard 
+          </a>
+        </li>
+        <li>
+          <a onclick="switchSection('tutorial')" id="link-tutorial" class="sidebar-link"> 
+            <i class="fa-solid fa-circle-question"></i> Tutorial 
+          </a>
+        </li>
+        <li>
+          <a onclick="switchSection('mapel')" id="link-mapel" class="sidebar-link"> 
+            <i class="fa-solid fa-book-open"></i> Mata Pelajaran 
+          </a>
+        </li>
+        <li>
+          <a onclick="switchSection('ekstra')" id="link-ekstra" class="sidebar-link"> 
+            <i class="fa-solid fa-futbol"></i> Ekstrakurikuler 
+          </a>
+        </li>
+        <li>
+          <a onclick="switchSection('koku')" id="link-koku" class="sidebar-link"> 
+            <i class="fa-solid fa-users-rectangle"></i> Kokurikuler 
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <a href="./" class="btn-back-home"> 
+            <i class="fa-solid fa-house"></i> &nbsp; Kembali ke Utama 
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-wrapper">
+      <!-- Top Navigation -->
+      <div class="top-bar">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <button class="toggle-btn" onclick="toggleSidebar()">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <h3 style="margin: 0;">Portal Administrator</h3>
+        </div>
+        
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div style="text-align:right; line-height:1.2;">
+                <!-- ID ditambahkan untuk di-update via JS -->
+                <div id="userNama" style="font-weight:600; font-size:0.9rem;">Administrator</div>
+                <div id="userKelas" style="font-size: 0.8rem; color: #888">Online</div>
+            </div>
+            <div style="width:40px; height:40px; background:#e0e7ff; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--primary-color);">
+                <i class="fa-solid fa-user"></i>
+            </div>
+        </div>
+      </div>
+
+      <div class="content-area">
+        <!-- SECTION: HOME / DASHBOARD -->
+        <div id="section-home" class="content-section active">
+          <div class="section-header">
+            <h2>Dashboard Ringkasan</h2>
+          </div>
+          <div class="dashboard-grid">
+            <div class="card blue">
+              <div class="card-icon" style="color: #0d6efd; background: #e7f1ff">
+                <i class="fa-solid fa-book"></i>
+              </div>
+              <div class="card-info">
+                <h3 id="count-mapel">0</h3>
+                <p>Mata Pelajaran</p>
+              </div>
+            </div>
+            <div class="card green">
+              <div class="card-icon" style="color: #198754; background: #d1e7dd">
+                <i class="fa-solid fa-campground"></i>
+              </div>
+              <div class="card-info">
+                <h3 id="count-ekstra">0</h3>
+                <p>Ekstrakurikuler</p>
+              </div>
+            </div>
+            <div class="card yellow">
+              <div class="card-icon" style="color: #ffc107; background: #fff3cd">
+                <i class="fa-solid fa-bus"></i>
+              </div>
+              <div class="card-info">
+                <h3 id="count-koku">0</h3>
+                <p>Kokurikuler</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 40px; background: white; padding: 50px; border-radius: 16px; text-align: center; color: #666; box-shadow: var(--card-shadow);">
+            <div style="width: 100px; height: 100px; background: #f8f9fa; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                <i class="fa-solid fa-rocket" style="font-size: 3rem; color: #0d6efd;"></i>
+            </div>
+            <h3 style="color:#333; margin-top:0;">Selamat Datang!</h3>
+            <p style="max-width:500px; margin:0 auto; line-height:1.6;">Sistem Pengelolaan Data Sekolah siap digunakan. Silakan pilih menu di sidebar sebelah kiri untuk mulai mengelola data akademik dan kegiatan siswa.</p>
+          </div>
+        </div>
+
+        <!-- SECTION: MATA PELAJARAN -->
+        <div id="section-mapel" class="content-section">
+          <div class="section-header">
+            <h2>Mata Pelajaran</h2>
+          </div>
+          <form id="formMapel" class="form-mapel">
+            <div>
+              <label for="namaMapel">Nama Mata Pelajaran</label>
+              <input type="text" id="namaMapel" placeholder="Contoh: Matematika" required autocomplete="off" />
+            </div>
+            <div>
+              <label for="singkatMapel">Singkatan</label>
+              <input type="text" id="singkatMapel" placeholder="Contoh: MTK" required autocomplete="off" />
+            </div>
+            <button type="submit" class="primary icon-button" title="Tambah Mapel">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </form>
+          <div style="overflow-x: auto; border-radius: 16px; box-shadow: var(--card-shadow);">
+            <table id="tabelMapel">
+                <thead>
+                <tr>
+                    <th>Nama Mata Pelajaran</th>
+                    <th>Singkat</th>
+                    <th>Aksi</th>
+                </tr>
+                </thead>
+                <tbody id="bodyMapel"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SECTION: EKSTRAKURIKULER -->
+        <div id="section-ekstra" class="content-section">
+          <div class="section-header">
+            <h2>Ekstrakurikuler</h2>
+          </div>
+          <form id="formEkstra" class="form-generic">
+            <div>
+              <label for="namaEkstra">Nama Ekstrakurikuler</label>
+              <input type="text" id="namaEkstra" placeholder="Contoh: Pramuka" required autocomplete="off" />
+            </div>
+            <button type="submit" class="primary icon-button" title="Tambah Ekstra">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </form>
+          <div style="overflow-x: auto; border-radius: 16px; box-shadow: var(--card-shadow);">
+            <table id="tabelEkstra">
+                <thead>
+                <tr>
+                    <th>Nama Kegiatan</th>
+                    <th>Aksi</th>
+                </tr>
+                </thead>
+                <tbody id="bodyEkstra"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SECTION: KOKURIKULER -->
+        <div id="section-koku" class="content-section">
+          <div class="section-header">
+            <h2>Kokurikuler</h2>
+          </div>
+          <form id="formKoku" class="form-generic">
+            <div>
+              <label for="namaKoku">Nama Kegiatan Kokurikuler</label>
+              <input type="text" id="namaKoku" placeholder="Contoh: Kunjungan Museum" required autocomplete="off" />
+            </div>
+            <button type="submit" class="primary icon-button" title="Tambah Koku">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </form>
+          <div style="overflow-x: auto; border-radius: 16px; box-shadow: var(--card-shadow);">
+            <table id="tabelKoku">
+                <thead>
+                <tr>
+                    <th>Nama Kegiatan</th>
+                    <th>Aksi</th>
+                </tr>
+                </thead>
+                <tbody id="bodyKoku"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SECTION: TUTORIAL -->
+        <div id="section-tutorial" class="content-section">
+          <div class="section-header">
+            <h2>Panduan Penggunaan</h2>
+          </div>
+
+          <div class="tutorial-card">
+            <h3><i class="fa-solid fa-plus" style="color:var(--primary-color)"></i> Menambah Data</h3>
+            <ul class="step-list">
+              <li>Pilih kategori (Mata Pelajaran, Ekstrakurikuler, atau Kokurikuler) dari menu di sidebar kiri.</li>
+              <li>Isi formulir input yang tersedia di bagian atas halaman dengan lengkap.</li>
+              <li>Klik tombol biru dengan ikon <b>Plus (+)</b> untuk menyimpan data ke dalam sistem.</li>
+            </ul>
+          </div>
+
+          <div class="tutorial-card" style="border-left-color: #0d6efd">
+            <h3><i class="fa-solid fa-pen" style="color:#0d6efd"></i> Mengubah Data</h3>
+            <ul class="step-list">
+              <li>Cari data yang ingin Anda ubah pada tabel daftar.</li>
+              <li>Klik tombol biru dengan ikon <b>Pensil</b> di kolom Aksi.</li>
+              <li>Jendela <i>pop-up</i> akan muncul. Ubah data sesuai kebutuhan.</li>
+              <li>Klik tombol <b>Simpan</b> untuk menerapkan perubahan secara permanen.</li>
+            </ul>
+          </div>
+
+          <div class="tutorial-card" style="border-left-color: #dc3545">
+            <h3><i class="fa-solid fa-trash" style="color:#dc3545"></i> Menghapus Data</h3>
+            <ul class="step-list">
+              <li>Cari data yang ingin dihapus pada tabel.</li>
+              <li>Klik tombol merah dengan ikon <b>Tempat Sampah</b>.</li>
+              <li>Konfirmasi penghapusan pada jendela peringatan yang muncul dengan mengklik <b>Ya, Hapus</b>.</li>
+              <li><b>Perhatian:</b> Data yang dihapus tidak dapat dikembalikan lagi.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL-MODAL -->
+
+    <!-- Modal Edit -->
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <span class="close-button" id="closeEditModal">×</span>
+        <h2 id="editModalTitle" style="margin-top: 0; color: #333; margin-bottom: 25px;">Edit Item</h2>
+        <form id="editForm" novalidate style="box-shadow: none; padding: 0; margin: 0; border: none;">
+          <input type="hidden" id="editItemId" />
+          <input type="hidden" id="editItemType" />
+          <div class="form-group" style="margin-bottom: 20px">
+            <label for="editNama">Nama</label>
+            <input type="text" id="editNama" required />
+          </div>
+          <div class="form-group" id="editSingkatGroup" style="margin-bottom: 20px">
+            <label for="editSingkat">Singkatan</label>
+            <input type="text" id="editSingkat" />
+          </div>
+          <div class="button-group">
+            <button type="button" id="cancelEditBtn" class="secondary btn-confirm">Batal</button>
+            <button type="submit" class="primary btn-confirm">Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal Notifikasi -->
+    <div id="notificationModal" class="modal">
+      <div class="modal-content" style="text-align: center; max-width: 400px;">
+        <div style="font-size: 4rem; color: #198754; margin-bottom: 15px; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h2 id="notificationTitle" style="margin: 0 0 10px; color: #333"></h2>
+        <p id="notificationMessage" style="color: #666; margin-bottom: 25px;"></p>
+        <div class="button-group" style="justify-content: center">
+          <button id="notificationOkBtn" class="primary btn-confirm" style="width: 100%;">OK, Mengerti</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div id="actionConfirmModal" class="modal">
+      <div class="modal-content" style="max-width: 400px">
+        <span class="close-button" id="actionCloseBtn" onclick="tutupModalHapus()">&times;</span>
+        <div class="modal-confirm-icon">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h2 id="modalActionTitle" class="modal-confirm-title">Konfirmasi</h2>
+        <p id="modalActionMessage" class="modal-confirm-msg">Apakah Anda yakin?</p>
+        <div class="modal-confirm-actions">
+          <button id="actionCancelBtn" class="secondary btn-confirm">Batal</button>
+          <button id="actionConfirmBtn" class="danger btn-confirm">Ya, Hapus</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="bangbin_uhuuyy.js"></script>
+
+    <script>
+      const _0x236972=_0x3bb9;function _0x3bb9(_0x5628ff,_0x47c1d5){const _0x739715=_0x7397();return _0x3bb9=function(_0x3bb96c,_0x1521de){_0x3bb96c=_0x3bb96c-0x157;let _0x167c72=_0x739715[_0x3bb96c];return _0x167c72;},_0x3bb9(_0x5628ff,_0x47c1d5);}(function(_0x2f071e,_0x198204){const _0x1be393=_0x3bb9,_0x6fb24d=_0x2f071e();while(!![]){try{const _0x5d39df=parseInt(_0x1be393(0x168))/0x1*(-parseInt(_0x1be393(0x1d8))/0x2)+parseInt(_0x1be393(0x1d7))/0x3+parseInt(_0x1be393(0x1c5))/0x4*(parseInt(_0x1be393(0x173))/0x5)+-parseInt(_0x1be393(0x1b3))/0x6*(parseInt(_0x1be393(0x170))/0x7)+parseInt(_0x1be393(0x16d))/0x8+parseInt(_0x1be393(0x174))/0x9*(-parseInt(_0x1be393(0x188))/0xa)+-parseInt(_0x1be393(0x1cb))/0xb*(-parseInt(_0x1be393(0x16f))/0xc);if(_0x5d39df===_0x198204)break;else _0x6fb24d['push'](_0x6fb24d['shift']());}catch(_0x5832fc){_0x6fb24d['push'](_0x6fb24d['shift']());}}}(_0x7397,0x57cad));function switchSection(_0x41abca){const _0x44a9f0=_0x3bb9;document['querySelectorAll'](_0x44a9f0(0x17c))[_0x44a9f0(0x1b5)](_0x38a092=>{const _0x7c2fa1=_0x44a9f0;_0x38a092[_0x7c2fa1(0x1c8)][_0x7c2fa1(0x16e)]('active');}),document[_0x44a9f0(0x17a)](_0x44a9f0(0x1ab))['forEach'](_0x43d285=>{const _0x3d7988=_0x44a9f0;_0x43d285[_0x3d7988(0x1c8)][_0x3d7988(0x16e)](_0x3d7988(0x160));});const _0x32351d=document[_0x44a9f0(0x1b7)]('section-'+_0x41abca);if(_0x32351d)_0x32351d[_0x44a9f0(0x1c8)]['add'](_0x44a9f0(0x160));const _0x5c117e=document[_0x44a9f0(0x1b7)](_0x44a9f0(0x1c0)+_0x41abca);if(_0x5c117e)_0x5c117e[_0x44a9f0(0x1c8)]['add']('active');if(_0x41abca==='home')updateDashboardCounters();if(window[_0x44a9f0(0x15a)]<=0x300)toggleSidebar();}function toggleSidebar(){const _0x275e67=_0x3bb9;document[_0x275e67(0x1b7)]('mainSidebar')[_0x275e67(0x1c8)][_0x275e67(0x1b8)]('active'),document['getElementById'](_0x275e67(0x1a8))['classList'][_0x275e67(0x1b8)](_0x275e67(0x160));}function tutupModalHapus(){const _0x363bed=_0x3bb9;document['getElementById'](_0x363bed(0x169))['classList']['remove'](_0x363bed(0x1b1)),setTimeout(()=>{const _0x33c613=_0x363bed;document['getElementById'](_0x33c613(0x169))[_0x33c613(0x1a5)]['display']='none';},0x12c);}function _0x7397(){const _0xd48e80=['required','notificationTitle','formMapel','formEkstra','innerHTML','ekstrakurikuler','Edit\x20Ekstrakurikuler','value','updateDashboardCounters','942501aqMAHe','796ZwQpia','nama','reset','editSingkatGroup','</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22danger\x20icon-button\x22\x20style=\x22margin-left:5px;\x22\x20title=\x22Hapus\x22\x20onclick=\x22window.hapusMapel(\x27','innerWidth','singkatMapel','add','display','infoDasar','kelas','active','actionCancelBtn','</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</tr>','editItemId','<i\x20class=\x22fa-solid\x20fa-pen-to-square\x22></i>','splice','</b>\x22\x20→\x20\x22<b>','now','1629IcuNjI','actionConfirmModal','innerText','bodyKoku','parentNode','2843856TMaOSO','remove','576ishxPF','14329IyShsB','Konfirmasi','message','1399305FRYUcp','7092qgAPUa','namaGuru','title','<tr><td\x20colspan=\x223\x22\x20class=\x22empty-state\x22><i\x20class=\x22fa-regular\x20fa-folder-open\x22></i><br>Belum\x20ada\x20data\x20mata\x20pelajaran.</td></tr>','bodyEkstra','window.editEkstra','querySelectorAll','actionCloseBtn','.content-section','hapusEkstra','bodyMapel','trim','flex','modalActionMessage','function','ekstra','window.hapusKoku','onclick','<tr><td\x20colspan=\x222\x22\x20class=\x22empty-state\x22><i\x20class=\x22fa-regular\x20fa-folder-open\x22></i><br>Belum\x20ada\x20data\x20kegiatan.</td></tr>','notificationModal','1860mfdKTJ','find','click','count-mapel','block','</b>\x22','mapel','length','Nama:\x20\x22<b>','Perubahan\x20Disimpan','Administrator','Online','\x27)\x22>','userKelas','editModalTitle','actionConfirmBtn','\x22</b>?<br><small>Tindakan\x20ini\x20tidak\x20dapat\x20dibatalkan.</small>','editNama','focus','Anda\x20yakin\x20ingin\x20menghapus\x20<b>\x22','DOMContentLoaded','textContent','addEventListener','cancelEditBtn','<tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>','</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22danger\x20icon-button\x22\x20style=\x22margin-left:5px;\x22\x20title=\x22Hapus\x22\x20onclick=\x22','modalActionTitle','error','mataPelajaran','style','count-ekstra','editSingkat','mobileOverlay','</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td><span\x20class=\x22tag-chip\x22>','</span></td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22primary\x20icon-button\x22\x20title=\x22Edit\x22\x20onclick=\x22window.editMapel(\x27','.sidebar-link','replace','kelasAktif','<i\x20class=\x22fa-solid\x20fa-trash-can\x22></i>','window.editKoku','formKoku','show','none','1182HQnVnw','mapel-','forEach','Edit\x20Kokurikuler','getElementById','toggle','submit','userNama','kokurikuler','koku-','editKoku','push','hapusKoku','link-','window.hapusEkstra','findIndex','notificationOkBtn','editMapel','4tRIrOV','editItemType','preventDefault','classList','cloneNode','target','139392tOjhau','singkat','koku'];_0x7397=function(){return _0xd48e80;};return _0x7397();}window['showCustomConfirm']=function(_0x3e36cf){return new Promise(_0x428de7=>{const _0x47ac97=_0x3bb9,_0x295c45=document['getElementById']('actionConfirmModal'),_0x45950e=document[_0x47ac97(0x1b7)](_0x47ac97(0x1a2)),_0x4bf1ac=document[_0x47ac97(0x1b7)](_0x47ac97(0x181)),_0x1eb077=document[_0x47ac97(0x1b7)](_0x47ac97(0x197)),_0x3f63f5=document['getElementById'](_0x47ac97(0x161)),_0x4e6431=document[_0x47ac97(0x1b7)](_0x47ac97(0x17b));_0x45950e['textContent']=_0x3e36cf[_0x47ac97(0x176)]||_0x47ac97(0x171),_0x4bf1ac[_0x47ac97(0x1d2)]=_0x3e36cf[_0x47ac97(0x172)]||'Apakah\x20Anda\x20yakin?',_0x295c45['style'][_0x47ac97(0x15d)]=_0x47ac97(0x180),setTimeout(()=>_0x295c45[_0x47ac97(0x1c8)][_0x47ac97(0x15c)](_0x47ac97(0x1b1)),0xa);const _0x3ce878=_0x1eb077[_0x47ac97(0x1c9)](!![]);_0x1eb077[_0x47ac97(0x16c)]['replaceChild'](_0x3ce878,_0x1eb077);const _0x5272e7=_0x3f63f5[_0x47ac97(0x1c9)](!![]);_0x3f63f5[_0x47ac97(0x16c)]['replaceChild'](_0x5272e7,_0x3f63f5),_0x3ce878[_0x47ac97(0x19e)](_0x47ac97(0x18a),()=>{tutupModalHapus(),_0x428de7(!![]);}),_0x5272e7['addEventListener'](_0x47ac97(0x18a),()=>{tutupModalHapus(),_0x428de7(![]);}),_0x4e6431[_0x47ac97(0x185)]=()=>{tutupModalHapus(),_0x428de7(![]);},window['onclick']=function(_0xb5c604){const _0x3a1a28=_0x47ac97;_0xb5c604[_0x3a1a28(0x1ca)]==_0x295c45&&(tutupModalHapus(),_0x428de7(![]));};});},document[_0x236972(0x1b7)](_0x236972(0x161))[_0x236972(0x19e)](_0x236972(0x18a),tutupModalHapus),document['addEventListener'](_0x236972(0x19c),()=>{const _0x3eec9d=_0x236972,_0x5f16c2=typeof loadData===_0x3eec9d(0x182)?loadData():{'mataPelajaran':[],'ekstrakurikuler':[],'kokurikuler':[],'infoDasar':{}},_0x442cdc=document[_0x3eec9d(0x1b7)](_0x3eec9d(0x1ba)),_0x2d17fd=document['getElementById'](_0x3eec9d(0x195));if(_0x5f16c2[_0x3eec9d(0x15e)]){_0x442cdc[_0x3eec9d(0x19d)]=_0x5f16c2['infoDasar'][_0x3eec9d(0x175)]||_0x3eec9d(0x192);const _0x4a5f13=_0x5f16c2['infoDasar'][_0x3eec9d(0x1ad)]||_0x5f16c2['infoDasar'][_0x3eec9d(0x15f)]||_0x3eec9d(0x193),_0x30db16=_0x4a5f13[_0x3eec9d(0x1ac)](/-/g,'\x20')['replace'](/\b\w/g,_0x47be06=>_0x47be06['toUpperCase']());_0x2d17fd[_0x3eec9d(0x19d)]=_0x30db16;}const _0x594336=_0x3eec9d(0x1ae),_0x5da78c=_0x3eec9d(0x164),_0x1de165=document['getElementById']('editModal'),_0x4f25d8=document[_0x3eec9d(0x1b7)]('editForm'),_0x129e37=document[_0x3eec9d(0x1b7)]('closeEditModal'),_0xddf29a=document[_0x3eec9d(0x1b7)](_0x3eec9d(0x19f)),_0x5eba47=document['getElementById'](_0x3eec9d(0x187)),_0x313d4c=document[_0x3eec9d(0x1b7)](_0x3eec9d(0x1c3));let _0x3887ed={};window[_0x3eec9d(0x1d6)]=()=>{const _0x335cd5=_0x3eec9d,_0x20b5e4=(_0x5f16c2[_0x335cd5(0x1a4)]||[])[_0x335cd5(0x18f)],_0x54b29a=(_0x5f16c2[_0x335cd5(0x1d3)]||[])[_0x335cd5(0x18f)],_0x3e9bff=(_0x5f16c2['kokurikuler']||[])[_0x335cd5(0x18f)];document['getElementById'](_0x335cd5(0x18b))[_0x335cd5(0x16a)]=_0x20b5e4,document[_0x335cd5(0x1b7)](_0x335cd5(0x1a6))[_0x335cd5(0x16a)]=_0x54b29a,document[_0x335cd5(0x1b7)]('count-koku')['innerText']=_0x3e9bff;};const _0xabacb1=(_0x441df4,_0x53d6ab)=>{const _0x52d590=_0x3eec9d;document[_0x52d590(0x1b7)](_0x52d590(0x1cf))[_0x52d590(0x1d2)]=_0x441df4,document[_0x52d590(0x1b7)]('notificationMessage')[_0x52d590(0x1d2)]=_0x53d6ab,_0x5eba47[_0x52d590(0x1a5)][_0x52d590(0x15d)]='flex',setTimeout(()=>_0x5eba47['classList'][_0x52d590(0x15c)](_0x52d590(0x1b1)),0xa);},_0x4e2262=()=>{const _0x215e3d=_0x3eec9d,_0x21de2f=document[_0x215e3d(0x1b7)](_0x215e3d(0x17e));_0x21de2f[_0x215e3d(0x1d2)]='';const _0x2211a8=_0x5f16c2[_0x215e3d(0x1a4)]||[];if(_0x2211a8[_0x215e3d(0x18f)]===0x0){_0x21de2f[_0x215e3d(0x1d2)]=_0x215e3d(0x177);return;}_0x2211a8[_0x215e3d(0x1b5)](_0x41f81a=>{const _0x50c227=_0x215e3d,_0x3e657a='<tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+_0x41f81a[_0x50c227(0x1d9)]+_0x50c227(0x1a9)+_0x41f81a[_0x50c227(0x1cc)]+_0x50c227(0x1aa)+_0x41f81a['id']+'\x27)\x22>'+_0x5da78c+_0x50c227(0x159)+_0x41f81a['id']+_0x50c227(0x194)+_0x594336+_0x50c227(0x162);_0x21de2f['innerHTML']+=_0x3e657a;}),updateDashboardCounters();},_0x28303a=(_0x2b419c,_0xd21364,_0x3d8120,_0x1da987)=>{const _0x238781=_0x3eec9d,_0x198b2b=document[_0x238781(0x1b7)](_0x2b419c);_0x198b2b[_0x238781(0x1d2)]='';const _0x49c369=_0xd21364||[];if(_0x49c369[_0x238781(0x18f)]===0x0){_0x198b2b['innerHTML']=_0x238781(0x186);return;}_0x49c369[_0x238781(0x1b5)](_0x1ebe7c=>{const _0x1c4d4e=_0x238781,_0x393f33=_0x1c4d4e(0x1a0)+_0x1ebe7c[_0x1c4d4e(0x1d9)]+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22primary\x20icon-button\x22\x20title=\x22Edit\x22\x20onclick=\x22'+_0x1da987+'(\x27'+_0x1ebe7c['id']+_0x1c4d4e(0x194)+_0x5da78c+_0x1c4d4e(0x1a1)+_0x3d8120+'(\x27'+_0x1ebe7c['id']+'\x27)\x22>'+_0x594336+'</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</tr>';_0x198b2b[_0x1c4d4e(0x1d2)]+=_0x393f33;}),updateDashboardCounters();},_0x20903f=(_0x5e3b25,_0x167b64,_0x1c04c1,_0x26abb4='')=>{const _0x5ad1ed=_0x3eec9d;document[_0x5ad1ed(0x1b7)](_0x5ad1ed(0x163))[_0x5ad1ed(0x1d5)]=_0x167b64,document[_0x5ad1ed(0x1b7)](_0x5ad1ed(0x1c6))[_0x5ad1ed(0x1d5)]=_0x5e3b25,document[_0x5ad1ed(0x1b7)](_0x5ad1ed(0x199))['value']=_0x1c04c1;const _0x28dc9a=document[_0x5ad1ed(0x1b7)](_0x5ad1ed(0x158)),_0x45832d=document[_0x5ad1ed(0x1b7)]('editSingkat'),_0x34cbdf=document['getElementById'](_0x5ad1ed(0x196));_0x5e3b25===_0x5ad1ed(0x18e)?(_0x34cbdf[_0x5ad1ed(0x19d)]='Edit\x20Mata\x20Pelajaran',_0x45832d[_0x5ad1ed(0x1d5)]=_0x26abb4,_0x28dc9a[_0x5ad1ed(0x1a5)][_0x5ad1ed(0x15d)]=_0x5ad1ed(0x18c),_0x45832d[_0x5ad1ed(0x1ce)]=!![]):(_0x34cbdf[_0x5ad1ed(0x19d)]=_0x5e3b25===_0x5ad1ed(0x183)?_0x5ad1ed(0x1d4):_0x5ad1ed(0x1b6),_0x28dc9a['style']['display']='none',_0x45832d['required']=![]),_0x1de165[_0x5ad1ed(0x1a5)][_0x5ad1ed(0x15d)]=_0x5ad1ed(0x180),setTimeout(()=>_0x1de165[_0x5ad1ed(0x1c8)][_0x5ad1ed(0x15c)](_0x5ad1ed(0x1b1)),0xa);},_0x5dedfa=()=>{const _0xa091c5=_0x3eec9d;_0x1de165[_0xa091c5(0x1c8)]['remove'](_0xa091c5(0x1b1)),setTimeout(()=>_0x1de165[_0xa091c5(0x1a5)][_0xa091c5(0x15d)]='none',0x12c);};window[_0x3eec9d(0x1c4)]=_0x44da37=>{const _0x2b0f7a=_0x3eec9d,_0x2075e4=_0x5f16c2['mataPelajaran']['find'](_0x7e318a=>_0x7e318a['id']===_0x44da37);_0x2075e4&&(_0x3887ed={'nama':_0x2075e4[_0x2b0f7a(0x1d9)],'singkat':_0x2075e4[_0x2b0f7a(0x1cc)]},_0x20903f(_0x2b0f7a(0x18e),_0x44da37,_0x2075e4[_0x2b0f7a(0x1d9)],_0x2075e4[_0x2b0f7a(0x1cc)]));},window['editEkstra']=_0x47101e=>{const _0xabcebc=_0x3eec9d,_0x797dea=_0x5f16c2['ekstrakurikuler'][_0xabcebc(0x189)](_0x5d266b=>_0x5d266b['id']===_0x47101e);_0x797dea&&(_0x3887ed={'nama':_0x797dea[_0xabcebc(0x1d9)]},_0x20903f(_0xabcebc(0x183),_0x47101e,_0x797dea[_0xabcebc(0x1d9)]));},window[_0x3eec9d(0x1bd)]=_0x21ef3d=>{const _0x380097=_0x3eec9d,_0x58ddfe=_0x5f16c2[_0x380097(0x1bb)][_0x380097(0x189)](_0x5dd3a0=>_0x5dd3a0['id']===_0x21ef3d);_0x58ddfe&&(_0x3887ed={'nama':_0x58ddfe[_0x380097(0x1d9)]},_0x20903f(_0x380097(0x1cd),_0x21ef3d,_0x58ddfe[_0x380097(0x1d9)]));};const _0x1b509c=async(_0x36fe62,_0x31d970,_0x2ebc2f)=>{const _0x263e84=_0x3eec9d;try{const _0x2d1ef1=await window['showCustomConfirm']({'title':'Hapus\x20Data?','message':_0x263e84(0x19b)+_0x2ebc2f+_0x263e84(0x198)});if(_0x2d1ef1){const _0x3fbeae=_0x31d970[_0x263e84(0x1c2)](_0x262a03=>_0x262a03['id']===_0x36fe62);if(_0x3fbeae>-0x1){_0x31d970[_0x263e84(0x165)](_0x3fbeae,0x1);if(typeof saveData===_0x263e84(0x182))saveData(_0x5f16c2);return!![];}}}catch(_0x1d1c21){console[_0x263e84(0x1a3)](_0x1d1c21);}return![];};window['hapusMapel']=async _0x2e58cf=>{const _0x40bd40=_0x3eec9d,_0x51230a=_0x5f16c2[_0x40bd40(0x1a4)][_0x40bd40(0x189)](_0x115a6c=>_0x115a6c['id']===_0x2e58cf)?.[_0x40bd40(0x1d9)]||'';if(await _0x1b509c(_0x2e58cf,_0x5f16c2['mataPelajaran'],_0x51230a))_0x4e2262();},window[_0x3eec9d(0x17d)]=async _0x2ff1ee=>{const _0x1366df=_0x3eec9d,_0x14514a=_0x5f16c2[_0x1366df(0x1d3)][_0x1366df(0x189)](_0x11ca71=>_0x11ca71['id']===_0x2ff1ee)?.[_0x1366df(0x1d9)]||'';if(await _0x1b509c(_0x2ff1ee,_0x5f16c2[_0x1366df(0x1d3)],_0x14514a))_0x28303a('bodyEkstra',_0x5f16c2['ekstrakurikuler'],_0x1366df(0x1c1),_0x1366df(0x179));},window[_0x3eec9d(0x1bf)]=async _0x22ee9=>{const _0x4f9c4d=_0x3eec9d,_0x910e7d=_0x5f16c2[_0x4f9c4d(0x1bb)][_0x4f9c4d(0x189)](_0x483b74=>_0x483b74['id']===_0x22ee9)?.[_0x4f9c4d(0x1d9)]||'';if(await _0x1b509c(_0x22ee9,_0x5f16c2[_0x4f9c4d(0x1bb)],_0x910e7d))_0x28303a(_0x4f9c4d(0x16b),_0x5f16c2[_0x4f9c4d(0x1bb)],_0x4f9c4d(0x184),'window.editKoku');},document[_0x3eec9d(0x1b7)](_0x3eec9d(0x1d0))[_0x3eec9d(0x19e)](_0x3eec9d(0x1b9),_0x54e266=>{const _0x156645=_0x3eec9d;_0x54e266['preventDefault']();const _0x2ca61c=document[_0x156645(0x1b7)]('namaMapel'),_0x28cc35=document[_0x156645(0x1b7)](_0x156645(0x15b));if(_0x2ca61c['value'][_0x156645(0x17f)]()&&_0x28cc35[_0x156645(0x1d5)]['trim']()){_0x5f16c2[_0x156645(0x1a4)][_0x156645(0x1be)]({'id':_0x156645(0x1b4)+Date[_0x156645(0x167)](),'nama':_0x2ca61c[_0x156645(0x1d5)][_0x156645(0x17f)](),'singkat':_0x28cc35[_0x156645(0x1d5)][_0x156645(0x17f)]()});if(typeof saveData===_0x156645(0x182))saveData(_0x5f16c2);_0x54e266['target'][_0x156645(0x157)](),_0x4e2262(),_0x2ca61c[_0x156645(0x19a)]();}}),document[_0x3eec9d(0x1b7)](_0x3eec9d(0x1d1))['addEventListener']('submit',_0x55a96d=>{const _0x4e4165=_0x3eec9d;_0x55a96d[_0x4e4165(0x1c7)]();const _0x514eb7=document[_0x4e4165(0x1b7)]('namaEkstra');if(_0x514eb7[_0x4e4165(0x1d5)][_0x4e4165(0x17f)]()){if(!_0x5f16c2[_0x4e4165(0x1d3)])_0x5f16c2['ekstrakurikuler']=[];_0x5f16c2['ekstrakurikuler']['push']({'id':'eskul-'+Date[_0x4e4165(0x167)](),'nama':_0x514eb7['value']['trim']()});if(typeof saveData==='function')saveData(_0x5f16c2);_0x55a96d[_0x4e4165(0x1ca)][_0x4e4165(0x157)](),_0x28303a('bodyEkstra',_0x5f16c2[_0x4e4165(0x1d3)],_0x4e4165(0x1c1),_0x4e4165(0x179)),_0x514eb7[_0x4e4165(0x19a)]();}}),document[_0x3eec9d(0x1b7)](_0x3eec9d(0x1b0))[_0x3eec9d(0x19e)]('submit',_0x3897e4=>{const _0x18a82e=_0x3eec9d;_0x3897e4[_0x18a82e(0x1c7)]();const _0x294944=document[_0x18a82e(0x1b7)]('namaKoku');if(_0x294944['value'][_0x18a82e(0x17f)]()){if(!_0x5f16c2[_0x18a82e(0x1bb)])_0x5f16c2[_0x18a82e(0x1bb)]=[];_0x5f16c2[_0x18a82e(0x1bb)]['push']({'id':_0x18a82e(0x1bc)+Date[_0x18a82e(0x167)](),'nama':_0x294944[_0x18a82e(0x1d5)][_0x18a82e(0x17f)]()});if(typeof saveData===_0x18a82e(0x182))saveData(_0x5f16c2);_0x3897e4[_0x18a82e(0x1ca)][_0x18a82e(0x157)](),_0x28303a(_0x18a82e(0x16b),_0x5f16c2[_0x18a82e(0x1bb)],_0x18a82e(0x184),_0x18a82e(0x1af)),_0x294944[_0x18a82e(0x19a)]();}}),_0x4f25d8['addEventListener'](_0x3eec9d(0x1b9),_0x858329=>{const _0x45f323=_0x3eec9d;_0x858329[_0x45f323(0x1c7)]();const _0x1320b0=document[_0x45f323(0x1b7)](_0x45f323(0x163))['value'],_0x542df0=document['getElementById'](_0x45f323(0x1c6))[_0x45f323(0x1d5)],_0x4a461b=document[_0x45f323(0x1b7)](_0x45f323(0x199))[_0x45f323(0x1d5)][_0x45f323(0x17f)](),_0x118509=document[_0x45f323(0x1b7)](_0x45f323(0x1a7))['value'][_0x45f323(0x17f)]();let _0x45220a='',_0x1195d3=![];if(_0x542df0==='mapel'){if(!_0x4a461b||!_0x118509)return;const _0x31595d=_0x5f16c2[_0x45f323(0x1a4)]['find'](_0x1544bb=>_0x1544bb['id']===_0x1320b0);_0x31595d&&(_0x31595d['nama']!==_0x4a461b&&(_0x45220a+='Nama:\x20\x22<b>'+_0x3887ed['nama']+_0x45f323(0x166)+_0x4a461b+'</b>\x22<br>',_0x1195d3=!![]),_0x31595d['singkat']!==_0x118509&&(_0x45220a+='Singkat:\x20\x22<b>'+_0x3887ed['singkat']+_0x45f323(0x166)+_0x118509+_0x45f323(0x18d),_0x1195d3=!![]),_0x31595d[_0x45f323(0x1d9)]=_0x4a461b,_0x31595d[_0x45f323(0x1cc)]=_0x118509),_0x4e2262();}else{if(!_0x4a461b)return;const _0x7c3bed=_0x542df0==='ekstra'?_0x5f16c2['ekstrakurikuler']:_0x5f16c2[_0x45f323(0x1bb)],_0x1c0074=_0x7c3bed[_0x45f323(0x189)](_0x817f40=>_0x817f40['id']===_0x1320b0);_0x1c0074&&_0x1c0074[_0x45f323(0x1d9)]!==_0x4a461b&&(_0x45220a+=_0x45f323(0x190)+_0x3887ed[_0x45f323(0x1d9)]+_0x45f323(0x166)+_0x4a461b+_0x45f323(0x18d),_0x1195d3=!![],_0x1c0074[_0x45f323(0x1d9)]=_0x4a461b);if(_0x542df0===_0x45f323(0x183))_0x28303a(_0x45f323(0x178),_0x5f16c2[_0x45f323(0x1d3)],_0x45f323(0x1c1),_0x45f323(0x179));else _0x28303a(_0x45f323(0x16b),_0x5f16c2[_0x45f323(0x1bb)],_0x45f323(0x184),'window.editKoku');}_0x5dedfa();if(_0x1195d3){if(typeof saveData===_0x45f323(0x182))saveData(_0x5f16c2);_0xabacb1(_0x45f323(0x191),_0x45220a);}}),_0x129e37['addEventListener']('click',_0x5dedfa),_0xddf29a[_0x3eec9d(0x19e)](_0x3eec9d(0x18a),_0x5dedfa),_0x313d4c[_0x3eec9d(0x19e)](_0x3eec9d(0x18a),()=>{const _0x3acb19=_0x3eec9d;_0x5eba47[_0x3acb19(0x1c8)][_0x3acb19(0x16e)](_0x3acb19(0x1b1)),setTimeout(()=>_0x5eba47['style'][_0x3acb19(0x15d)]=_0x3acb19(0x1b2),0x12c);}),window['addEventListener'](_0x3eec9d(0x18a),_0x57063c=>{const _0x365272=_0x3eec9d;if(_0x57063c['target']==_0x1de165)_0x5dedfa();_0x57063c[_0x365272(0x1ca)]==_0x5eba47&&(_0x5eba47['classList'][_0x365272(0x16e)](_0x365272(0x1b1)),setTimeout(()=>_0x5eba47[_0x365272(0x1a5)][_0x365272(0x15d)]=_0x365272(0x1b2),0x12c));}),_0x4e2262(),_0x28303a(_0x3eec9d(0x178),_0x5f16c2[_0x3eec9d(0x1d3)],_0x3eec9d(0x1c1),_0x3eec9d(0x179)),_0x28303a('bodyKoku',_0x5f16c2[_0x3eec9d(0x1bb)],'window.hapusKoku','window.editKoku'),updateDashboardCounters();});
+    </script>
+  </body>
+</html>

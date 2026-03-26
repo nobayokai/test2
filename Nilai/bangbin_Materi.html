@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabel Kurikulum Pembelajaran Interaktif</title>
+    <!-- Memuat Tailwind CSS untuk styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Memuat Google Fonts (Inter) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="https://lh3.googleusercontent.com/d/16rll5zsRdwTbR3nF_NmPKwY51tg4tnOn">
+    <!-- Memuat pdfmake untuk generate PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    
+    <style>
+        /* Menggunakan font Inter untuk tampilan yang lebih modern */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Warna latar belakang lebih lembut */
+        }
+        
+        /* Animasi untuk baris tabel saat muncul */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #curriculum-body tr {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* Styling untuk tombol aksi */
+        .action-button {
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
+        .action-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .home-link { 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            transition: all 0.3s ease-in-out; 
+            flex-shrink: 0; 
+            text-decoration: none; 
+            position: absolute;
+            top: 16px;
+            right: 24px;
+        }
+        .home-link:hover { 
+            transform: scale(1.1) rotate(5deg); 
+            color: #c7d2fe;
+        }
+        .home-link svg { 
+            width: 32px; 
+            height: 32px; 
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Header Halaman -->
+    <header class="bg-indigo-600 shadow-lg relative">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <h1 class="text-3xl font-bold text-white tracking-tight">Materi Pelajaran 2025</h1>
+        </div>
+        <a href="./" class="home-link" title="Kembali ke Menu Utama">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" /></svg>
+        </a>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- Filter dan Tombol Aksi dalam Card -->
+        <div class="mb-8 p-6 bg-white rounded-xl shadow-md transform hover:shadow-xl transition-shadow duration-300">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Filter Fase -->
+                <div class="lg:col-span-1">
+                    <label for="fase-filter" class="block mb-2 text-sm font-medium text-slate-600">Filter Fase</label>
+                    <select id="fase-filter" class="w-full p-3 border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <!-- Opsi Fase akan dimuat oleh JavaScript -->
+                    </select>
+                </div>
+                <!-- Filter Pelajaran -->
+                <div class="lg:col-span-1">
+                    <label for="pelajaran-filter" class="block mb-2 text-sm font-medium text-slate-600">Filter Pelajaran</label>
+                    <select id="pelajaran-filter" class="w-full p-3 border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <!-- Opsi Pelajaran akan dimuat oleh JavaScript -->
+                    </select>
+                </div>
+                <!-- Tombol Aksi -->
+                <div class="lg:col-span-2 flex items-end space-x-4">
+                    <button id="download-pdf" class="action-button w-full flex items-center justify-center p-3 bg-rose-500 text-white rounded-lg shadow-md hover:bg-rose-600 font-semibold">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <button id="contact-wa" class="action-button w-full flex items-center justify-center p-3 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 font-semibold">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.269.654 4.288 1.902 6.043l-1.465 5.368 5.534-1.457z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kontainer untuk tabel agar responsif -->
+        <div class="overflow-x-auto bg-white rounded-xl shadow-md">
+            <table class="min-w-full">
+                <thead class="bg-slate-200">
+                    <!-- Header Tabel -->
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Fase</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Kelas</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Pelajaran</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Unit</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Sub Unit</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Tujuan Pembelajaran</th>
+                    </tr>
+                </thead>
+                <!-- Badan tabel akan diisi oleh JavaScript -->
+                <tbody id="curriculum-body" class="divide-y divide-slate-200">
+                    <!-- Data akan dimuat di sini -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        // --- PUSAT DATA KURIKULUM ---
+        const curriculumData = [
+            // Fase A
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Cacah hingga 20', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Cacah hingga 100', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Penjumlahan dan Pengurangan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Pecahan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Aljabar', subUnit: 'Simbol dalam Matematika', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Aljabar', subUnit: 'Pengenalan Pola', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Pengukuran', subUnit: 'Pengukuran Panjang', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Pengukuran', subUnit: 'Pengukuran Waktu', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Pengukuran', subUnit: 'Pengukuran Berat', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Geometri', subUnit: 'Bangun Datar', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Geometri', subUnit: 'Bangun Ruang', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Geometri', subUnit: 'Orientasi dan Posisi', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Dasar Pengolahan Data', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Penyajian Data dalam Bentuk Turus', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Penyajian Data dalam Bentuk Piktogram', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Pengenalan Huruf dan Kata', subUnit: 'Pengenalan Huruf Abjad', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Pengenalan Huruf dan Kata', subUnit: 'Huruf Kapital dan Huruf Kecil', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Pengenalan Huruf dan Kata', subUnit: 'Pengenalan Suku Kata', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Pengenalan Huruf dan Kata', subUnit: 'Kata Benda', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Pengenalan Huruf dan Kata', subUnit: 'Kata Sifat', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Pengenalan Huruf dan Kata', subUnit: 'Kata Kerja', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Pengenalan Huruf dan Kata', subUnit: 'Kata Sambung', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Pengenalan Huruf dan Kata', subUnit: 'Kata Keterangan Tempat', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Pengenalan Huruf dan Kata', subUnit: 'Lawan Kata (Antonim)', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Pengenalan Huruf dan Kata', subUnit: 'Kata Ulang', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Tunggal', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Tanya', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Perintah', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Imbauan dan Ajakan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Larangan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Tanda Baca', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Aktif dan Pasif', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Argumentasi Sederhana', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Ide Pokok Bacaan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Aktivitas Membaca Nyaring', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Aktivitas Mendengarkan dan Menanggapi Dongeng', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Aktivitas Membaca Gambar dan Teks Sederhana', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Analisis Informasi pada Berbagai Media', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Pengelompokkan Informasi pada Teks/Gambar', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Aktivitas Menceritakan Kembali', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Aktivitas Menyimpulkan Bacaan dan Gambar', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Menulis dan Menggambar', subUnit: 'Penulisan Nama dan Kata Sederhana', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Menulis dan Menggambar', subUnit: 'Menulis atau Menggambar Gagasan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Menulis dan Menggambar', subUnit: 'Menulis atau Menggambar Pengalaman', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Menulis dan Menggambar', subUnit: 'Penulisan Lambang Bilangan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Menulis dan Menggambar', subUnit: 'Penulisan Cerita', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Menulis dan Menggambar', subUnit: 'Penulisan Paragraf', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Berbicara', subUnit: 'Aktivitas Berbicara di Depan Kelas', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Berbicara', subUnit: 'Penyampaian Pendapat dan Gagasan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Berbicara', subUnit: 'Permainan Peran', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Berbicara', subUnit: 'Penjelasan Hubungan Sebab- dan Akibat', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Berbicara', subUnit: 'Aktivitas Menceritakan Pengalaman', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Ekspresi Bahasa', subUnit: 'Pantun', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Ekspresi Bahasa', subUnit: 'Peribahasa', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Bahasa Indonesia', unit: 'Ekspresi Bahasa', subUnit: 'Puisi', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: 'Pancasila', subUnit: 'Garuda Pancasila dan makna setiap sila', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: 'Pancasila', subUnit: 'Penerapan Nilai Pancasila di Lingkungan Keluarga', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: 'Pancasila', subUnit: 'Jejak Perumus Pancasila', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: 'Pancasila', subUnit: 'Pengenalan Makna Bendera dan Lagu Kebangsaan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: 'Undang-Undang Dasar Negara Republik Indonesia Tahun 1945', subUnit: 'Aturan dan Norma dalam Keluarga', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: 'Undang-Undang Dasar Negara Republik Indonesia Tahun 1945', subUnit: 'Manfaat Hidup Tertib dan Taat Aturan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: 'Undang-Undang Dasar Negara Republik Indonesia Tahun 1945', subUnit: 'Hak dan Kewajiban', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: '"Bhinneka Tunggal Ika "', subUnit: 'Pengenalan Identitas Diri', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: '"Bhinneka Tunggal Ika "', subUnit: 'Perbedaan sebagai Identitas Persatuan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: 'NKRI', subUnit: 'Karakteristik Lingkungan Tempat Tinggal dan Sekolah', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: 'NKRI', subUnit: 'Kepedulian dan Tanggung Jawab terhadap Lingkungan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Pancasila', unit: 'NKRI', subUnit: 'Lingkungan Sekitar sebagai Bagian dari NKRI', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Al-Qur’an Hadis', subUnit: 'Belajar Al Quran', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Al-Qur’an Hadis', subUnit: 'Pengenalan Huruf Hijaiah', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Al-Qur’an Hadis', subUnit: 'Hafalan Surah Al-Fatihah', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Al-Qur’an Hadis', subUnit: 'Pengenalan Harakat', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Al-Qur’an Hadis', subUnit: 'Hadis tentang Kebersihan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akidah', subUnit: 'Pengenalan Rukun Iman', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akidah', subUnit: 'Beriman kepada Allah', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akidah', subUnit: 'Pengenalan Asmaul Husna', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akidah', subUnit: 'Beriman kepada Malaikat', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akhlak', subUnit: '"Makna Basmalah dan Hamdalah"', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akhlak', subUnit: 'Perilaku Disipilin', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Pengenalan Rukun Islam', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Pengenalan Kalimat Syahadat', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Kebiasaan Hidup Bersih', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Salat Fardu', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Azan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Ikamah', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Zikir dan Doa Setelah Salat', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Nabi dan Rasul Panutanku', subUnit: 'Kisah Nabi Adam', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Nabi dan Rasul Panutanku', subUnit: 'Kisah Nabi Ibrahim a.s.', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Musik', unit: 'Unsur dalam Musik', subUnit: 'Nada', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Musik', unit: 'Unsur dalam Musik', subUnit: 'Irama', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Musik', unit: 'Instrumen Musik', subUnit: 'Pengembangan Ritme Sederhana', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Musik', unit: 'Instrumen Musik', subUnit: 'Pemahaman Bunyi dalam Musik', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Musik', unit: 'Aktivitas Aktivitas Bermain Musik', subUnit: 'Aktivitas Bernyanyi', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Musik', unit: 'Aktivitas Aktivitas Bermain Musik', subUnit: 'Aktivitas Bermain Alat Musik', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Musik', unit: 'Ragam Alat Musik', subUnit: 'Permainan Ritme Sederhana', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Musik', unit: 'Ragam Alat Musik', subUnit: 'Alat Musik Melodis', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Musik', unit: 'Irama', subUnit: 'Tempo', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Musik', unit: 'Irama', subUnit: 'Pola Irama Lagu Anak', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Musik', unit: 'Penyajian Musik', subUnit: 'Aktivitas Bermusik Kelompok (Ensambel)', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Titik dan Garis', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Bentuk', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Bidang', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Warna', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Tekstur', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Memotong dan Menempel', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Menggambar', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Mewarnai', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Pewarna Kering dan Basah dalam Karya Seni 2D', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 3D', subUnit: 'Bahan Lunak dan Keras dalam Karya Seni 3D', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 3D', subUnit: 'Aktivitas Melipat dan Membentuk', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Rupa', unit: 'Pengetahuan Seni Rupa', subUnit: 'Jenis Karya Seni Rupa', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Pengenalan Gerak dan Rangsangan', subUnit: 'Gerak Bebas Menanggapi Rangsangan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Pengenalan Gerak dan Rangsangan', subUnit: 'Gerak dari Alam dan Lingkungan', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Pengenalan Gerak dan Rangsangan', subUnit: 'Gerak Mengikuti Bunyi dan Musik', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Pengenalan Gerak dan Rangsangan', subUnit: 'Gerak Berdasarkan Cerita dan Imajinasi', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Pengenalan Gerak dan Rangsangan', subUnit: 'Gerak Sehari-hari dan Tari', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Unsur dalam Tari', subUnit: 'Ruang, Waktu, dan Tenaga dalam Tari', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Penyusunan dan Penciptaan Gerak', subUnit: 'Eksplorasi Gerak', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Penyusunan dan Penciptaan Gerak', subUnit: 'Pembuatan Gerak dari Ide dan Cerita', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Ekspresi, Penampilan, dan Refleksi', subUnit: 'Tarian Kelompok', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Ekspresi, Penampilan, dan Refleksi', subUnit: 'Etika Penampil dan Penonton', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Ekspresi, Penampilan, dan Refleksi', subUnit: 'Ekspresi dan Emosi dalam Tari', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Seni Tari', unit: 'Ekspresi, Penampilan, dan Refleksi', subUnit: 'Refleksi Pengalaman Menari', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Terampil Bergerak', subUnit: 'Gerak Fundamental', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Terampil Bergerak', subUnit: 'Gerak Lokomotor dan Nonlokomotor', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Terampil Bergerak', subUnit: 'Gerak Manipulatif', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Keterampilan Personal, Sosial dan Emosional', subUnit: 'Strategi Kolaborasi', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Gaya Hidup Sehat dan Aktif', subUnit: 'Pola Makan Sehat dan Aktivitas Jasmani', tujuanPembelajaran: [] },
+            { fase: 'A', kelas: 'Kelas 1, Kelas 2', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Kesehatan dan Keselamatan', subUnit: 'Keselamatan dalam Berolahraga', tujuanPembelajaran: [] },
+
+            // Fase B
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Cacah Hingga 1.000', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Operasi Hitung Bilangan Cacah hingga 1.000', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Cacah Hingga 10.000', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Operasi Hitung Bilangan Cacah Hingga 10.000', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Kelipatan dan Faktor', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Pecahan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Desimal', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Aljabar', subUnit: 'Pola Gambar dan Objek', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Aljabar', subUnit: 'Pola Bilangan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Aljabar', subUnit: 'Operasi Aritmatika: Penjumlahan dan Pengurangan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Pengukuran', subUnit: 'Pengukuran Panjang', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Pengukuran', subUnit: 'Pengukuran Berat', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Pengukuran', subUnit: 'Pengukuran Luas', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Pengukuran', subUnit: 'Pengukuran Volume', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Geometri', subUnit: 'Ciri-Ciri Bangun Datar', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Geometri', subUnit: 'Komposisi dan Dekomposisi Bangun Datar', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Pengurutan dan Pembandingan Data', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Penyajian Data dalam Bentuk Tabel', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Penyajian Data dalam Bentuk Diagram Gambar', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Penyajian Data dalam Bentuk Piktogram', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Penyajian Data dalam Bentuk Diagram Batang', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Vocabulary and Grammar', subUnit: 'Counting with Numbers', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Vocabulary and Grammar', subUnit: 'Using Prepositions of Place', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Vocabulary and Grammar', subUnit: 'Using "Can" for Abilities', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Vocabulary and Grammar', subUnit: 'Using Adverbs of Frequency', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Vocabulary and Grammar', subUnit: 'Using "Like" and "Likes" for Preferences', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Listening', subUnit: 'Daily Activities', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Listening', subUnit: 'Time and Schedules', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Listening', subUnit: 'Directions and Locations', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Reading', subUnit: 'Reading Simple Texts', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Reading', subUnit: 'Reading Descriptive Texts', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Writing', subUnit: 'Writing about Time and Daily Activities', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Writing', subUnit: 'Writing about Rooms and Objects', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Speaking', subUnit: 'Talking about Time and Daily Activities', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Speaking', subUnit: 'Talking About Objects', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Inggris', unit: 'Speaking', subUnit: 'Talking About Public Places and Transportation', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tata Bahasa dan Struktur Kalimat', subUnit: 'Kalimat dengan Urutan SPOK', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tata Bahasa dan Struktur Kalimat', subUnit: 'Kalimat Transitif dan Intransitif', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tata Bahasa dan Struktur Kalimat', subUnit: 'Kalimat Aktif dan Pasif', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tata Bahasa dan Struktur Kalimat', subUnit: 'Kalimat Efektif', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tata Bahasa dan Struktur Kalimat', subUnit: 'Kalimat Langsung dan Tidak Langsung', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tata Bahasa dan Struktur Kalimat', subUnit: 'Kalimat Anjuran (Persuasif) dan Larangan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tata Bahasa dan Struktur Kalimat', subUnit: 'Kalimat Majemuk Setara', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Unsur Kalimat', subUnit: 'Keterangan Waktu', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Unsur Kalimat', subUnit: 'Kata Depan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Unsur Kalimat', subUnit: 'Kata Tanya', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Unsur Kalimat', subUnit: 'Kata Hubung (Konjungsi)', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tanda Baca dan Ejaan', subUnit: 'Titik dan Koma', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tanda Baca dan Ejaan', subUnit: 'Tanda Tanya dan Tanda Seru', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tanda Baca dan Ejaan', subUnit: 'Tanda Kutip', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tanda Baca dan Ejaan', subUnit: 'Penulisan Nilai Uang', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Tanda Baca dan Ejaan', subUnit: 'Penggunaan Huruf Kapital', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Morfologi dan Pembentukan Kata', subUnit: 'Kata dengan Tiga Suku Kata atau Lebih', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Morfologi dan Pembentukan Kata', subUnit: 'Awalan dan Imbuhan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Morfologi dan Pembentukan Kata', subUnit: 'Homonim', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Gaya Bahasa dan Ekspresi', subUnit: 'Majas', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Gaya Bahasa dan Ekspresi', subUnit: 'Puisi dan Rima', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Paragraf dan Teks', subUnit: 'Teks dan Paragraf Deskripsi', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Paragraf dan Teks', subUnit: 'Paragraf Deduktif, Induktif, dan Campuran', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Paragraf dan Teks', subUnit: 'Ide Pokok dan Ide Pendukung', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Paragraf dan Teks', subUnit: 'Teks Argumentasi', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Paragraf dan Teks', subUnit: 'Teks Prosedur', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Paragraf dan Teks', subUnit: 'Teks Eksposisi', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Paragraf dan Teks', subUnit: 'Penulisan Cerita dan Narasi', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Informasi pada Teks, Gambar, dan Teks Aural', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Pengelompokan Informasi pada Teks dan Gambar', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Aktivitas Menceritakan Kembali', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Aktivitas Menyimpulkan Bacaan dan Gambar', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Membaca, Memirsa, dan Menyimak', subUnit: 'Dongeng dan Cerita', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Keterampilan Berbahasa dan Penyajian Informasi', subUnit: 'Penggunaan Kamus', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Keterampilan Berbahasa dan Penyajian Informasi', subUnit: 'Penulisan Tegak Bersambung', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Keterampilan Berbahasa dan Penyajian Informasi', subUnit: 'Penulisan dengan Struktur Tengah-Awal-Akhir', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Keterampilan Berbahasa dan Penyajian Informasi', subUnit: 'Surat', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Keterampilan Berbahasa dan Penyajian Informasi', subUnit: 'Poster', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Keterampilan Berbahasa dan Penyajian Informasi', subUnit: 'Wawancara', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Bahasa Indonesia', unit: 'Keterampilan Berbahasa dan Penyajian Informasi', subUnit: 'Penyampaikan Pendapat dan Menanggapi Teks/Gambar', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Pancaindra dan Siklus Makhluk Hidup', subUnit: 'Bentuk dan Fungsi Pancaindra', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Pancaindra dan Siklus Makhluk Hidup', subUnit: 'Siklus Hidup Manusia', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Pancaindra dan Siklus Makhluk Hidup', subUnit: 'Siklus Hidup Tumbuhan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Pancaindra dan Siklus Makhluk Hidup', subUnit: 'Siklus Hidup Hewan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Pancaindra dan Siklus Makhluk Hidup', subUnit: 'Pelestarian Makhluk Hidup', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Energi dan Perubahan Wujud Zat', subUnit: 'Sumber dan Bentuk Energi', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Energi dan Perubahan Wujud Zat', subUnit: 'Perubahan Bentuk Energi', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Energi dan Perubahan Wujud Zat', subUnit: 'Energi Listrik', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Energi dan Perubahan Wujud Zat', subUnit: 'Fotosintesis', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Energi dan Perubahan Wujud Zat', subUnit: 'Sifat dan Wujud Zat', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Energi dan Perubahan Wujud Zat', subUnit: 'Perubahan Wujud Zat', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Gaya dan Gerak', subUnit: 'Jenis Gaya', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Gaya dan Gerak', subUnit: 'Pengaruh Gaya terhadap Gerak dan Bentuk Benda', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Gaya dan Gerak', subUnit: 'Gaya Magnet', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Gaya dan Gerak', subUnit: 'Gaya Gesek', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Gaya dan Gerak', subUnit: 'Gaya Pegas', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Masyarakat, Budaya, dan Kearifan Lokal Indonesia', subUnit: 'Tanggung Jawab dan Peran Sosial', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Masyarakat, Budaya, dan Kearifan Lokal Indonesia', subUnit: 'Interaksi Sosial', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Masyarakat, Budaya, dan Kearifan Lokal Indonesia', subUnit: 'Keragaman dan Pelestarian Budaya Indonesia', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Masyarakat, Budaya, dan Kearifan Lokal Indonesia', subUnit: 'Keragaman dan Pelestarian Kearifan Lokal Indonesia', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Masyarakat, Budaya, dan Kearifan Lokal Indonesia', subUnit: 'Sejarah Keluarga dan Lingkungan Tempat Tinggal', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Uang', subUnit: 'Kebutuhan dan Keinginan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Uang', subUnit: 'Nilai Mata Uang', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Cuaca, Musim, dan Perubahan Iklim', subUnit: 'Cuaca', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Cuaca, Musim, dan Perubahan Iklim', subUnit: 'Musim dan Iklim', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Cuaca, Musim, dan Perubahan Iklim', subUnit: 'Perubahan Iklim dan Pencegahannya', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Geografi dan Bentang Alam', subUnit: 'Denah', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Geografi dan Bentang Alam', subUnit: 'Leta Kota/Kabupaten', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Geografi dan Bentang Alam', subUnit: 'Letak Provinsi', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Geografi dan Bentang Alam', subUnit: 'Peta Konvensional dan Peta Digital', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Geografi dan Bentang Alam', subUnit: 'Ragam Bentang Alam', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Geografi dan Bentang Alam', subUnit: 'Korelasi Bentang Alam dan Profesi Masyarakat', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Geografi dan Bentang Alam', subUnit: 'Sumber Daya Alam dan Keanekaragaman Hayati', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Geografi dan Bentang Alam', subUnit: 'Pelestarian Sumber Daya Alam', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Pancasila', unit: 'Pancasila', subUnit: 'Makna Pancasila dalam Kehidupan Sehari-Hari', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Pancasila', unit: 'Pancasila', subUnit: 'Perumus Pancasila sebagai Teladan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Pancasila', unit: 'Pancasila', subUnit: 'Makna Pancasila dalam Keluarga dan Sekolah', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Pancasila', unit: 'Undang-Undang Dasar Negara Republik Indonesia Tahun 1945', subUnit: 'Hak dan Kewajiban', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Pancasila', unit: 'Undang-Undang Dasar Negara Republik Indonesia Tahun 1945', subUnit: 'Ragam Peraturan di Sekolah dan Rumah', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Pancasila', unit: '"Bhinneka Tunggal Ika "', subUnit: 'Bangga terhadap Bahasa dan Budaya Indonesia', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Pancasila', unit: '"Bhinneka Tunggal Ika "', subUnit: 'Keberagaman di Sekitar Kita', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Pancasila', unit: 'NKRI', subUnit: 'Identitas', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Pancasila', unit: 'NKRI', subUnit: 'Lingkungan Tempat Tinggal', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Pancasila', unit: 'NKRI', subUnit: 'Perangkat Desa dan Kelurahan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Al-Qur’an Hadis', subUnit: '"Kisah Penciptaan Manusia dalan Surah Al Hujurat"', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Al-Qur’an Hadis', subUnit: 'Hadis Tentang Kewajiban Salat', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Al-Qur’an Hadis', subUnit: 'Silaturahmi dalam Q.S. At-Tīn dan Hadis', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akidah', subUnit: 'Sifat-Sifat Allah', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akidah', subUnit: 'Asmaul Husna Allah Maha Pemberi dan Maha Besar', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akidah', subUnit: '" Iman kepada Kitab-Kitab Allah Swt."', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akidah', subUnit: '" Iman Kepada Rasul-Rasul Allah Swt."', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akhlak', subUnit: 'Pengenalan Kalimah Ṭayyibah', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akhlak', subUnit: 'Berbakti kepada Orang Tua', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akhlak', subUnit: 'Berbakti kepada Guru', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Pengenalan Puasa', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Pengenalan Salat Jumat, Duha, dan Tahajud', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Pengenalan Usia Balig', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Kewajiban Anak setelah Usia Balig', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Aku Suka Belajar Sejarah Islam', subUnit: 'Kisah Hijrah Nabi Muhammad saw.', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Aku Suka Belajar Sejarah Islam', subUnit: 'Nabi Muhammad saw. Rasulku', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Musik', unit: 'Unsur dalam Musik', subUnit: 'Bunyi dan Birama', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Musik', unit: 'Unsur dalam Musik', subUnit: 'Nada, Irama, Tempo dan Melodi', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Musik', unit: 'Instrumen Musik', subUnit: 'Instrumen Musik Tradisional', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Musik', unit: 'Instrumen Musik', subUnit: 'Instrumen Musik Kontemporer', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Musik', unit: 'Aktivitas Bermain Musik', subUnit: 'Pengenalan Ragam Alat dan Bunyi Musik', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Musik', unit: 'Aktivitas Bermain Musik', subUnit: 'Teknik Permainan dan Perawatan Alat Musik', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Musik', unit: 'Penyajian Musik', subUnit: 'Musik Kreasi', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Musik', unit: 'Penyajian Musik', subUnit: 'Praktik Bermain Musik', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Titik dan Garis', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Bentuk', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Ruang', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Warna', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Tekstur', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Fokus', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Kesatuan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Kontras', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Pola dan Ritme', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Proporsi', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Keseimbangan dalam Desain', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Memotong dan Menempel', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Menggambar', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Mewarnai', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Melukis', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Cetak', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 3D', subUnit: 'Bahan Lunak dan Keras dalam Karya Seni 3D', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 3D', subUnit: 'Teknik Melipat dan Membentuk', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 3D', subUnit: 'Pewarna', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Pengetahuan Seni Rupa', subUnit: 'Interpretasi dan Merespons Karya Seni Rupa', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Pengetahuan Seni Rupa', subUnit: 'Seni dan Budaya', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Rupa', unit: 'Pengetahuan Seni Rupa', subUnit: 'Jenis Karya Seni Rupa', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Gerak dan Ekspresi dari Aktivitas Sehari-hari', subUnit: 'Gerak Ekspresi Sehari-hari', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Gerak dan Ekspresi dari Aktivitas Sehari-hari', subUnit: 'Ekspresi Wajah dan Tubuh', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Gerak dan Ekspresi dari Aktivitas Sehari-hari', subUnit: 'Properti Pendukung Ekspresi Gerak', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Gerak dan Ekspresi dari Aktivitas Sehari-hari', subUnit: 'Aktivitas Menari Ekspresif', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Tari dari Permainan Tradisional', subUnit: 'Ciri Khas Gerak Permainan Tradisional', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Tari dari Permainan Tradisional', subUnit: 'Gerak Level dan Arah Hadap dalam Tari', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Tari dari Permainan Tradisional', subUnit: 'Properti Tari Tradisional', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Apresiasi Penyajian Tari', subUnit: 'Keunikan Penyajian Tari', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Apresiasi Penyajian Tari', subUnit: 'Tarian dan Keberagaman Budaya', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Penyusunan dan Penciptaan Gerak', subUnit: 'Unsur Utama Tari', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Penyusunan dan Penciptaan Gerak', subUnit: 'Latar Penyajian Tari', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Penyusunan dan Penciptaan Gerak', subUnit: 'Eksplorasi Gerak', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Penyusunan dan Penciptaan Gerak', subUnit: 'Praktik Merangkai Gerak', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Tari Kelompok', subUnit: 'Gerak dalam Kelompok', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Seni Tari', unit: 'Tari Kelompok', subUnit: 'Kerja Sama dalam Tari Kelompok', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Terampil Bergerak', subUnit: 'Gerak Fundamental', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Terampil Bergerak', subUnit: 'Gerak Lokomotor dan Nonlokomotor', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Terampil Bergerak', subUnit: 'Gerak Manipulatif', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Keterampilan Personal, Sosial dan Emosional', subUnit: 'Peraturan dan Konsep Sportivitas (Fair Play)', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Keterampilan Personal, Sosial dan Emosional', subUnit: 'Strategi Kolaborasi', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Gaya Hidup Sehat dan Aktif', subUnit: 'Pola Makan Sehat, Aktivitas Jasmani dan Risiko Kesehatan', tujuanPembelajaran: [] },
+            { fase: 'B', kelas: 'Kelas 3, Kelas 4', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Kesehatan dan Keselamatan', subUnit: 'Keselamatan dan Pencegahan Cedera dalam Olahraga', tujuanPembelajaran: [] },
+
+            // Fase C
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Cacah Hingga 100.000', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Operasi Hitung Bilangan Cacah Hingga 100.000', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Cacah Hingga 1.000.000', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Prima, KPK, dan FPB', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Pecahan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Bilangan', subUnit: 'Bilangan Desimal', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Aljabar', subUnit: 'Rasio dan Proporsi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Aljabar', subUnit: 'Pola Bilangan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Aljabar', subUnit: 'Operasi Aritmatika: Penjumlahan dan Pengurangan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Aljabar', subUnit: 'Operasi Aritmatika: Perkalian dan Pembagian', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Pengukuran', subUnit: 'Keliling Bangun Datar', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Pengukuran', subUnit: 'Luas Area Bangun Datar', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Pengukuran', subUnit: 'Sudut', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Pengukuran', subUnit: 'Waktu', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Geometri', subUnit: 'Bangun Datar', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Geometri', subUnit: 'Bangun Ruang: Kubus dan Balok', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Pengurutan dan Pembandingan Data', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Penyajian Data dalam Bentuk Piktogram', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Penyajian Data dalam Bentuk Gambar', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Penyajian Data dalam Bentuk Diagram Batang', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Penyajian Data dalam Bentuk Tabel', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Matematika', unit: 'Analisis Data dan Peluang', subUnit: 'Peluang', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Vocabulary and Grammar', subUnit: 'Food, Drinks, Price, and Shopping', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Vocabulary and Grammar', subUnit: 'Describing Quantity', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Vocabulary and Grammar', subUnit: 'Date and Months', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Vocabulary and Grammar', subUnit: 'Adjectives to Describe Things', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Vocabulary and Grammar', subUnit: 'Comparative and Superlative Adjectives', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Listening', subUnit: 'Conversation about Family and School', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Listening', subUnit: 'Conversation about Food, Drinks, and Health', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Listening', subUnit: 'Listening to Stories', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Reading', subUnit: 'Reading Descriptive Texts', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Reading', subUnit: 'Reading Informational Texts', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Reading', subUnit: 'Reading Stories', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Writing', subUnit: 'Writing Simple Sentences', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Writing', subUnit: 'Writing Short Descriptive Texts', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Writing', subUnit: 'Making Posters', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Speaking', subUnit: 'Introducing Myself and Others', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Speaking', subUnit: 'Asking and Giving Information', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Inggris', unit: 'Speaking', subUnit: 'Asking for Permission', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Ejaan dan Bentuk Kata', subUnit: 'Awalan, Akhiran, dan Imbuhan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Ejaan dan Bentuk Kata', subUnit: 'Penggunaan Huruf Kapital', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Ejaan dan Bentuk Kata', subUnit: 'Sinonim dan Antonim', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Ejaan dan Bentuk Kata', subUnit: 'Kata Hubung', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Ejaan dan Bentuk Kata', subUnit: 'Kata Sifat', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Ejaan dan Bentuk Kata', subUnit: 'Kata Tanya', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Ejaan dan Bentuk Kata', subUnit: 'Singkatan dan Akronim', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Ejaan dan Bentuk Kata', subUnit: 'Penulisan Angka dan Bilangan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Perintah', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Majemuk Bertingkat', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Majemuk Setara', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Langsung dan Tidak Langsung', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Kalimat', subUnit: 'Kalimat Saran dan Tanggapan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Ekspresi Bahasa', subUnit: 'Majas', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Ekspresi Bahasa', subUnit: 'Ungkapan (Idiom)', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Ekspresi Bahasa', subUnit: 'Peribahasa', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teknik Membaca dan Menulis', subUnit: 'Teknik Membaca Cepat (Skimming dan Scanning)', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teknik Membaca dan Menulis', subUnit: 'Perbedaan Opini dan Fakta', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teknik Membaca dan Menulis', subUnit: 'Penulisan Surat dan Surat Elektronik (Surel)', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teknik Membaca dan Menulis', subUnit: 'Penulisan Teks Eksplanasi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teknik Membaca dan Menulis', subUnit: 'Penulisan Teks Eksposisi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teknik Membaca dan Menulis', subUnit: 'Penulisan Teks Deskripsi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teknik Membaca dan Menulis', subUnit: 'Penulisan Laporan Hasil Pengamatan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teknik Membaca dan Menulis', subUnit: 'Penulisan Pengumuman', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teknik Membaca dan Menulis', subUnit: 'Penulisan Ringkasan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Fungsional', subUnit: 'Grafik dan Infografik', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Fungsional', subUnit: 'Poster', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Fungsional', subUnit: 'Iklan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Fungsional', subUnit: 'Penulisan Teks Prosedur', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Fungsional', subUnit: 'Formulir', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Fungsional', subUnit: 'Kuitansi dan Anggaran', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Kreatif', subUnit: 'Peta Pikiran', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Kreatif', subUnit: 'Kutipan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Kreatif', subUnit: 'Fiksi Ilmiah', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Kreatif', subUnit: 'Puisi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Kreatif', subUnit: 'Pantun', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Teks Kreatif', subUnit: 'Dongeng dan Cerita', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Praktik Komunikasi dan Keterampilan Ilmiah', subUnit: 'Wawancara', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Praktik Komunikasi dan Keterampilan Ilmiah', subUnit: 'Pidato', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Praktik Komunikasi dan Keterampilan Ilmiah', subUnit: 'Drama', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Praktik Komunikasi dan Keterampilan Ilmiah', subUnit: 'Resensi Buku', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Praktik Komunikasi dan Keterampilan Ilmiah', subUnit: 'Presentasi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Praktik Komunikasi dan Keterampilan Ilmiah', subUnit: 'Penyusunan Esai Argumentatif', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Praktik Komunikasi dan Keterampilan Ilmiah', subUnit: 'Teknik Menyunting Tulisan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Bahasa Indonesia', unit: 'Praktik Komunikasi dan Keterampilan Ilmiah', subUnit: 'Pembuatan Daftar Pustaka', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Sistem Organ Tubuh dan Kesehatan', subUnit: 'Sistem Pencernaan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Sistem Organ Tubuh dan Kesehatan', subUnit: 'Sistem Pernapasan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Sistem Organ Tubuh dan Kesehatan', subUnit: 'Kesehatan Organ Reproduksi dan Pubertas', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Sistem Organ Tubuh dan Kesehatan', subUnit: 'Sistem Peredaran Darah', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Sistem Organ Tubuh dan Kesehatan', subUnit: 'Sistem Gerak', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Air, Ekosistem, dan Lingkungan', subUnit: 'Mengenal Ekosistem dan Ragamnya', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Air, Ekosistem, dan Lingkungan', subUnit: 'Komponen Biotik dan Abiotik', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Air, Ekosistem, dan Lingkungan', subUnit: 'Rantai Makanan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Air, Ekosistem, dan Lingkungan', subUnit: 'Keseimbangan Ekosistem', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Air, Ekosistem, dan Lingkungan', subUnit: 'Siklus Air dan Upaya Menjaga Ketersediaan Air', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Energi', subUnit: 'Cahaya', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Energi', subUnit: 'Bunyi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Energi', subUnit: 'Energi Fosil', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Energi', subUnit: 'Energi Alternatif', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Energi', subUnit: 'Penghematan Energi dan Perubahan Iklim', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Antariksa', subUnit: 'Rotasi dan Revolusi Bumi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Antariksa', subUnit: 'Planet dan Tata Surya', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Geografi Indonesia', subUnit: 'Letak dan Kondisi Geografis Indonesia', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Geografi Indonesia', subUnit: 'Pengaruh Letak Geografis Indonesia pada Masyarakat', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Sejarah dan Pahlawan', subUnit: 'Pahlawan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Sejarah dan Pahlawan', subUnit: 'Sejarah Daerah dan Peninggalannya', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Budaya dan Kearifan Lokal', subUnit: 'Keragaman Budaya Nasional', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Budaya dan Kearifan Lokal', subUnit: 'Tradisi dan Kearifan Lokal di Indonesia', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Kegiatan Ekonomi', subUnit: 'Produksi, Konsumsi, dan Distribusi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', unit: 'Kegiatan Ekonomi', subUnit: 'Ekonomi Kreatif', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Pancasila', unit: 'Pancasila', subUnit: 'Pancasila sebagai Dasar Negara', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Pancasila', unit: 'Pancasila', subUnit: 'Sejarah Pancasila', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Pancasila', unit: 'Pancasila', subUnit: 'Tokoh Perumus Pancasila', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Pancasila', unit: 'Undang-Undang Dasar Negara Republik Indonesia Tahun 1945', subUnit: 'Norma, Hak, dan Kewajiban', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Pancasila', unit: 'Undang-Undang Dasar Negara Republik Indonesia Tahun 1945', subUnit: 'Musyawarah dan Pengambilan Keputusan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Pancasila', unit: '"Bhinneka Tunggal Ika "', subUnit: 'Bahasa sebagai Perekat Bangsa', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Pancasila', unit: '"Bhinneka Tunggal Ika "', subUnit: 'Keragaman Budaya Daerah', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Pancasila', unit: 'NKRI', subUnit: 'Kota/Kabupaten dan Provinsi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Pancasila', unit: 'NKRI', subUnit: 'Gotong Royong', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Al-Qur’an Hadis', subUnit: 'Pemahaman dan Makna Surah Aḍ-Ḍuḥā', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Al-Qur’an Hadis', subUnit: 'Pemahaman dan Makna Surah Al-A\'lā', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Al-Qur’an Hadis', subUnit: 'Hadis tentang Keragaman', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akidah', subUnit: 'Makna Asmaul Husna', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akidah', subUnit: '"Iman kepada Hari Akhir "', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akidah', subUnit: 'Ketetapan Allah dalam Qada dan Qadr', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akhlak', subUnit: 'Iman dan Tawakal kepada Allah Swt.', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akhlak', subUnit: 'Akhlak dalam Berteman', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akhlak', subUnit: 'Persaudaraan dalam Islam', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akhlak', subUnit: 'Akhlak Berteman dalam Keragaman', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Akhlak', subUnit: 'Peduli Lingkungan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Pengamalan Puasa Sunah', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Akhlak Berbagi dengan Sesama', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Fikih', subUnit: 'Hukum Halal dan Haram', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Sejarah Peradaban Islam', subUnit: 'Kisah Hijrah Nabi Muhammad saw. ke Madinah', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Agama Islam dan Budi Pekerti', unit: 'Sejarah Peradaban Islam', subUnit: 'Kisah Teladan Khilafahurasyidin', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Musik', unit: 'Instrumen Musik', subUnit: 'Nada, Irama, dan Melodi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Musik', unit: 'Instrumen Musik', subUnit: 'Bunyi yang Dihasilkan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Musik', unit: 'Aktivitas Bermain Musik', subUnit: 'Aktivitas Bernyanyi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Musik', unit: 'Aktivitas Bermain Musik', subUnit: 'Aktivitas Bermain Alat Musik', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Musik', unit: 'Ragam Alat Musik', subUnit: 'Permainan Ritme Sederhana', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Musik', unit: 'Ragam Alat Musik', subUnit: 'Alat Musik Melodis', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Musik', unit: 'Irama', subUnit: 'Tempo', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Musik', unit: 'Irama', subUnit: 'Pola Irama Lagu Anak', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Musik', unit: 'Penyajian Musik', subUnit: 'Aktivitas Bermusik Kelompok (Ensambel)', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Musik', unit: 'Penyajian Musik', subUnit: 'Bermain Alat Musik Bersama', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Titik dan Garis', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Bidang', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Ruang', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Warna', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Fokus', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Penekanan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Kontras', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Pola dan Ritme', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Proporsi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Keseimbangan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Memotong dan Menempel', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Menggambar', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Melukis', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Teknik Menganyam 2D', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Pengetahuan Seni Rupa', subUnit: 'Fungsi Karya Seni Seni', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Pengetahuan Seni Rupa', subUnit: 'Interpretasi dan Merespons Karya Seni Rupa', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Pengetahuan Seni Rupa', subUnit: 'Seni dan Budaya', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Unsur Rupa', subUnit: 'Tekstur', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 2D', subUnit: 'Pewarna Kering dan Basah dalam Karya Seni 2D', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 3D', subUnit: 'Bahan Lunak dan Keras dalam Karya Seni 3D', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 3D', subUnit: 'Teknik Menganyam 3D', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 3D', subUnit: 'Teknik Melipat dan Membentuk', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Prinsip Desain', subUnit: 'Kesatuan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 3D', subUnit: 'Teknik Mengikat dan Menyimpul', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Pengetahuan Seni Rupa', subUnit: 'Jenis Karya Seni Rupa', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Rupa', unit: 'Alat, Bahan, dan Teknik Berkarya 3D', subUnit: 'Pewarna', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Tari', unit: 'Tari Tradisi dan Unsur Pendukungnya', subUnit: 'Gerak Tari Tradisi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Tari', unit: 'Tari Tradisi dan Unsur Pendukungnya', subUnit: 'Unsur Pendukung dalam Tari Tradisi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Tari', unit: 'Desain Tari Kelompok', subUnit: 'Ragam Gerak Tari Tradisi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Tari', unit: 'Desain Tari Kelompok', subUnit: 'Gerak Pembuka, Inti, dan Penutup', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Tari', unit: 'Penyusunan dan Penciptaan Gerak Tari', subUnit: 'Kreativitas Gerak Bertema Sosial dan Alam', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Tari', unit: 'Penyusunan dan Penciptaan Gerak Tari', subUnit: 'Unsur Pendukung Karya Tari', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Tari', unit: 'Penyusunan dan Penciptaan Gerak Tari', subUnit: 'Pembuatan Tari dari Tari Tradisi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Tari', unit: 'Penampilan dan Apresiasi Karya Tari', subUnit: 'Penampilan Karya Tari di Pergelaran', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Tari', unit: 'Penampilan dan Apresiasi Karya Tari', subUnit: 'Apresiasi dan Pemaknaan Karya Tari', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Seni Tari', unit: 'Desain Tari Kelompok', subUnit: 'Ragam Desain Tari Kelompok', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Terampil Bergerak', subUnit: 'Gerak Manipulatif', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Terampil Bergerak', subUnit: 'Gerak Spesifik', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Terampil Bergerak', subUnit: 'Konsep Gerak', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Keterampilan Personal, Sosial dan Emosional', subUnit: 'Strategi Kolaborasi', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Keterampilan Personal, Sosial dan Emosional', subUnit: 'Peraturan dan Konsep Sportivitas (Fair Play)', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Gaya Hidup Sehat dan Aktif', subUnit: 'Manfaat Aktivitas Jasmani', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Gaya Hidup Sehat dan Aktif', subUnit: 'Pola Makan Sehat dan Kebugaran Jasmani', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Gaya Hidup Sehat dan Aktif', subUnit: 'Risiko Gaya Hidup Tidak Sehat', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)', unit: 'Kesehatan dan Keselamatan', subUnit: 'Keselamatan dalam Olahraga', tujuanPembelajaran: [] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Berpikir Komputasional', subUnit: '1', tujuanPembelajaran: ['Menerapkan pemecahan masalah dalam kehidupan sehari-hari.'] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'PLBJ', unit: 'Sirih Kuning', subUnit: '', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'PLBJ', unit: 'Gambang Kromong', subUnit: '', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'PLBJ', unit: 'Monas', subUnit: '', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'PLBJ', unit: 'Bir Pletok', subUnit: '', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'PLBJ', unit: 'Permainan Betawi', subUnit: 'Permainan Bentengan', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'PLBJ', unit: 'Permainan Betawi', subUnit: 'Tak Kadal Lobang', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'PLBJ', unit: 'Pencak Silat', subUnit: 'Maen Pukul', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'PLBJ', unit: 'Transportasi', subUnit: '', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'PLBJ', unit: 'Fasilitas Umum', subUnit: 'Tugu di Jakarta', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'PLBJ', unit: 'Fasilitas Umum', subUnit: 'Halte', tujuanPembelajaran: [] },
+            { fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'PLBJ', unit: 'Fasilitas Umum', subUnit: 'Tempat Rekreasi', tujuanPembelajaran: [] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Berpikir Komputasional', subUnit: '1', tujuanPembelajaran: ['Memahami konsep berpikir Komputasional.'] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Berpikir Komputasional', subUnit: '1', tujuanPembelajaran: ['Menuliskan urutan Instruksi Secara Logis.'] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Literasi Digital', subUnit: '1', tujuanPembelajaran: ['Memahami Konsep Dasar Teknologi Digital.'] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Literasi Digital', subUnit: '1', tujuanPembelajaran: ['Memahami Perangkat Keras dan Perangkat Lunak Komputer.'] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Literasi dan Etika Kecerdasan Artifisial', subUnit: '1', tujuanPembelajaran: ['Memahami Konsep Dasar Kecerdasan Artifisial.'] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Literasi dan Etika Kecerdasan Artifisial', subUnit: '1', tujuanPembelajaran: ['Memahami Perbedaan Komputer dan Manusia dalam Penginderaan.'] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Literasi dan Etika Kecerdasan Artifisial', subUnit: '1', tujuanPembelajaran: ['Memahami Mesin Cerdas vs Mesin Non Cerdas.'] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Pemanfaatan dan Pengembangan Kecerdasan Artifisial', subUnit: '1', tujuanPembelajaran: ['Memahami Manfaat Kecerdasan Artifisial dalam Kehidupan Sehari-hari.'] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Pemanfaatan dan Pengembangan Kecerdasan Artifisial', subUnit: '1', tujuanPembelajaran: ['Menerapkan Konsep Klasifikasi dalam Kehidupan Sehari-hari.'] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Pemanfaatan dan Pengembangan Kecerdasan Artifisial', subUnit: '1', tujuanPembelajaran: ['Memahami Bagaimana KA Melakukan Klasifikasi.'] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Pemanfaatan dan Pengembangan Kecerdasan Artifisial', subUnit: '1', tujuanPembelajaran: ['Menerapkan Eksperimen Klasifikasi Manual VS Klasifikasi oleh KA.'] },
+			{ fase: 'C', kelas: 'Kelas 5, Kelas 6', pelajaran: 'Koding KA', unit: 'Pemanfaatan dan Pengembangan Kecerdasan Artifisial', subUnit: '1', tujuanPembelajaran: ['Memahami Pengaruh Data Input terhadap Klasifikasi KA.'] }					
+        ];
+
+        // --- SKRIP UNTUK MEMBUAT TABEL, FILTER, DAN AKSI ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableBody = document.getElementById('curriculum-body');
+            const faseFilter = document.getElementById('fase-filter');
+            const pelajaranFilter = document.getElementById('pelajaran-filter');
+            const downloadPdfButton = document.getElementById('download-pdf');
+            const contactWaButton = document.getElementById('contact-wa');
+
+            let currentFilteredData = [...curriculumData];
+
+            // Fungsi untuk membuat baris tabel dari data yang diberikan
+            function renderTable(data) {
+                tableBody.innerHTML = ''; // Kosongkan tabel sebelum mengisi data baru
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-gray-500">Tidak ada data yang cocok dengan filter.</td></tr>`;
+                    return;
+                }
+
+                data.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.style.opacity = '0'; // Set opacity awal untuk animasi
+                    
+                    // Membuat daftar tujuan pembelajaran dalam format list
+                    const tujuanList = item.tujuanPembelajaran.length > 0
+                        ? `<ul class="list-disc list-inside space-y-1">${item.tujuanPembelajaran.map(t => `<li>${t}</li>`).join('')}</ul>`
+                        : '<span class="text-gray-400">-</span>'; // Tampilkan strip jika kosong
+
+                    // Membuat sel untuk setiap properti data
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">${item.fase}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${item.kelas}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 font-semibold">${item.pelajaran}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">${item.unit}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">${item.subUnit || '-'}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">${tujuanList}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            // Fungsi untuk mengisi opsi pada dropdown filter
+            function populateFilters() {
+                const fases = [...new Set(curriculumData.map(item => item.fase))].sort();
+                const pelajarans = [...new Set(curriculumData.map(item => item.pelajaran))].sort();
+
+                faseFilter.innerHTML = '<option value="Semua Fase">Semua Fase</option>';
+                pelajaranFilter.innerHTML = '<option value="Semua Pelajaran">Semua Pelajaran</option>';
+
+                fases.forEach(fase => {
+                    faseFilter.innerHTML += `<option value="${fase}">${fase}</option>`;
+                });
+
+                pelajarans.forEach(pelajaran => {
+                    pelajaranFilter.innerHTML += `<option value="${pelajaran}">${pelajaran}</option>`;
+                });
+            }
+
+            // Fungsi untuk memfilter data berdasarkan pilihan dropdown
+            function applyFilters() {
+                const selectedFase = faseFilter.value;
+                const selectedPelajaran = pelajaranFilter.value;
+
+                currentFilteredData = curriculumData.filter(item => {
+                    const faseMatch = (selectedFase === 'Semua Fase' || item.fase === selectedFase);
+                    const pelajaranMatch = (selectedPelajaran === 'Semua Pelajaran' || item.pelajaran === selectedPelajaran);
+                    return faseMatch && pelajaranMatch;
+                });
+
+                renderTable(currentFilteredData);
+            }
+
+            // Fungsi untuk membuat dan mengunduh PDF
+            function createPdf() {
+                const selectedFase = faseFilter.value;
+                const selectedPelajaran = pelajaranFilter.value;
+                
+                // Membuat header untuk PDF
+                const tableHeader = [
+                    { text: 'Fase', style: 'tableHeader' },
+                    { text: 'Kelas', style: 'tableHeader' },
+                    { text: 'Pelajaran', style: 'tableHeader' },
+                    { text: 'Unit', style: 'tableHeader' },
+                    { text: 'Sub Unit', style: 'tableHeader' },
+                    { text: 'Tujuan Pembelajaran', style: 'tableHeader' }
+                ];
+
+                // Mengubah data yang difilter menjadi format yang bisa dibaca pdfmake
+                const tableBody = currentFilteredData.map(item => {
+                    const tujuanText = item.tujuanPembelajaran.length > 0 
+                        ? item.tujuanPembelajaran.join('\n') 
+                        : '-';
+                    return [
+                        item.fase, 
+                        item.kelas, 
+                        item.pelajaran, 
+                        item.unit, 
+                        item.subUnit || '-', 
+                        tujuanText
+                    ];
+                });
+
+                // Definisi dokumen untuk pdfmake
+                const docDefinition = {
+                    pageOrientation: 'landscape', // Set orientasi menjadi landscape
+                    pageSize: 'A4',
+                    content: [
+                        { text: 'Data Kurikulum Pembelajaran', style: 'header' },
+                        { text: `Filter: ${selectedFase} - ${selectedPelajaran}`, style: 'subheader' },
+                        {
+                            style: 'tableExample',
+                            table: {
+                                headerRows: 1,
+                                // Lebar kolom bisa disesuaikan, '*' akan membagi sisa ruang
+                                widths: ['auto', 'auto', 'auto', '*', '*', '*'], 
+                                body: [
+                                    tableHeader,
+                                    ...tableBody
+                                ]
+                            },
+                            layout: 'lightHorizontalLines' // Gaya tabel
+                        }
+                    ],
+                    styles: {
+                        header: {
+                            fontSize: 18,
+                            bold: true,
+                            margin: [0, 0, 0, 10]
+                        },
+                        subheader: {
+                            fontSize: 14,
+                            bold: false,
+                            margin: [0, 0, 0, 15]
+                        },
+                        tableExample: {
+                            margin: [0, 5, 0, 15]
+                        },
+                        tableHeader: {
+                            bold: true,
+                            fontSize: 10,
+                            color: 'black',
+                            fillColor: '#eeeeee'
+                        }
+                    },
+                    defaultStyle: {
+                        fontSize: 9
+                    }
+                };
+
+                // Membuat dan mengunduh PDF
+                pdfMake.createPdf(docDefinition).download('kurikulum_pembelajaran.pdf');
+            }
+
+            // Event listener untuk tombol download PDF
+            downloadPdfButton.addEventListener('click', createPdf);
+            
+            // Event listener untuk tombol WhatsApp
+            contactWaButton.addEventListener('click', () => {
+                const phoneNumber = '6281310051985';
+                const message = 'Halo, saya ingin bertanya mengenai kurikulum pembelajaran.';
+                const url = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank'); // Membuka di tab baru
+            });
+
+            // Inisialisasi halaman
+            populateFilters();
+            renderTable(curriculumData);
+
+            // Tambahkan event listener untuk setiap kali filter diubah
+            faseFilter.addEventListener('change', applyFilters);
+            pelajaranFilter.addEventListener('change', applyFilters);
+        });
+    </script>
+
+</body>
+</html>
+
+

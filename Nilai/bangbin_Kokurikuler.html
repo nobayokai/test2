@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Nilai Kokurikuler</title>
+    <link rel="icon" type="image/x-icon" href="https://lh3.googleusercontent.com/d/16rll5zsRdwTbR3nF_NmPKwY51tg4tnOn">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+    <style>
+    /* Standarisasi & Reset (Tema dari Input Nilai) */
+    :root {
+        --primary-color: #007aff;
+        --success-color: #28a745;
+        --secondary-color: #586474;
+        --danger-color: #df4759;
+        --warning-color: #ffc107;
+        --bg-color: #eef2f5;
+        --font-color: #3e4a59;
+        --light-shadow: #ffffff;
+        --dark-shadow: #d1d9e6;
+        --border-radius-lg: 15px;
+        --border-radius-md: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--font-color);
+        margin: 0;
+        padding: 20px;
+    }
+    .container { max-width: 95%; margin: auto; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Header */
+    .title-wrapper {
+        display: flex; align-items: center; gap: 20px;
+        padding-bottom: 15px; margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+    .title-wrapper h1 { margin: 0; padding: 0; font-size: 2em; color: var(--primary-color); flex-grow: 1; }
+    .home-link { color: var(--secondary-color); transition: all 0.2s ease; text-decoration: none; }
+    .home-link:hover { transform: scale(1.1); color: var(--primary-color); }
+    .home-link svg { width: 36px; height: 36px; }
+
+    /* Desain Tombol & Input Baru (Neumorphism) */
+    .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        gap: 10px; padding: 10px 20px; font-size: 0.9em; font-weight: 600;
+        font-family: 'Poppins', sans-serif; border-radius: var(--border-radius-md);
+        border: none; cursor: pointer; background: var(--bg-color);
+        color: var(--secondary-color); transition: all 0.2s ease-out;
+        box-shadow: 5px 5px 10px var(--dark-shadow), -5px -5px 10px var(--light-shadow);
+        text-decoration: none;
+    }
+    .btn:hover { color: var(--primary-color); }
+    .btn:active {
+        box-shadow: inset 3px 3px 6px var(--dark-shadow), inset -3px -3px 6px var(--light-shadow);
+        color: var(--primary-color);
+    }
+    .btn.success { color: var(--success-color); }
+    .btn.success:hover, .btn.success:active { color: var(--success-color); }
+    .btn.danger { color: var(--danger-color); }
+    .btn.danger:hover, .btn.danger:active { color: var(--danger-color); }
+    .btn svg {
+        width: 18px; height: 18px; stroke-width: 2.5; transition: all 0.2s ease-out;
+    }
+    .btn:hover svg { stroke: var(--primary-color); }
+    .btn.success:hover svg { stroke: var(--success-color); }
+    .btn.danger:hover svg { stroke: var(--danger-color); }
+    .btn.btn-circle {
+        width: 42px; height: 42px; padding: 0; border-radius: 50%;
+    }
+    .btn.tutorial { color: var(--warning-color); font-size: 20px; }
+    .btn.tutorial:hover { transform: rotate(15deg); }
+    
+    input[type="text"], input[type="number"], select {
+        width: 100%; padding: 10px; border: none; font-size: 1em;
+        border-radius: var(--border-radius-md); box-sizing: border-box;
+        background: var(--bg-color);
+        box-shadow: inset 3px 3px 6px var(--dark-shadow), inset -3px -3px 6px var(--light-shadow);
+        color: var(--font-color); font-family: 'Poppins', sans-serif;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%233e4a59" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 1em;
+        padding-right: 2.5em;
+    }
+    input:focus, select:focus { outline: none; }
+
+    /* Filter & Aksi */
+    .actions-wrapper {
+        display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+
+    /* Tabel */
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: var(--border-radius-lg);
+        box-shadow: 5px 5px 10px var(--dark-shadow), -5px -5px 10px var(--light-shadow);
+        padding: 10px;
+        background: var(--bg-color);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+        border: none;
+        padding: 12px 8px;
+        text-align: center;
+        vertical-align: middle;
+        white-space: normal;
+        word-wrap: break-word;
+        border-bottom: 1px solid #d8dde3;
+    }
+    tr:last-child td { border-bottom: none; }
+    thead th { 
+        background-color: #ebe2d0;
+        color: var(--primary-color);
+        position: sticky; top: 0;
+        font-size: 0.9em;
+        z-index: 2;
+    }
+    td.col-deskripsi { text-align: left; font-size: 0.85em; }
+    .header-controls { display: flex; flex-direction: column; gap: 8px; align-items: center; padding: 5px 0; }
+    .header-controls span { font-weight: 600; font-size: 1.1em; }
+    .header-controls select { font-size: 0.85em; padding: 5px; height: auto; }
+
+    /* Modal */
+    .modal-backdrop {
+        position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.2); display: none; align-items: center;
+        justify-content: center; backdrop-filter: blur(4px);
+    }
+    .modal-content {
+        background: var(--bg-color); border-radius: var(--border-radius-lg);
+        box-shadow: 10px 10px 20px var(--dark-shadow), -10px -10px 20px var(--light-shadow);
+        max-width: 600px; width: 90%; max-height: 85vh;
+        display: flex; flex-direction: column; animation: fadeIn 0.3s ease;
+        border: 1px solid var(--light-shadow); padding: 25px;
+    }
+    .modal-content h3 { padding: 0 0 15px 0; margin: 0; color: var(--primary-color); font-size: 1.5em; }
+    .modal-actions { padding: 15px 0 0; text-align: right; border-top: 1px solid #d8dde3; margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px; }
+
+    #predikatList { display: flex; flex-direction: column; gap: 15px; max-height: 40vh; overflow-y: auto; margin-bottom: 20px; }
+    .predikat-item { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+    .predikat-item input { padding: 12px; font-size: 1em; }
+    </style>
+</head>
+<body>
+    <svg width="0" height="0" style="display:none;" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="icon-save" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></symbol>
+      <symbol id="icon-predikat" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></symbol>
+      <symbol id="icon-download" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></symbol>
+      <symbol id="icon-close" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></symbol>
+      <symbol id="icon-plus" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></symbol>
+      <symbol id="icon-delete" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" /></symbol>
+    </svg>
+
+    <div class="container">
+        <div class="title-wrapper">
+            <a href="./" class="home-link" title="Kembali ke Menu Utama">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" /></svg>
+            </a>
+            <h1 id="judulKoku">Input Nilai Kokurikuler</h1>
+            <div class="actions-wrapper">
+                <button id="simpanKoku" class="btn"><svg><use href="#icon-save"/></svg><span>Simpan</span></button>
+                <button id="downloadPdfButton" class="btn success"><svg><use href="#icon-download"/></svg><span>Download PDF</span></button>
+                <button id="bukaModalPredikat" class="btn"><svg><use href="#icon-predikat"/></svg><span>Predikat</span></button>
+                <button id="tutorialKokuButton" title="Tampilkan Tutorial" class="btn btn-circle tutorial">★</button>
+            </div>
+        </div>
+
+        <p>Pilih predikat untuk setiap dimensi. Deskripsi capaian akan dibuat secara otomatis.</p>
+        
+        <div class="table-wrapper">
+            <table id="tabelKoku">
+                <thead id="tabelKokuHead"></thead>
+                <tbody id="tabelKokuBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="predikatModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content">
+            <h3 id="predikatModalTitle">Sesuaikan Predikat</h3>
+            <div id="predikatList"></div>
+            <button id="tambahPredikat" type="button" class="btn" style="margin-top: 15px; width: 100%; justify-content: center;"><svg><use href="#icon-plus"/></svg><span>Tambah Predikat</span></button>
+            <div class="modal-actions">
+                <button id="simpanPredikat" class="btn success"><svg><use href="#icon-save"/></svg><span>Simpan</span></button>
+                <button id="tutupModalPredikat" class="btn"><svg><use href="#icon-close"/></svg><span>Tutup</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="bangbin_uhuuyy.js"></script>
+    <script>
+
+const _0x1a16ce=_0x4ebd;function _0x4ebd(_0x29fac4,_0x5b0b64){const _0x4a723a=_0x4a72();return _0x4ebd=function(_0x4ebda6,_0x7f2428){_0x4ebda6=_0x4ebda6-0x83;let _0x281e08=_0x4a723a[_0x4ebda6];return _0x281e08;},_0x4ebd(_0x29fac4,_0x5b0b64);}(function(_0x5b5c6a,_0xbaf931){const _0x2cfffd=_0x4ebd,_0x458ec3=_0x5b5c6a();while(!![]){try{const _0x29640c=-parseInt(_0x2cfffd(0xcd))/0x1+-parseInt(_0x2cfffd(0xd6))/0x2*(parseInt(_0x2cfffd(0x93))/0x3)+-parseInt(_0x2cfffd(0xef))/0x4*(parseInt(_0x2cfffd(0x109))/0x5)+-parseInt(_0x2cfffd(0x11c))/0x6+parseInt(_0x2cfffd(0xfc))/0x7+-parseInt(_0x2cfffd(0xf3))/0x8+parseInt(_0x2cfffd(0x84))/0x9;if(_0x29640c===_0xbaf931)break;else _0x458ec3['push'](_0x458ec3['shift']());}catch(_0x55e4d2){_0x458ec3['push'](_0x458ec3['shift']());}}}(_0x4a72,0x52ae8),document[_0x1a16ce(0x8a)](_0x1a16ce(0xe9),()=>{const _0x2f7d3a=_0x1a16ce,_0xef33f1=new URLSearchParams(window['location']['search']),_0x5de181=_0xef33f1[_0x2f7d3a(0x9b)](_0x2f7d3a(0xd0)),_0x3439fc=_0xef33f1[_0x2f7d3a(0x9b)](_0x2f7d3a(0x9f));let _0x50041f=loadData();const _0x190251=document[_0x2f7d3a(0x94)](_0x2f7d3a(0xf0)),_0x1c8b76=document[_0x2f7d3a(0x94)]('tabelKokuHead'),_0x183351=document[_0x2f7d3a(0x94)](_0x2f7d3a(0xb5)),_0x65038a=document['getElementById']('simpanKoku'),_0x16000b=document[_0x2f7d3a(0x94)](_0x2f7d3a(0xa5)),_0x4c5d9b=document['getElementById'](_0x2f7d3a(0xf7));document['title']='Nilai\x20Koku\x20-\x20'+(_0x3439fc||_0x2f7d3a(0xe1)),_0x190251[_0x2f7d3a(0x8c)]=_0x2f7d3a(0xde)+(_0x3439fc||_0x2f7d3a(0x10a));if(!_0x5de181){_0x190251[_0x2f7d3a(0x8c)]=_0x2f7d3a(0xb8);return;}const _0x226aac=_0x50041f[_0x2f7d3a(0x10c)][_0x2f7d3a(0xad)](_0x490595=>_0x490595[_0x2f7d3a(0x9d)]&&_0x490595[_0x2f7d3a(0x9d)][_0x2f7d3a(0xc8)]()!=='')||[],_0x4c1df8=_0x50041f[_0x2f7d3a(0xae)][_0x5de181]||{},_0x3d5279=Object[_0x2f7d3a(0x8b)](_0x4c1df8)[_0x2f7d3a(0xad)](_0x5b1f0d=>_0x4c1df8[_0x5b1f0d]&&_0x4c1df8[_0x5b1f0d]['length']>0x0);if(_0x3d5279[_0x2f7d3a(0xf2)]===0x0){_0x183351[_0x2f7d3a(0xeb)]='<tr><td\x20colspan=\x223\x22>Belum\x20ada\x20dimensi\x20yang\x20dipilih.\x20Silakan\x20atur\x20di\x20halaman\x20\x27Kelola\x20Tujuan\x20Pembelajaran\x27.</td></tr>',_0x65038a[_0x2f7d3a(0x103)][_0x2f7d3a(0x97)]='none',_0x16000b[_0x2f7d3a(0x103)]['display']=_0x2f7d3a(0xb6),_0x4c5d9b['style'][_0x2f7d3a(0x97)]='none';return;}const _0x177ea8=['Sangat\x20Baik',_0x2f7d3a(0xda),_0x2f7d3a(0xaa),'Perlu\x20Peningkatan'],_0x4d9734=()=>_0x50041f[_0x2f7d3a(0xe3)]?.[_0x5de181]||_0x177ea8,_0x32e589=(_0x21f50d,_0x5cc1a8)=>{const _0x226679=_0x2f7d3a,_0x42584b=new URLSearchParams(window[_0x226679(0xc2)][_0x226679(0xb7)])[_0x226679(0x9b)](_0x226679(0x9f)),_0x3b8f3b=_0x34f15c=>{const _0x48809c=_0x226679;if(_0x34f15c['length']===0x0)return'';if(_0x34f15c[_0x48809c(0xf2)]===0x1)return _0x34f15c[0x0];if(_0x34f15c[_0x48809c(0xf2)]===0x2)return _0x34f15c['join'](_0x48809c(0xf9));return _0x34f15c[_0x48809c(0xe8)](0x0,-0x1)[_0x48809c(0x86)](',\x20')+_0x48809c(0x11b)+_0x34f15c[_0x48809c(0xe8)](-0x1);},_0x14b701=document['getElementById'](_0x226679(0xb0)+_0x21f50d),_0x3e159d=document['querySelectorAll']('select[data-siswa-id=\x22'+_0x21f50d+'\x22]'),_0x3e74de=_0x4d9734(),_0x48eebe={};_0x3e159d[_0x226679(0xc4)](_0x296db3=>{const _0xdcfe21=_0x226679,_0x50aeb5=_0x296db3[_0xdcfe21(0x111)];if(_0x50aeb5){const _0x3683a2=_0x296db3[_0xdcfe21(0x114)][_0xdcfe21(0xa1)],_0x456aef=_0x50041f[_0xdcfe21(0xba)][_0x3683a2]?.[_0xdcfe21(0x9d)]||_0x3683a2;if(!_0x48eebe[_0x50aeb5])_0x48eebe[_0x50aeb5]=[];_0x48eebe[_0x50aeb5][_0xdcfe21(0xbf)](_0x456aef);}});const _0x728283=[];_0x3e74de['forEach'](_0x178e0c=>{const _0x4addc1=_0x226679;if(_0x48eebe[_0x178e0c]&&_0x48eebe[_0x178e0c]['length']>0x0){const _0x56709b=_0x3b8f3b(_0x48eebe[_0x178e0c]);_0x728283[_0x4addc1(0xbf)](_0x178e0c+_0x4addc1(0xbd)+_0x56709b);}});let _0x56eddc='';_0x728283[_0x226679(0xf2)]>0x0&&(_0x56eddc=_0x226679(0xca)+_0x5cc1a8+'\x20menunjukkan\x20capaian\x20'+_0x728283[_0x226679(0x86)](',\x20')+_0x226679(0xb1)+_0x42584b+'\x22.'),_0x14b701[_0x226679(0x8c)]=_0x56eddc;},_0x2263c4=()=>{const _0x313df0=_0x2f7d3a,_0x192e72=_0x4d9734();let _0x364563=_0x313df0(0x105);_0x3d5279[_0x313df0(0xc4)](_0xa50597=>{const _0x3174d3=_0x313df0;let _0x46b3ff=_0x3174d3(0xab);_0x192e72[_0x3174d3(0xc4)](_0x1dc41f=>_0x46b3ff+='<option\x20value=\x22'+_0x1dc41f+'\x22>'+_0x1dc41f+_0x3174d3(0xbe)),_0x364563+=_0x3174d3(0xd2)+(_0x50041f['dimensiKokurikuler'][_0xa50597]?.[_0x3174d3(0x9d)]||_0xa50597)+'</span><select\x20class=\x22bulk-update\x22\x20data-dimensi-key=\x22'+_0xa50597+'\x22>'+_0x46b3ff+_0x3174d3(0x11e);}),_0x364563+=_0x313df0(0xa9),_0x1c8b76['innerHTML']=_0x364563,_0x183351[_0x313df0(0xeb)]='',_0x226aac[_0x313df0(0xc4)]((_0x508d42,_0x56cd06)=>{const _0x10eec2=_0x313df0,_0x220888=document[_0x10eec2(0xb9)]('tr');let _0x3b8499=_0x10eec2(0xc7)+(_0x56cd06+0x1)+_0x10eec2(0x10f)+_0x508d42['nama']+_0x10eec2(0xa4);_0x3d5279[_0x10eec2(0xc4)](_0x419244=>{const _0x37f9d9=_0x10eec2,_0x47859b=_0x50041f[_0x37f9d9(0xa3)]?.[_0x508d42['id']]?.[_0x5de181]?.[_0x419244]||'';let _0x21265f=_0x37f9d9(0x117);_0x192e72[_0x37f9d9(0xc4)](_0x49e9ff=>_0x21265f+=_0x37f9d9(0xdf)+_0x49e9ff+'\x22\x20'+(_0x47859b===_0x49e9ff?_0x37f9d9(0xa2):'')+'>'+_0x49e9ff+_0x37f9d9(0xbe)),_0x3b8499+=_0x37f9d9(0x11f)+_0x508d42['id']+_0x37f9d9(0xa0)+_0x419244+'\x22>'+_0x21265f+_0x37f9d9(0xfe);}),_0x3b8499+=_0x10eec2(0xe2)+_0x508d42['id']+_0x10eec2(0x113),_0x220888[_0x10eec2(0xeb)]=_0x3b8499,_0x183351['appendChild'](_0x220888);}),_0x429400(),_0x226aac[_0x313df0(0xc4)](_0x366385=>_0x32e589(_0x366385['id'],_0x366385[_0x313df0(0x9d)]));},_0x429400=()=>{const _0x1f164a=_0x2f7d3a;_0x183351[_0x1f164a(0x115)](_0x1f164a(0xa8))[_0x1f164a(0xc4)](_0xc628ed=>{const _0x140383=_0x1f164a,_0x1efe95=_0xc628ed[_0x140383(0x114)][_0x140383(0x89)],_0x3b4650=_0x226aac['find'](_0x1f4e6d=>_0x1f4e6d['id']===_0x1efe95);_0xc628ed['addEventListener'](_0x140383(0x87),()=>_0x32e589(_0x1efe95,_0x3b4650['nama']));}),_0x1c8b76['querySelectorAll'](_0x1f164a(0xac))[_0x1f164a(0xc4)](_0x4df87e=>{const _0x397f0f=_0x1f164a;_0x4df87e[_0x397f0f(0x8a)]('change',_0x43258c=>{const _0x3523b9=_0x397f0f,_0x33bdc2=_0x43258c['target'][_0x3523b9(0x114)]['dimensiKey'],_0x499eee=_0x43258c[_0x3523b9(0x118)]['value'];if(!_0x499eee)return;_0x183351[_0x3523b9(0x115)](_0x3523b9(0xb4)+_0x33bdc2+'\x22]')[_0x3523b9(0xc4)](_0x158fa7=>{const _0x4d65fa=_0x3523b9;_0x158fa7['value']=_0x499eee;const _0x99f4f2=_0x158fa7[_0x4d65fa(0x114)][_0x4d65fa(0x89)],_0x1a5ae5=_0x226aac[_0x4d65fa(0x9a)](_0xe2fa65=>_0xe2fa65['id']===_0x99f4f2);_0x32e589(_0x99f4f2,_0x1a5ae5[_0x4d65fa(0x9d)]);}),_0x43258c[_0x3523b9(0x118)][_0x3523b9(0x111)]='';});});},_0x51b23d=async()=>{const _0x255f9f=_0x2f7d3a;if(!_0x50041f['nilaiKokurikuler'])_0x50041f[_0x255f9f(0xa3)]={};if(!_0x50041f[_0x255f9f(0x91)])_0x50041f[_0x255f9f(0x91)]={};_0x226aac[_0x255f9f(0xc4)](_0x5e8124=>{const _0x57e9bb=_0x255f9f,_0x3a1f79=_0x5e8124['id'];if(!_0x50041f[_0x57e9bb(0xa3)][_0x3a1f79])_0x50041f[_0x57e9bb(0xa3)][_0x3a1f79]={};if(!_0x50041f[_0x57e9bb(0xa3)][_0x3a1f79][_0x5de181])_0x50041f['nilaiKokurikuler'][_0x3a1f79][_0x5de181]={};document['querySelectorAll'](_0x57e9bb(0xfa)+_0x3a1f79+'\x22]')[_0x57e9bb(0xc4)](_0x3c8035=>{const _0x2aced9=_0x57e9bb,_0x216364=_0x3c8035[_0x2aced9(0x114)]['dimensiKey'];_0x50041f[_0x2aced9(0xa3)][_0x3a1f79][_0x5de181][_0x216364]=_0x3c8035['value']||(delete _0x50041f['nilaiKokurikuler'][_0x3a1f79][_0x5de181][_0x216364],undefined);});const _0xa8ddd7=document['getElementById']('desc-'+_0x3a1f79)[_0x57e9bb(0x8c)];if(!_0x50041f[_0x57e9bb(0x91)][_0x3a1f79])_0x50041f[_0x57e9bb(0x91)][_0x3a1f79]={};_0x50041f[_0x57e9bb(0x91)][_0x3a1f79][_0x5de181]=_0xa8ddd7;}),saveData(_0x50041f),await showModal('Berhasil',_0x255f9f(0x104));},_0x5534ad=()=>{const _0x446d35=_0x2f7d3a,_0x25cfb8=_0xad3f04=>{const _0x145f38=_0x4ebd;if(!_0xad3f04){const _0x3ce011=new Date();return _0x3ce011[_0x145f38(0x8f)](_0x145f38(0xea),{'day':'2-digit','month':_0x145f38(0xf4),'year':_0x145f38(0xe0)});}const _0x58d32d=new Date(_0xad3f04);if(isNaN(_0x58d32d[_0x145f38(0xaf)]()))return _0x145f38(0xd8);return _0x58d32d[_0x145f38(0x8f)](_0x145f38(0xea),{'day':_0x145f38(0x92),'month':'long','year':'numeric'});},_0x47a7c3=_0x50041f[_0x446d35(0x10c)][_0x446d35(0xad)](_0x584611=>_0x584611[_0x446d35(0x9d)]&&_0x584611['nama'][_0x446d35(0xc8)]()!=='')||[],_0x324452=_0x50041f[_0x446d35(0xae)][_0x5de181]||{},_0x168fde=Object[_0x446d35(0x8b)](_0x324452)[_0x446d35(0xad)](_0x2f6b64=>_0x324452[_0x2f6b64]&&_0x324452[_0x2f6b64][_0x446d35(0xf2)]>0x0),_0x573ed5=_0x168fde[_0x446d35(0x95)](_0x34e571=>[{'text':_0x50041f[_0x446d35(0xba)][_0x34e571]?.[_0x446d35(0x9d)]+':','style':_0x446d35(0xc3)},{'ul':_0x324452[_0x34e571],'fontSize':0xa,'margin':[0xa,0x2,0x0,0x8]}]),_0x9228bd=[[{'text':_0x446d35(0xf6),'style':_0x446d35(0x96)},{'text':'Deskripsi\x20Capaian','style':_0x446d35(0x96)}]];_0x47a7c3[_0x446d35(0xc4)](_0x1e3903=>{const _0x45b38e=_0x446d35,_0x280a3c=document[_0x45b38e(0x94)](_0x45b38e(0xb0)+_0x1e3903['id'])['textContent'][_0x45b38e(0xc8)]();_0x280a3c&&_0x9228bd[_0x45b38e(0xbf)]([{'text':_0x1e3903[_0x45b38e(0x9d)],'style':_0x45b38e(0x9e)},{'text':_0x280a3c,'style':_0x45b38e(0x9e),'alignment':'justify'}]);});const _0x5485e8=_0x50041f[_0x446d35(0x8d)],_0x27e755={'content':[{'text':_0x446d35(0x120),'style':_0x446d35(0xc1)},{'style':'headerGrid','table':{'widths':['50%',_0x446d35(0xb2)],'body':[[[{'text':'Identitas\x20Sekolah','style':_0x446d35(0x10d)},{'table':{'widths':[_0x446d35(0x112),'*'],'body':[[{'text':_0x446d35(0x83),'style':_0x446d35(0xc3)},':\x20'+(_0x5485e8['namaSekolah']||'')],[{'text':_0x446d35(0x88),'style':_0x446d35(0xc3)},':\x20'+(_0x5485e8[_0x446d35(0xce)]||'')],[{'text':_0x446d35(0xed),'style':_0x446d35(0xc3)},':\x20'+(_0x5485e8[_0x446d35(0xcf)]||'')]]},'layout':_0x446d35(0xd5)}],[{'text':_0x446d35(0x119),'style':_0x446d35(0x10d)},{'text':_0x3439fc,'bold':!![],'fontSize':0xb,'margin':[0x0,0x0,0x0,0xa]},..._0x573ed5]]]},'layout':_0x446d35(0xd5)},{'text':'Capaian\x20Siswa:','style':_0x446d35(0xbc),'margin':[0x0,0xf,0x0,0x5]},{'style':_0x446d35(0xcc),'table':{'widths':[_0x446d35(0xe5),_0x446d35(0xdd)],'body':_0x9228bd,'headerRows':0x1},'layout':{'hLineWidth':(_0x24d31d,_0x3db5b3)=>_0x24d31d===0x0||_0x24d31d===_0x3db5b3['table'][_0x446d35(0x9c)][_0x446d35(0xf2)]?0x1:_0x24d31d===0x1?0x1:0.5,'vLineWidth':()=>0x0,'hLineColor':_0x2c76a8=>_0x2c76a8===0x0||_0x2c76a8===0x1?_0x446d35(0x116):_0x446d35(0xa6)}},{'margin':[0x0,0x28,0x0,0x0],'table':{'widths':[_0x446d35(0xb2),'50%'],'body':[[{'stack':[{'text':_0x446d35(0xc0)},{'text':_0x446d35(0xf5)},{'text':'\x20','margin':[0x0,0x3c,0x0,0x0]},{'text':_0x5485e8[_0x446d35(0x121)]||_0x446d35(0xa7),'bold':!![],'decoration':_0x446d35(0x85)},{'text':_0x446d35(0xdc)+(_0x5485e8[_0x446d35(0xf8)]||'')}],'alignment':_0x446d35(0x10e),'border':[![],![],![],![]]},{'stack':[{'text':(_0x5485e8['kabupatenKota']||_0x446d35(0xcb))+',\x20'+_0x25cfb8(_0x5485e8[_0x446d35(0x8e)])},{'text':'Wali\x20Kelas,'},{'text':'\x20','margin':[0x0,0x3c,0x0,0x0]},{'text':_0x5485e8[_0x446d35(0x99)]||_0x446d35(0xa7),'bold':!![],'decoration':_0x446d35(0x85)},{'text':_0x446d35(0xdc)+(_0x5485e8[_0x446d35(0x11d)]||'')}],'alignment':_0x446d35(0x10e),'border':[![],![],![],![]]}]]},'layout':_0x446d35(0xd5)}],'styles':{'header':{'fontSize':0x10,'bold':!![],'margin':[0x0,0x0,0x0,0xf],'alignment':_0x446d35(0x10e)},'subheader':{'fontSize':0xc,'bold':!![],'margin':[0x0,0xa,0x0,0x5]},'headerGrid':{'margin':[0x0,0x0,0x0,0x14]},'gridHeader':{'fontSize':0xc,'bold':!![],'margin':[0x0,0x0,0x0,0x8],'color':_0x446d35(0x100)},'label':{'bold':!![],'fontSize':0xa},'tableStyle':{'margin':[0x0,0x5,0x0,0xf]},'tableHeader':{'bold':!![],'fontSize':0xb,'color':_0x446d35(0x116),'fillColor':_0x446d35(0x10b),'alignment':'center','margin':[0x5,0x5,0x5,0x5]},'cellStyle':{'margin':[0x5,0x5,0x5,0x5],'fontSize':0xa}},'defaultStyle':{'fontSize':0xa,'color':_0x446d35(0x11a)}};pdfMake[_0x446d35(0x107)](_0x27e755)['download'](_0x446d35(0xc6)+_0x3439fc[_0x446d35(0xfd)](/\s+/g,'_')+_0x446d35(0x108));},_0x2aab87=document[_0x2f7d3a(0x94)](_0x2f7d3a(0xc5)),_0x2a8846=document[_0x2f7d3a(0x94)](_0x2f7d3a(0x102)),_0x2c8717=document[_0x2f7d3a(0x94)](_0x2f7d3a(0xee)),_0x211961=document[_0x2f7d3a(0x94)](_0x2f7d3a(0xf1)),_0x54e90f=document[_0x2f7d3a(0x94)](_0x2f7d3a(0x101)),_0x4a1bc1=document['getElementById'](_0x2f7d3a(0xec)),_0x13c4e6=()=>{_0x2c8717['innerHTML']='',_0x4d9734()['forEach'](_0x34257d=>{const _0x42c1f5=_0x4ebd,_0x28cd02=document['createElement'](_0x42c1f5(0xdb));_0x28cd02[_0x42c1f5(0xd4)]=_0x42c1f5(0x98),_0x28cd02[_0x42c1f5(0xeb)]=_0x42c1f5(0xbb)+_0x34257d+_0x42c1f5(0xc9),_0x2c8717[_0x42c1f5(0x110)](_0x28cd02);});};_0x16000b[_0x2f7d3a(0x8a)]('click',()=>{const _0x2e743f=_0x2f7d3a;_0x13c4e6(),_0x2aab87[_0x2e743f(0x103)]['display']=_0x2e743f(0xe7);}),_0x211961[_0x2f7d3a(0x8a)](_0x2f7d3a(0xd1),()=>{const _0x55a05a=_0x2f7d3a,_0x58552b=document[_0x55a05a(0xb9)](_0x55a05a(0xdb));_0x58552b['className']='predikat-item',_0x58552b['innerHTML']='<input\x20type=\x22text\x22\x20value=\x22\x22\x20placeholder=\x22Predikat\x20Baru\x22><button\x20class=\x22danger\x20delete-predikat-btn\x22>Hapus</button>',_0x2c8717['appendChild'](_0x58552b);}),_0x2c8717[_0x2f7d3a(0x8a)](_0x2f7d3a(0xd1),_0x529407=>{const _0x3919c8=_0x2f7d3a;if(_0x529407[_0x3919c8(0x118)][_0x3919c8(0xb3)][_0x3919c8(0x106)]('delete-predikat-btn'))_0x529407['target'][_0x3919c8(0xd3)][_0x3919c8(0xfb)]();}),_0x54e90f['addEventListener'](_0x2f7d3a(0xd1),async()=>{const _0x5c6fa9=_0x2f7d3a,_0x2ca25b=Array[_0x5c6fa9(0xd7)](_0x2c8717[_0x5c6fa9(0x115)]('input'))['map'](_0xae3611=>_0xae3611[_0x5c6fa9(0x111)]['trim']())[_0x5c6fa9(0xad)](_0x1ddc94=>_0x1ddc94);if(_0x2ca25b[_0x5c6fa9(0xf2)]===0x0)delete _0x50041f[_0x5c6fa9(0xe3)][_0x5de181];else{if(!_0x50041f['predikatKokurikuler'])_0x50041f['predikatKokurikuler']={};_0x50041f[_0x5c6fa9(0xe3)][_0x5de181]=_0x2ca25b;}saveData(_0x50041f),_0x2aab87[_0x5c6fa9(0x103)]['display']=_0x5c6fa9(0xb6),await showModal(_0x5c6fa9(0xff),_0x5c6fa9(0xe4)),_0x2263c4();}),_0x4a1bc1['addEventListener'](_0x2f7d3a(0xd1),()=>{const _0x5c68ac=_0x2f7d3a;_0x2aab87[_0x5c68ac(0x103)][_0x5c68ac(0x97)]=_0x5c68ac(0xb6);}),_0x2263c4(),_0x65038a[_0x2f7d3a(0x8a)](_0x2f7d3a(0xd1),_0x51b23d),_0x4c5d9b[_0x2f7d3a(0x8a)]('click',_0x5534ad);}),document[_0x1a16ce(0x8a)]('DOMContentLoaded',()=>{const _0x3dc7d5=_0x1a16ce,_0x80eb0f=document[_0x3dc7d5(0x94)](_0x3dc7d5(0xe6));_0x80eb0f&&_0x80eb0f[_0x3dc7d5(0x8a)](_0x3dc7d5(0xd1),()=>{const _0x32c2dd=_0x3dc7d5,_0x22f3f4=_0x32c2dd(0x90),_0x42ffc1=_0x32c2dd(0xd9);showModal(_0x22f3f4,_0x42ffc1,![]);});}));function _0x4a72(){const _0x2b6ccf=['siswaId','addEventListener','keys','textContent','infoDasar','tanggalRaporNilai','toLocaleDateString','Panduan\x20Halaman\x20Nilai\x20Kokurikuler','deskripsiKokurikuler','2-digit','30CcSUXx','getElementById','flatMap','tableHeader','display','predikat-item','namaGuru','find','get','body','nama','cellStyle','kokuNama','\x22\x20data-dimensi-key=\x22','dimensiKey','selected','nilaiKokurikuler','</td>','bukaModalPredikat','gray','___________________','.predikat-siswa','<th\x20style=\x22width:\x2035%;\x22>Deskripsi\x20Capaian</th></tr>','Cukup','<option\x20value=\x22\x22>Predikat</option>','.bulk-update','filter','tujuanKokurikuler','getTime','desc-','\x20pada\x20kegiatan\x20\x22','50%','classList','.predikat-siswa[data-dimensi-key=\x22','tabelKokuBody','none','search','Error:\x20ID\x20Kegiatan\x20tidak\x20ditemukan.','createElement','dimensiKokurikuler','<input\x20type=\x22text\x22\x20value=\x22','subheader','\x20dalam\x20','</option>','push','Mengetahui,','header','location','label','forEach','predikatModal','Laporan_Koku_','<td>','trim','\x22><button\x20class=\x22danger\x20delete-predikat-btn\x22>Hapus</button>','Ananda\x20','Jakarta','tableStyle','434287zJIxYk','kelas','tahunAjaran','kokuId','click','<th><div\x20class=\x22header-controls\x22><span>','parentElement','className','noBorders','103442rQjEQO','from','...........................','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22text-align:\x20left;\x20line-height:\x201.6;\x20width:\x20100%;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<p>Halaman\x20ini\x20digunakan\x20untuk\x20menilai\x20kegiatan\x20kokurikuler\x20berdasarkan\x20dimensi\x20yang\x20telah\x20dipilih.</p>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<ul\x20style=\x22padding-left:\x2020px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<li\x20style=\x22margin-bottom:\x208px;\x22><strong>1.\x20Pilih\x20Predikat:</strong>\x20Untuk\x20setiap\x20siswa,\x20pilih\x20predikat\x20yang\x20sesuai\x20pada\x20setiap\x20kolom\x20dimensi.</li>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<li\x20style=\x22margin-bottom:\x208px;\x22><strong>2.\x20Deskripsi\x20Otomatis:</strong>\x20Kolom\x20\x22Deskripsi\x20Capaian\x22\x20akan\x20<strong>terisi\x20secara\x20otomatis</strong>\x20berdasarkan\x20pilihan\x20Anda.</li>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<li\x20style=\x22margin-bottom:\x208px;\x22><strong>3.\x20Isi\x20Cepat:</strong>\x20Gunakan\x20dropdown\x20di\x20bawah\x20nama\x20setiap\x20dimensi\x20untuk\x20menerapkan\x20satu\x20predikat\x20ke\x20semua\x20siswa.</li>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<li\x20style=\x22margin-bottom:\x208px;\x22><strong>4.\x20Sesuaikan\x20Predikat:</strong>\x20Klik\x20tombol\x20pensil\x20<svg\x20xmlns=\x22http://www.w3.org/2000/svg\x22\x20viewBox=\x220\x200\x2016\x2016\x22\x20fill=\x22currentColor\x22\x20style=\x22width:\x2016px;\x20height:\x2016px;\x20display:\x20inline;\x20vertical-align:\x20middle;\x22><path\x20d=\x22m13.498\x200-9.022\x209.022-1.25\x204.25\x204.25-1.25L16\x202.502l-2.502-2.502Z\x20M12.126\x201.374l1.126\x201.126-9.022\x209.022-2.126.626.626-2.126L12.126\x201.374Z\x22></path><path\x20d=\x22M2\x2014.5a.5.5\x200\x200\x201-.5-.5v-9a.5.5\x200\x200\x201\x20.5-.5h7a.5.5\x200\x200\x201\x200\x201h-7v9a.5.5\x200\x200\x201-.5-.5Z\x22></path></svg>\x20di\x20sebelah\x20judul\x20untuk\x20<strong>mengganti\x20istilah\x20predikat</strong>\x20(misal:\x20\x22Baik\x22\x20menjadi\x20\x22Berkembang\x22)\x20khusus\x20untuk\x20kegiatan\x20ini.</li>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<li\x20style=\x22margin-bottom:\x208px;\x22><strong>5.\x20Download\x20Laporan:</strong>\x20Klik\x20tombol\x20\x22Download\x20PDF\x22\x20untuk\x20mengunduh\x20rekapitulasi\x20nilai\x20dan\x20deskripsi\x20dalam\x20format\x20PDF.</li>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</ul>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<p\x20style=\x22margin-top:\x2015px;\x20background-color:\x20#eaf2f8;\x20border-left:\x204px\x20solid\x20#4A90E2;\x20padding:\x2010px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<strong>PENTING:</strong>\x20Setelah\x20selesai,\x20jangan\x20lupa\x20klik\x20tombol\x20<strong>\x22Simpan\x20Nilai\x20Kokurikuler\x22</strong>\x20di\x20bagian\x20bawah\x20untuk\x20menyimpan\x20semua\x20penilaian\x20Anda.\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</p>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','Baik','div','NIP.\x20','70%','Input\x20Nilai:\x20','<option\x20value=\x22','numeric','Tidak\x20Ditemukan','<td\x20class=\x22col-deskripsi\x22\x20id=\x22desc-','predikatKokurikuler','Daftar\x20predikat\x20telah\x20diperbarui.','30%','tutorialKokuButton','flex','slice','DOMContentLoaded','id-ID','innerHTML','tutupModalPredikat','Tahun\x20Ajaran','predikatList','16220yMnhvI','judulKoku','tambahPredikat','length','1514600WJdReq','long','Kepala\x20Sekolah,','Nama\x20Siswa','downloadPdfButton','nipKepsek','\x20dan\x20','select[data-siswa-id=\x22','remove','4153611NPkIlp','replace','</select></td>','Berhasil','#333333','simpanPredikat','predikatModalTitle','style','Data\x20nilai\x20kokurikuler\x20telah\x20berhasil\x20disimpan.','<tr><th\x20style=\x22width:\x204%;\x22>No</th><th\x20style=\x22width:\x2015%;\x22>Nama\x20Siswa</th>','contains','createPdf','.pdf','135RTiPEz','Kegiatan\x20Tidak\x20Ditemukan','#eeeeee','dataSiswa','gridHeader','center','</td><td\x20style=\x22text-align:\x20left;\x22>','appendChild','value','auto','\x22></td>','dataset','querySelectorAll','black','<option\x20value=\x22\x22>--\x20Pilih\x20--</option>','target','Tema\x20Kegiatan','#111',',\x20dan\x20','2943996QAmdJI','nipGuru','</select></div></th>','<td><select\x20class=\x22predikat-siswa\x22\x20data-siswa-id=\x22','Laporan\x20Kegiatan\x20Kokurikuler','kepalaSekolah','Nama\x20Sekolah','13376376uhBYqv','underline','join','change','Kelas'];_0x4a72=function(){return _0x2b6ccf;};return _0x4a72();}
+
+
+    </script>
+</body>
+
+</html>
+

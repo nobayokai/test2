@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>Tes Dropdown ExcelJS</title>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+</head>
+<body>
+
+    <h1>Tes Tombol Download Excel</h1>
+    <p>Klik tombol di bawah ini. Seharusnya ini akan mengunduh file Excel dengan dropdown.</p>
+    <button id="testButton" style="font-size: 1.2em; padding: 10px 20px;">Test Download Excel</button>
+
+    <script>
+        // Fungsi ini hanya akan berjalan jika tombol di atas diklik.
+        document.getElementById('testButton').addEventListener('click', async () => {
+            try {
+                console.log("Tombol Tes di-klik. Membuat file Excel...");
+
+                // Opsi untuk dropdown
+                const opsiPredikat = ['Sangat Baik', 'Baik', 'Cukup', 'Perlu Peningkatan'];
+
+                // Membuat Workbook dan Worksheet
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('Tes Dropdown');
+
+                // Mendefinisikan kolom
+                worksheet.columns = [
+                    { header: 'Nama', key: 'name', width: 20 },
+                    { header: 'Pilihan', key: 'choice', width: 25 }
+                ];
+
+                // Menambahkan data sederhana
+                worksheet.addRows([
+                    { name: 'Siswa A', choice: 'Baik' },
+                    { name: 'Siswa B', choice: 'Cukup' }
+                ]);
+
+                // Menambahkan validasi data (DROPDOWN) ke setiap sel di kolom 'Pilihan'
+                worksheet.getColumn('choice').eachCell({ includeEmpty: true }, (cell, rowNumber) => {
+                    // Jangan tambahkan dropdown ke header (baris pertama)
+                    if (rowNumber > 1) {
+                        cell.dataValidation = {
+                            type: 'list',
+                            allowBlank: true,
+                            formulae: [`"${opsiPredikat.join(',')}"`]
+                        };
+                        console.log(`Dropdown ditambahkan ke sel ${cell.address}`);
+                    }
+                });
+
+                console.log("Proses pembuatan selesai. Mengunduh file...");
+
+                // Membuat file dan men-trigger download
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'hasil_tes.xlsx';
+                link.click();
+
+                alert("File 'hasil_tes.xlsx' telah berhasil diunduh!");
+
+            } catch (error) {
+                console.error("Terjadi error:", error);
+                alert("Gagal membuat file Excel. Cek console (F12) untuk detail error.");
+            }
+        });
+    </script>
+
+</body>
+</html>

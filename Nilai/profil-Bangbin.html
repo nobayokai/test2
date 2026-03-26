@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Bintang Adhi Permana</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="https://lh3.googleusercontent.com/d/16rll5zsRdwTbR3nF_NmPKwY51tg4tnOn">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #111827; /* Dark background */
+            color: #e5e7eb;
+        }
+
+        /* -- Canvas untuk Partikel -- */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* -- Efek Glassmorphism -- */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        }
+
+        /* -- Animasi Saat Scroll -- */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .scroll-reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* -- Styling Timeline Baru -- */
+        .timeline {
+            position: relative;
+            padding-left: 3rem;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(59, 130, 246, 0.3);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -3.5rem;
+            top: 5px;
+            width: 1rem;
+            height: 1rem;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            border: 3px solid #111827;
+            transition: all 0.3s ease;
+        }
+        .timeline-item:hover::before {
+            transform: scale(1.3);
+            background-color: #60a5fa;
+        }
+    </style>
+</head>
+<body class="w-full">
+
+    <!-- HERO SECTION DENGAN PARTIKEL -->
+    <header class="relative h-screen flex items-center justify-center text-center overflow-hidden">
+        <canvas id="particle-canvas"></canvas>
+        <div class="relative z-10 p-4 scroll-reveal">
+            <img src="http://lh3.googleusercontent.com/d/1QHVbK_TkBo00jcaxdxD5XWmOPV2DTD3o" alt="Foto Profil" class="w-36 h-36 rounded-full mx-auto border-4 border-blue-500 shadow-lg mb-4" onerror="this.onerror=null;this.src='https://placehold.co/150x150/374151/e5e7eb?text=BAP';">
+            <h1 class="text-5xl md:text-6xl font-bold text-white tracking-tight">Bintang Adhi Permana</h1>
+            <p class="text-xl md:text-2xl text-blue-300 mt-2">Guru & Pengembang Pendidikan</p>
+            <div class="mt-6 flex justify-center space-x-5">
+                <a href="https://wa.me/6281310051985" target="_blank" class="text-gray-300 hover:text-white transform hover:scale-125 transition-transform duration-300"><i class="fab fa-whatsapp fa-2x"></i></a>
+                <a href="#" class="text-gray-300 hover:text-white transform hover:scale-125 transition-transform duration-300"><i class="fab fa-facebook fa-2x"></i></a>
+                <a href="#" class="text-gray-300 hover:text-white transform hover:scale-125 transition-transform duration-300"><i class="fab fa-instagram fa-2x"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- KONTEN UTAMA -->
+    <main class="container mx-auto p-4 md:p-8 space-y-16">
+
+        <!-- PENGALAMAN MENGAJAR -->
+        <section class="scroll-reveal">
+            <h2 class="text-3xl font-bold text-center mb-10 text-blue-400">Pengalaman Mengajar</h2>
+            <div class="timeline max-w-2xl mx-auto">
+                <div class="timeline-item">
+                    <p class="font-semibold text-lg text-gray-100">SDN Lubang Buaya 01</p>
+                    <p class="text-sm text-gray-400">2021 - Sekarang</p>
+                </div>
+                <div class="timeline-item">
+                    <p class="font-semibold text-lg text-gray-100">SDN Lubang Buaya 13</p>
+                    <p class="text-sm text-gray-400">2014 - 2021</p>
+                </div>
+                <div class="timeline-item">
+                    <p class="font-semibold text-lg text-gray-100">SDN Kalideres 12 Pagi</p>
+                    <p class="text-sm text-gray-400">2011 - 2014</p>
+                </div>
+                <div class="timeline-item">
+                    <p class="font-semibold text-lg text-gray-100">SDN Kebon Manggis 14 Pagi</p>
+                    <p class="text-sm text-gray-400">2007 - 2010</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PERAN & KONTRIBUSI -->
+        <section class="scroll-reveal">
+            <h2 class="text-3xl font-bold text-center mb-10 text-blue-400">Peran & Kontribusi</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass-card p-6 tilt-card">
+                    <h3 class="font-bold text-xl text-white mb-2">Analis Data</h3>
+                    <p class="text-gray-400 text-sm mb-2">2024 - Sekarang</p>
+                    <ul class="list-disc list-inside text-gray-300 text-sm">
+                        <li>Direktorat PAUD, SD, SMP, SMA</li>
+                    </ul>
+                </div>
+                <div class="glass-card p-6 tilt-card">
+                    <h3 class="font-bold text-xl text-white mb-2">Pengembang Kurikulum</h3>
+                    <p class="text-gray-400 text-sm mb-2">2019 - Sekarang</p>
+                    <p class="text-gray-300 text-sm">PKLK Disdik DKI Jakarta</p>
+                </div>
+                <div class="glass-card p-6 tilt-card">
+                    <h3 class="font-bold text-xl text-white mb-2">Pengembang Erapor SD</h3>
+                     <p class="text-gray-400 text-sm mb-2">2019 - Sekarang</p>
+                    <p class="text-gray-300 text-sm">Direktorat SD Kemendikdasmen</p>
+                </div>
+                <div class="glass-card p-6 tilt-card">
+                    <h3 class="font-bold text-xl text-white mb-2">Sekretaris Kwartir Ranting</h3>
+                    <p class="text-gray-400 text-sm mb-2">2020 - Sekarang</p>
+                    <p class="text-gray-300 text-sm">Kwarran Cipayung, Jakarta Timur</p>
+                </div>
+                <div class="glass-card p-6 tilt-card">
+                    <h3 class="font-bold text-xl text-white mb-2">Penulis Buku</h3>
+                    <p class="text-gray-400 text-sm mb-2">2022 - 2023</p>
+                    <ul class="list-disc list-inside text-gray-300 text-sm">
+                        <li>Pancasila - Erlangga</li>
+                        <li>Matematika - Erlangga</li>
+                        <li>Koding Ka - Puskurbuk</li>
+                    </ul>
+                </div>
+                <div class="glass-card p-6 tilt-card">
+                    <h3 class="font-bold text-xl text-white mb-2">Penulis Modul Ajar</h3>
+                    <ul class="list-disc list-inside text-gray-300 text-sm">
+                        <li>Direktorat SD Kemendikdasmen</li>
+                        <li>Direktorat Guru dan Tenaga Kependidikan</li>
+                        <li>Pusat Kurikulum dan Pembelajaran</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- PENDIDIKAN -->
+        <section class="scroll-reveal">
+            <h2 class="text-3xl font-bold text-center mb-10 text-blue-400">Pendidikan</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                <div class="glass-card p-6 flex items-center space-x-4">
+                    <i class="fas fa-graduation-cap text-blue-400 text-3xl"></i>
+                    <div>
+                        <p class="font-semibold text-lg text-white">S2 - Penelitian dan Evaluasi Pendidikan</p>
+                        <p class="text-sm text-gray-400">Universitas Prof. DR. Hamka Jakarta</p>
+                    </div>
+                </div>
+                 <div class="glass-card p-6 flex items-center space-x-4">
+                    <i class="fas fa-graduation-cap text-blue-400 text-3xl"></i>
+                    <div>
+                        <p class="font-semibold text-lg text-white">S1 - PGSD</p>
+                        <p class="text-sm text-gray-400">Universitas Negeri Jakarta</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PRODUK & KARYA -->
+        <section class="scroll-reveal">
+            <h2 class="text-3xl font-bold text-center mb-10 text-blue-400">Produk & Karya</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Product Card Template -->
+                <div class="glass-card p-5 flex flex-col justify-between">
+                    <div>
+                        <p class="font-semibold text-lg text-white">Modul Ajar Matematika Kls 1</p>
+                        <p class="text-sm text-gray-400 mt-1">Modul pembelajaran untuk tingkat dasar.</p>
+                    </div>
+                    <a href="#" class="self-end mt-4 text-blue-400 hover:text-blue-300 transition-colors"><i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="glass-card p-5 flex flex-col justify-between">
+                    <div>
+                        <p class="font-semibold text-lg text-white">Modul Ajar Matematika Kls 2</p>
+                        <p class="text-sm text-gray-400 mt-1">Melanjutkan pondasi matematika dasar.</p>
+                    </div>
+                    <a href="#" class="self-end mt-4 text-blue-400 hover:text-blue-300 transition-colors"><i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="glass-card p-5 flex flex-col justify-between">
+                    <div>
+                        <p class="font-semibold text-lg text-white">Modul Ajar Matematika Kls 5</p>
+                        <p class="text-sm text-gray-400 mt-1">Materi matematika untuk tingkat lanjut.</p>
+                    </div>
+                    <a href="#" class="self-end mt-4 text-blue-400 hover:text-blue-300 transition-colors"><i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="glass-card p-5 flex flex-col justify-between">
+                    <div>
+                        <p class="font-semibold text-lg text-white">Modul Ajar Pancasila Kls 5</p>
+                        <p class="text-sm text-gray-400 mt-1">Pembelajaran nilai-nilai Pancasila.</p>
+                    </div>
+                    <a href="#" class="self-end mt-4 text-blue-400 hover:text-blue-300 transition-colors"><i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="glass-card p-5 flex flex-col justify-between">
+                    <div>
+                        <p class="font-semibold text-lg text-white">Konten Game Interaktif Kls 1</p>
+                        <p class="text-sm text-gray-400 mt-1">Media belajar berbasis permainan.</p>
+                    </div>
+                    <a href="#" class="self-end mt-4 text-blue-400 hover:text-blue-300 transition-colors"><i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="glass-card p-5 flex flex-col justify-between">
+                    <div>
+                        <p class="font-semibold text-lg text-white">Buku Nilai Kokurikuler</p>
+                        <p class="text-sm text-gray-400 mt-1">Alat bantu penilaian kegiatan siswa.</p>
+                    </div>
+                    <a href="#" class="self-end mt-4 text-blue-400 hover:text-blue-300 transition-colors"><i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="glass-card p-5 flex flex-col justify-between">
+                    <div>
+                        <p class="font-semibold text-lg text-white">Aplikasi Rapor SD</p>
+                        <p class="text-sm text-gray-400 mt-1">Aplikasi digital untuk rekapitulasi nilai.</p>
+                    </div>
+                    <a href="#" class="self-end mt-4 text-blue-400 hover:text-blue-300 transition-colors"><i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="glass-card p-5 flex flex-col justify-between">
+                    <div>
+                        <p class="font-semibold text-lg text-white">Aplikasi Buku Induk</p>
+                        <p class="text-sm text-gray-400 mt-1">Digitalisasi data administrasi siswa.</p>
+                    </div>
+                    <a href="#" class="self-end mt-4 text-blue-400 hover:text-blue-300 transition-colors"><i class="fas fa-arrow-right"></i></a>
+                </div>
+                 <div class="glass-card p-5 flex flex-col justify-between">
+                    <div>
+                        <p class="font-semibold text-lg text-white">Video Pembelajaran 1</p>
+                        <p class="text-sm text-gray-400 mt-1">Konten video edukatif.</p>
+                    </div>
+                    <a href="#" class="self-end mt-4 text-blue-400 hover:text-blue-300 transition-colors"><i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="glass-card p-5 flex flex-col justify-between">
+                    <div>
+                        <p class="font-semibold text-lg text-white">Video Pembelajaran 2</p>
+                        <p class="text-sm text-gray-400 mt-1">Konten video edukatif lanjutan.</p>
+                    </div>
+                    <a href="#" class="self-end mt-4 text-blue-400 hover:text-blue-300 transition-colors"><i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center p-8 mt-16 border-t border-gray-800">
+        <p class="text-gray-500">&copy; 2024 Bintang Adhi Permana. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // --- SCRIPT PARTIKEL ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray;
+
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            update() {
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            let numberOfParticles = (canvas.height * canvas.width) / 9000;
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 1;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * .4) - .2;
+                let directionY = (Math.random() * .4) - .2;
+                let color = 'rgba(59, 130, 246, 0.5)';
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+        }
+
+        init();
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            init();
+        });
+
+        // --- SCRIPT ANIMASI SCROLL ---
+        const scrollElements = document.querySelectorAll(".scroll-reveal");
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("visible");
+                }
+            });
+        }, { threshold: 0.1 });
+
+        scrollElements.forEach(el => {
+            observer.observe(el);
+        });
+
+        // --- SCRIPT EFEK 3D TILT PADA KARTU ---
+        const tiltCards = document.querySelectorAll('.tilt-card');
+        tiltCards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const { width, height } = rect;
+                const rotateX = (y / height - 0.5) * -15; // Invert Y-axis for natural feel
+                const rotateY = (x / width - 0.5) * 15;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>
+

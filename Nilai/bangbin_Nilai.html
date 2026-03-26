@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Nilai</title>
+    <link rel="icon" type="image/x-icon" href="https://lh3.googleusercontent.com/d/16rll5zsRdwTbR3nF_NmPKwY51tg4tnOn">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+<style>
+    /* Standarisasi & Reset */
+    :root {
+        --primary-color: #007aff;
+        --success-color: #28a745;
+        --secondary-color: #586474;
+        --danger-color: #df4759;
+        --warning-color: #ffc107;
+        --bg-color: #eef2f5;
+        --font-color: #3e4a59;
+        --light-shadow: #ffffff;
+        --dark-shadow: #d1d9e6;
+        --border-radius-lg: 15px;
+        --border-radius-md: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--font-color);
+        margin: 0;
+        padding: 20px;
+    }
+    .container { max-width: 95%; margin: auto; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Header */
+    .title-wrapper {
+        display: flex; align-items: center; gap: 20px;
+        padding-bottom: 15px; margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+    .title-wrapper h1 { margin: 0; padding: 0; font-size: 2em; color: var(--primary-color); flex-grow: 1; }
+    .home-link { color: var(--secondary-color); transition: all 0.2s ease; }
+    .home-link:hover { transform: scale(1.1); color: var(--primary-color); }
+    .home-link svg { width: 36px; height: 36px; }
+
+    /* Desain Tombol & Input Baru (Neumorphism) */
+    .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        gap: 10px; padding: 10px 20px; font-size: 0.9em; font-weight: 600;
+        font-family: 'Poppins', sans-serif; border-radius: var(--border-radius-md);
+        border: none; cursor: pointer; background: var(--bg-color);
+        color: var(--secondary-color); transition: all 0.2s ease-out;
+        box-shadow: 5px 5px 10px var(--dark-shadow), -5px -5px 10px var(--light-shadow);
+    }
+    .btn:hover { color: var(--primary-color); }
+    .btn:active {
+        box-shadow: inset 3px 3px 6px var(--dark-shadow), inset -3px -3px 6px var(--light-shadow);
+        color: var(--primary-color);
+    }
+    .btn.success { color: var(--success-color); }
+    .btn.success:hover, .btn.success:active { color: var(--success-color); }
+    .btn svg {
+        width: 18px; height: 18px; stroke-width: 2.5; transition: all 0.2s ease-out;
+    }
+    .btn:hover svg { stroke: var(--primary-color); }
+    .btn.success:hover svg { stroke: var(--success-color); }
+    .btn.btn-circle {
+        width: 42px; height: 42px; padding: 0; border-radius: 50%;
+    }
+    .btn.tutorial { color: var(--warning-color); font-size: 20px; }
+    .btn.tutorial:hover { transform: rotate(15deg); }
+    .btn:disabled {
+        opacity: 0.6; cursor: not-allowed;
+        box-shadow: inset 3px 3px 6px var(--dark-shadow), inset -3px -3px 6px var(--light-shadow);
+    }
+    input[type="text"], input[type="number"] {
+        width: 100%; padding: 10px; border: none; font-size: 1em;
+        border-radius: var(--border-radius-md); box-sizing: border-box;
+        background: var(--bg-color);
+        box-shadow: inset 3px 3px 6px var(--dark-shadow), inset -3px -3px 6px var(--light-shadow);
+        color: var(--font-color); font-family: 'Poppins', sans-serif;
+    }
+    input:focus { outline: none; }
+
+    /* Filter & Aksi */
+    .actions-wrapper {
+        display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+    .filter-wrapper {
+        margin-bottom: 20px; max-width: 400px;
+    }
+
+    /* Tabel */
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        max-height: 65vh;
+        overflow-y: auto;
+        border-radius: var(--border-radius-lg);
+        box-shadow: 5px 5px 10px var(--dark-shadow), -5px -5px 10px var(--light-shadow);
+        padding: 10px;
+        background: var(--bg-color);
+    }
+    table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    th, td {
+        border: none;
+        padding: 12px 8px;
+        text-align: center;
+        vertical-align: middle;
+        white-space: normal;
+        word-wrap: break-word;
+        border-bottom: 1px solid #d8dde3;
+    }
+    tr:last-child td { border-bottom: none; }
+    thead th { 
+        background-color: #ebe2d0;
+        color: var(--primary-color);
+        position: sticky; top: 0;
+        font-size: 0.9em;
+        z-index: 2;
+    }
+    .col-no { width: 4%; }
+    .col-nama { width: 15%; text-align: left; }
+    .col-tp { width: 8%; }
+    .col-rata { width: 6%; font-weight: bold; }
+    .col-deskripsi { width: 18%; font-size: 0.85em; text-align: left; }
+    .header-input { padding: 8px !important; text-align: center; }
+
+    /* Modal */
+    .modal-backdrop {
+        position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.2); display: none; align-items: center;
+        justify-content: center; backdrop-filter: blur(4px);
+    }
+    .modal-content {
+        background: var(--bg-color); border-radius: var(--border-radius-lg);
+        box-shadow: 10px 10px 20px var(--dark-shadow), -10px -10px 20px var(--light-shadow);
+        max-width: 600px; width: 90%; max-height: 85vh;
+        display: flex; flex-direction: column; animation: fadeIn 0.3s ease;
+        border: 1px solid var(--light-shadow); padding: 15px;
+    }
+    .modal-content h3 { padding: 10px; margin: 0; color: var(--primary-color); font-size: 1.5em; }
+    .modal-actions { padding: 15px 10px 0; text-align: right; border-top: 1px solid #d8dde3; margin-top: 15px; }
+    .import-step {
+        border-radius: var(--border-radius-md); padding: 15px; margin-bottom: 15px;
+        box-shadow: inset 3px 3px 6px var(--dark-shadow), inset -3px -3px 6px var(--light-shadow);
+    }
+    .import-step h4 { margin-top: 0; color: var(--primary-color); }
+    #predikatInputsWrapper .predikat-input-group {
+        display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 10px; align-items: center; margin-bottom: 10px;
+    }
+</style>
+</head>
+<body>
+    <svg width="0" height="0" style="display:none;" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="icon-save" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></symbol>
+      <symbol id="icon-excel" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></symbol>
+      <symbol id="icon-predikat" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></symbol>
+      <symbol id="icon-download" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></symbol>
+      <symbol id="icon-upload" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></symbol>
+      <symbol id="icon-close" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></symbol>
+    </svg>
+
+    <div class="container">
+        <div class="title-wrapper">
+             <a href="index.html" class="home-link" title="Kembali ke Menu Utama">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V9.75M8.25 21h7.5" /></svg>
+            </a>
+            <h1 id="judulMapel">Memuat...</h1>
+			<div class="actions-wrapper">
+				<button id="simpanNilai" class="btn"><svg><use href="#icon-save"/></svg><span>Simpan</span></button>
+				<button id="imporExcel" type="button" class="btn success"><svg><use href="#icon-excel"/></svg><span>Impor</span></button>
+                <button id="eksporExcel" type="button" class="btn"><svg><use href="#icon-download"/></svg><span>Download</span></button>
+				<button id="aturPredikat" type="button" class="btn"><svg><use href="#icon-predikat"/></svg><span>Predikat</span></button>
+                <button id="startTutorialBtn" title="Tampilkan Tutorial" class="btn btn-circle tutorial">★</button>
+			</div>
+        </div>
+        
+        <div class="filter-wrapper">
+            <input type="text" id="filterNama" placeholder="Ketik nama siswa untuk memfilter...">
+        </div>
+
+        <div class="table-wrapper">
+            <table id="tabelNilai">
+                <thead id="tabelNilaiHead"></thead>
+                <tbody id="tabelNilaiBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+
+    <div id="predikatModal" class="modal-backdrop">
+        <div class="modal-content">
+            <h3 id="modalPredikatTitle">Atur Rentang Nilai dan Predikat</h3>
+            <p>Sesuaikan rentang nilai dan deskripsi predikat. Perubahan akan disimpan khusus untuk mata pelajaran ini.</p>
+            <form id="formPredikat">
+                <div id="predikatInputsWrapper"></div>
+                <div class="modal-actions">
+                    <button type="submit" id="simpanPredikatModal" class="btn"><svg><use href="#icon-save"/></svg><span>Simpan Predikat</span></button>
+                    <button type="button" id="batalPredikatModal" class="btn"><svg><use href="#icon-close"/></svg><span>Batal</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="importExcelModal" class="modal-backdrop">
+        <div class="modal-content">
+            <h3>Impor Nilai dari Excel</h3>
+            <div class="import-step">
+                <h4>Langkah 1: Unduh Template</h4>
+                <p>Unduh template untuk memastikan format data sesuai. Jangan mengubah kolom NIS dan Nama Siswa.</p>
+                <button id="downloadTemplateBtn" class="btn"><svg><use href="#icon-download"/></svg><span>Unduh Template</span></button>
+            </div>
+            <div class="import-step">
+                <h4>Langkah 2: Unggah File</h4>
+                <p>Pilih file Excel yang sudah Anda isi nilainya.</p>
+                <button id="selectFileBtn" class="btn"><svg><use href="#icon-upload"/></svg><span>Pilih File</span></button>
+                <span id="fileNameSpan" style="margin-left:10px; font-style:italic;">Tidak ada file dipilih.</span>
+            </div>
+            <div class="modal-actions">
+                <button id="processImportBtn" class="btn success" disabled><svg><use href="#icon-excel"/></svg><span>Impor Sekarang</span></button>
+                <button id="closeImportModalBtn" type="button" class="btn"><svg><use href="#icon-close"/></svg><span>Tutup</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tutorialModal" class="modal-backdrop">
+        <div class="modal-content" style="max-width: 800px;">
+            <h3>Panduan Halaman Input Nilai</h3>
+            <div class="modal-body" style="text-align:left; line-height:1.6;">
+                <p>Gunakan halaman ini untuk mengelola nilai siswa dengan mudah dan efisien.</p>
+                <h4>⚖️ Mengatur Bobot Nilai</h4>
+                <p>Di bagian <strong>kepala tabel</strong>, Anda dapat mengatur bobot untuk setiap <strong>TP (Tujuan Pembelajaran)</strong>, <strong>(RR) (Rata-Rata Nilai TP)</strong>, dan <strong>PAS (Penilaian Akhir Semester)</strong>. Perubahan bobot akan langsung mempengaruhi perhitungan Nilai Akhir (R).</p>
+                <h4>📊 Kolom Otomatis</h4>
+                <ul>
+                    <li><strong>(RR)</strong>: Menampilkan rata-rata nilai sumatif dari semua TP berdasarkan bobotnya.</li>
+                    <li><strong>R</strong>: Nilai Rapor final yang dihitung dari (RR) dan PAS sesuai bobotnya.</li>
+                    <li><strong>Capaian Tertinggi/Terendah</strong>: Deskripsi otomatis berdasarkan nilai TP tertinggi dan terendah siswa.</li>
+                </ul>
+                <h4>⚙️ Tombol Aksi</h4>
+                <p>Gunakan tombol di atas untuk <strong>Menyimpan Nilai</strong>, melakukan <strong>Impor dari Excel</strong> untuk pengisian massal, atau <strong>Mengatur Rentang Predikat</strong> (misal: "Sangat Baik" untuk nilai 90-100).</p>
+            </div>
+            <div class="modal-actions">
+                <button id="closeTutorialModalBtn" class="btn">Saya Mengerti</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="bangbin_uhuuyy.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+
+function _0x17aa(_0x3a7472,_0x450bbe){const _0x442fea=_0x442f();return _0x17aa=function(_0x17aa36,_0x19da5f){_0x17aa36=_0x17aa36-0x15b;let _0x2b4dee=_0x442fea[_0x17aa36];return _0x2b4dee;},_0x17aa(_0x3a7472,_0x450bbe);}const _0x232f9f=_0x17aa;function _0x442f(){const _0x368912=['\x22>Tidak\x20ada\x20data\x20siswa\x20untuk\x20kelas\x20ini.</td></tr>','flex','aoa_to_sheet','getElementById','\x22][data-tp-id=\x22','pas-','min-','startTutorialBtn','tabelNilaiBody','nilaiAkhir','writeFile','textContent','appendChild','infoDasar','batalPredikatModal','display','fileNameSpan','message','9475770npUXcw','\x22\x20class=\x22col-deskripsi\x22></td>','Bangbin\x20Nilai','Pastikan\x20semua\x20kolom\x20predikat\x20terisi\x20dengan\x20benar.','Error:\x20ID\x20Mata\x20Pelajaran\x20tidak\x20ditemukan\x20di\x20URL.','innerHTML','<th\x20class=\x22col-rata\x22>(RR)<br><input\x20type=\x22number\x22\x20class=\x22header-input\x22\x20id=\x22bobotRR\x22\x20value=\x22','querySelectorAll','nama','Tidak\x20ada\x20file\x20yang\x20dipilih.','6GxBvrR','\x22\x20class=\x22nilai-input\x20nilai-tp\x22></td>','utils','push','getAttribute','45685osGLte','Error','Nilai\x20-\x20','predikat','DOMContentLoaded','name','rata-rata-','book_append_sheet','excelFileInput','\x22\x20data-index=\x22','\x22\x20title=\x22Bobot\x20TP\x20','style','tr[data-nis=\x22','modalPredikatTitle','forEach','Gagal\x20memproses\x20file.\x20Pastikan\x20formatnya\x20benar.\x20Error:\x20','setAttribute','submit','<br><input\x20type=\x22number\x22\x20class=\x22header-input\x20header-input-tp\x22\x20id=\x22bobot-tp-','none','Semua\x20nilai\x20dan\x20pengaturan\x20bobot\x20telah\x20berhasil\x20disimpan.','dataset','nilaiR','dari','\x20dalam\x20','NIS','PAS','tutorialModal','simpanNilai','onload','target','deskripsiMax','pembobotan','<div\x20class=\x22predikat-input-group\x22><input\x20type=\x22number\x22\x20placeholder=\x22Dari\x22\x20value=\x22','data-nis','\x20baris\x20data\x20siswa\x20berhasil\x20diperbarui\x20dari\x20file\x20Excel.','<tr><td\x20colspan=\x22','agama','array','predikatInputsWrapper','read','\x22></th>','.header-input-tp','location','includes','\x22\x20class=\x22col-rata\x22></td><td\x20class=\x22col-tp\x22><input\x20type=\x22number\x22\x20min=\x220\x22\x20max=\x22100\x22\x20value=\x22','pas','input','Bangbin_Nilai_','[data-field=\x22predikat\x22]','<td\x20class=\x22col-tp\x22><input\x20type=\x22number\x22\x20min=\x220\x22\x20max=\x22100\x22\x20value=\x22','mapelId','click','bobotPAS','tabelNilaiHead','value','sheet_to_json','nis','148TrrUOl','search','nilai','toLowerCase','selectFileBtn','3170951QTxgHw','replace','bobotRR','\x22\x20data-field=\x22predikat\x22\x20required></div>','querySelector','importExcelModal','<td\x20class=\x22col-no\x22>','\x22\x20data-siswa-id=\x22','.nilai-pas','trim','disabled','mataPelajaran','699213YjmPyP','deskripsiMin','filterNama','Mata\x20Pelajaran\x20Tidak\x20Ditemukan','get','\x22\x20id=\x22pas-','max-','.nilai-input','\x22\x20title=\x22Bobot\x20nilai\x20PAS\x22></th><th\x20class=\x22col-rata\x22>R</th><th\x20class=\x22col-deskripsi\x22\x20style=\x22text-align:\x20center;\x20vertical-align:\x20middle;\x22>MAX</th><th\x20class=\x22col-deskripsi\x22\x20style=\x22text-align:\x20center;\x20vertical-align:\x20middle;\x22>MIN</th></tr>','files','\x22>TP\x20','data-nama','closeTutorialModalBtn','504522tmlDqL','<td\x20id=\x22rata-rata-','TP\x20','mapelNama','.predikat-input-group','filter','<th\x20class=\x22col-tp\x22\x20title=\x22','bobot-tp-','length','161776qnBbWd','imporExcel','addEventListener','round','117GDHhYu','predikatModal','kelas','\x22\x20title=\x22Bobot\x20nilai\x20rata-rata\x20TP\x22></th><th\x20class=\x22col-tp\x22>PAS<br><input\x20type=\x22number\x22\x20class=\x22header-input\x22\x20id=\x22bobotPAS\x22\x20value=\x22','formPredikat','\x22\x20class=\x22nilai-input\x20nilai-pas\x22></td><td\x20id=\x22r-','Berhasil','Impor\x20Berhasil','</td><td\x20class=\x22col-nama\x22>','title','find','deskripsi','185710rrRtPi','input[data-siswa-id=\x22','tujuanPembelajaran','Atur\x20Predikat\x20untuk:\x20'];_0x442f=function(){return _0x368912;};return _0x442f();}(function(_0x134a3d,_0x379e41){const _0x49fcce=_0x17aa,_0x106877=_0x134a3d();while(!![]){try{const _0x574994=parseInt(_0x49fcce(0x1eb))/0x1+parseInt(_0x49fcce(0x16e))/0x2+parseInt(_0x49fcce(0x1de))/0x3+parseInt(_0x49fcce(0x1cd))/0x4*(-parseInt(_0x49fcce(0x193))/0x5)+-parseInt(_0x49fcce(0x18e))/0x6*(-parseInt(_0x49fcce(0x1d2))/0x7)+parseInt(_0x49fcce(0x15e))/0x8*(parseInt(_0x49fcce(0x162))/0x9)+-parseInt(_0x49fcce(0x184))/0xa;if(_0x574994===_0x379e41)break;else _0x106877['push'](_0x106877['shift']());}catch(_0x1941e0){_0x106877['push'](_0x106877['shift']());}}}(_0x442f,0x3fa49),document['addEventListener'](_0x232f9f(0x197),()=>{const _0x2bdfa4=_0x232f9f,_0x1b0bf7=new URLSearchParams(window[_0x2bdfa4(0x1be)][_0x2bdfa4(0x1ce)]),_0x507298=_0x1b0bf7[_0x2bdfa4(0x1e2)](_0x2bdfa4(0x1c6)),_0x3b4997=_0x1b0bf7['get'](_0x2bdfa4(0x1ee)),_0x364819=document[_0x2bdfa4(0x175)]('judulMapel'),_0x1b57e3=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x1c9)),_0x3389df=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x17a)),_0x55879d=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x1af)),_0x26411c=document[_0x2bdfa4(0x175)]('aturPredikat'),_0x2d045c=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x15f)),_0x2273af=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x19b)),_0x5cb71f=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x163)),_0x55f5b3=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x1ba)),_0x574925=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x166)),_0x580b6c=document['getElementById'](_0x2bdfa4(0x180)),_0x4c9a6a=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x1a0)),_0x2dd02c=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x1d7)),_0x256335=document[_0x2bdfa4(0x175)]('downloadTemplateBtn'),_0x31e6ff=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x1d1)),_0x3b43e0=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x182)),_0x1019a7=document[_0x2bdfa4(0x175)]('processImportBtn'),_0x13d977=document[_0x2bdfa4(0x175)]('closeImportModalBtn');let _0x4bc9cb=null;const _0x55cbb9=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x179)),_0x2278f8=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x1ae)),_0x9cd9a=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x1ea)),_0x3ca942=document[_0x2bdfa4(0x175)](_0x2bdfa4(0x1e0));document[_0x2bdfa4(0x16b)]=_0x2bdfa4(0x195)+(_0x3b4997||'Tidak\x20Ditemukan'),_0x364819[_0x2bdfa4(0x17d)]='Input\x20Nilai:\x20'+(_0x3b4997||_0x2bdfa4(0x1e1));if(!_0x507298){_0x364819[_0x2bdfa4(0x17d)]=_0x2bdfa4(0x188);return;}const _0x3c11a1=loadData(),_0x1818b5=_0x3c11a1[_0x2bdfa4(0x17f)]['kelasAktif'];let _0x4d35a2=_0x3c11a1['dataSiswa']||[];const _0x102f89=_0x3c11a1[_0x2bdfa4(0x1dd)][_0x2bdfa4(0x16c)](_0x237e8f=>_0x237e8f['id']===_0x507298),_0x3db487=_0x102f89?_0x102f89[_0x2bdfa4(0x1b8)]:null;_0x3db487&&(_0x4d35a2=_0x4d35a2[_0x2bdfa4(0x1f0)](_0x30d97b=>_0x30d97b[_0x2bdfa4(0x1b8)]===_0x3db487));let _0x320f93=_0x3c11a1[_0x2bdfa4(0x170)][_0x1818b5]?.[_0x507298]||TP_DEFAULT_MASTER[_0x1818b5]?.[_0x507298]||[];if(_0x320f93[_0x2bdfa4(0x15d)]===0x0){_0x3389df['innerHTML']='<tr><td\x20colspan=\x222\x22>Belum\x20ada\x20data\x20TP.\x20Silakan\x20atur\x20di\x20halaman\x20Kelola\x20TP\x20terlebih\x20dahulu.</td></tr>',document['querySelector']('.actions-wrapper')['style'][_0x2bdfa4(0x181)]=_0x2bdfa4(0x1a6),document[_0x2bdfa4(0x1d6)]('.filter-wrapper')['style'][_0x2bdfa4(0x181)]='none';return;}if(_0x4d35a2['length']===0x0){_0x3389df['innerHTML']=_0x2bdfa4(0x1b7)+(0x2+_0x320f93[_0x2bdfa4(0x15d)]+0x3)+_0x2bdfa4(0x172),document['querySelector']('.actions-wrapper')[_0x2bdfa4(0x19e)][_0x2bdfa4(0x181)]=_0x2bdfa4(0x1a6),document[_0x2bdfa4(0x1d6)]('.filter-wrapper')[_0x2bdfa4(0x19e)][_0x2bdfa4(0x181)]='none';return;}function _0x4eab9b(_0x2c625c){const _0x31eba2=_0x2bdfa4,_0x417292=parseFloat(document[_0x31eba2(0x175)](_0x31eba2(0x1d4))[_0x31eba2(0x1ca)])||0x0,_0xd370cb=parseFloat(document[_0x31eba2(0x175)](_0x31eba2(0x1c8))[_0x31eba2(0x1ca)])||0x0,_0xa7caef={};_0x320f93['forEach'](_0x56e461=>{const _0x5c11df=_0x31eba2,_0x171fe8=document[_0x5c11df(0x1d6)](_0x5c11df(0x16f)+_0x2c625c+_0x5c11df(0x176)+_0x56e461['id']+'\x22]');if(_0x171fe8&&_0x171fe8[_0x5c11df(0x1ca)]!=='')_0xa7caef[_0x56e461['id']]=parseInt(_0x171fe8[_0x5c11df(0x1ca)],0xa);});let _0xfcb7ea=null,_0x3b63e0=0x0,_0x1f1c9a=0x0;for(const _0x1ec152 in _0xa7caef){const _0x4e408e=_0xa7caef[_0x1ec152],_0x12e174=document[_0x31eba2(0x175)](_0x31eba2(0x15c)+_0x1ec152),_0x374353=_0x12e174?parseFloat(_0x12e174[_0x31eba2(0x1ca)])||0x0:0x0;_0x374353>0x0&&(_0x3b63e0+=_0x4e408e*_0x374353,_0x1f1c9a+=_0x374353);}if(_0x1f1c9a>0x0)_0xfcb7ea=_0x3b63e0/_0x1f1c9a;let _0x804f8d=-0x1,_0x738388=0x65,_0x873275=null,_0x4f3348=null;const _0x50a42c=Object['values'](_0xa7caef)[_0x31eba2(0x1f0)](_0x2e5955=>!isNaN(_0x2e5955));if(_0x50a42c[_0x31eba2(0x15d)]>0x0)for(const _0x1a34f5 in _0xa7caef){const _0x500fed=_0xa7caef[_0x1a34f5];_0x500fed>_0x804f8d&&(_0x804f8d=_0x500fed,_0x873275=_0x1a34f5),_0x500fed<_0x738388&&(_0x738388=_0x500fed,_0x4f3348=_0x1a34f5);}const _0x290c2f=document[_0x31eba2(0x175)](_0x31eba2(0x177)+_0x2c625c),_0x1eb9c4=_0x290c2f&&_0x290c2f[_0x31eba2(0x1ca)]!==''?parseInt(_0x290c2f[_0x31eba2(0x1ca)],0xa):null;let _0x297043='-';if(_0xfcb7ea!==null){if(_0xd370cb===0x0||_0x1eb9c4===null)_0x297043=Math[_0x31eba2(0x161)](_0xfcb7ea);else{const _0x3540e9=_0xfcb7ea*_0x417292+_0x1eb9c4*_0xd370cb,_0x25c1d0=_0x417292+_0xd370cb;if(_0x25c1d0>0x0)_0x297043=Math['round'](_0x3540e9/_0x25c1d0);else _0x297043=Math['round'](_0xfcb7ea);}}const _0x338a51=_0xfcb7ea!==null?Math['round'](_0xfcb7ea):'-',_0x307130=_0x320f93[_0x31eba2(0x16c)](_0x2b905c=>_0x2b905c['id']===_0x873275),_0x2fcbf0=_0x320f93[_0x31eba2(0x16c)](_0x130318=>_0x130318['id']===_0x4f3348),_0x41055=getPredikatForNilai(_0x507298,_0x804f8d,_0x3c11a1),_0x17c419=getPredikatForNilai(_0x507298,_0x738388,_0x3c11a1),_0x2a0b34=_0x307130?_0x41055?_0x41055+_0x31eba2(0x1ab)+_0x307130[_0x31eba2(0x16d)]:_0x307130[_0x31eba2(0x16d)]:'-',_0x5c9cfe=_0x2fcbf0?_0x17c419?_0x17c419+_0x31eba2(0x1ab)+_0x2fcbf0['deskripsi']:_0x2fcbf0[_0x31eba2(0x16d)]:'-';return{'rataRata':_0x338a51,'nilaiR':_0x297043,'deskripsiMax':_0x2a0b34,'deskripsiMin':_0x5c9cfe};}function _0x252c21(_0x201218){const _0xa726e8=_0x2bdfa4,_0x254ad7=_0x4eab9b(_0x201218);document[_0xa726e8(0x175)](_0xa726e8(0x199)+_0x201218)[_0xa726e8(0x17d)]=_0x254ad7['rataRata'],document[_0xa726e8(0x175)]('r-'+_0x201218)['textContent']=_0x254ad7[_0xa726e8(0x1a9)],document[_0xa726e8(0x175)](_0xa726e8(0x1e4)+_0x201218)['textContent']=_0x254ad7[_0xa726e8(0x1b2)],document[_0xa726e8(0x175)](_0xa726e8(0x178)+_0x201218)[_0xa726e8(0x17d)]=_0x254ad7[_0xa726e8(0x1df)];}const _0x58d09e=_0x3c11a1[_0x2bdfa4(0x1b3)]?.[_0x1818b5]?.[_0x507298]||{},_0x5cb810=_0x58d09e['rr']??0x1,_0xa50f42=_0x58d09e[_0x2bdfa4(0x1c1)]??0x1;let _0x3522ba='<tr><th\x20class=\x22col-no\x22>No</th><th\x20class=\x22col-nama\x22>Nama\x20Siswa</th>';_0x320f93[_0x2bdfa4(0x1a1)]((_0x3c315b,_0x165e7e)=>{const _0x1c8389=_0x2bdfa4,_0x506da8=_0x58d09e['tp']?.[_0x3c315b['id']]??0x1;_0x3522ba+=_0x1c8389(0x15b)+_0x3c315b[_0x1c8389(0x16d)]+_0x1c8389(0x1e8)+(_0x165e7e+0x1)+_0x1c8389(0x1a5)+_0x3c315b['id']+'\x22\x20value=\x22'+_0x506da8+_0x1c8389(0x19d)+(_0x165e7e+0x1)+_0x1c8389(0x1bc);}),_0x3522ba+=_0x2bdfa4(0x18a)+_0x5cb810+_0x2bdfa4(0x165)+_0xa50f42+_0x2bdfa4(0x1e6),_0x1b57e3['innerHTML']=_0x3522ba,_0x4d35a2[_0x2bdfa4(0x1a1)]((_0x2b8491,_0x3704f7)=>{const _0x2377fd=_0x2bdfa4,_0x28d98b=document['createElement']('tr');_0x28d98b[_0x2377fd(0x1a3)](_0x2377fd(0x1b5),_0x2b8491[_0x2377fd(0x1cc)]),_0x28d98b['setAttribute'](_0x2377fd(0x1e9),_0x2b8491[_0x2377fd(0x18c)][_0x2377fd(0x1d0)]());let _0x4acf51=_0x2377fd(0x1d8)+(_0x3704f7+0x1)+_0x2377fd(0x16a)+_0x2b8491[_0x2377fd(0x18c)]+'</td>';_0x320f93['forEach'](_0x527791=>{const _0xaafb44=_0x2377fd,_0x1ab807=_0x3c11a1[_0xaafb44(0x1cf)]?.[_0x2b8491['id']]?.[_0x1818b5]?.[_0x507298]?.[_0x527791['id']]||'';_0x4acf51+=_0xaafb44(0x1c5)+_0x1ab807+_0xaafb44(0x1d9)+_0x2b8491['id']+'\x22\x20data-tp-id=\x22'+_0x527791['id']+_0xaafb44(0x18f);});const _0x1d99ce=_0x3c11a1[_0x2377fd(0x1cf)]?.[_0x2b8491['id']]?.[_0x1818b5]?.[_0x507298]?.[_0x2377fd(0x1c1)]||'';_0x4acf51+=_0x2377fd(0x1ec)+_0x2b8491['id']+_0x2377fd(0x1c0)+_0x1d99ce+_0x2377fd(0x1d9)+_0x2b8491['id']+_0x2377fd(0x1e3)+_0x2b8491['id']+_0x2377fd(0x167)+_0x2b8491['id']+'\x22\x20class=\x22col-rata\x22\x20style=\x22font-weight:bold;\x22></td><td\x20id=\x22max-'+_0x2b8491['id']+'\x22\x20class=\x22col-deskripsi\x22></td><td\x20id=\x22min-'+_0x2b8491['id']+_0x2377fd(0x185),_0x28d98b[_0x2377fd(0x189)]=_0x4acf51,_0x3389df[_0x2377fd(0x17e)](_0x28d98b),_0x28d98b[_0x2377fd(0x18b)](_0x2377fd(0x1e5))[_0x2377fd(0x1a1)](_0x27b053=>{const _0x44ea15=_0x2377fd;_0x27b053['addEventListener'](_0x44ea15(0x1c2),()=>_0x252c21(_0x2b8491['id']));}),_0x252c21(_0x2b8491['id']);});const _0x2216f=()=>_0x4d35a2[_0x2bdfa4(0x1a1)](_0x5a1354=>_0x252c21(_0x5a1354['id']));document['getElementById']('bobotRR')[_0x2bdfa4(0x160)]('input',_0x2216f),document[_0x2bdfa4(0x175)](_0x2bdfa4(0x1c8))[_0x2bdfa4(0x160)](_0x2bdfa4(0x1c2),_0x2216f),document['querySelectorAll'](_0x2bdfa4(0x1bd))['forEach'](_0x569c95=>_0x569c95[_0x2bdfa4(0x160)]('input',_0x2216f)),_0x55879d[_0x2bdfa4(0x160)]('click',async()=>{const _0x3fed64=_0x2bdfa4;if(!_0x3c11a1[_0x3fed64(0x1cf)])_0x3c11a1[_0x3fed64(0x1cf)]={};_0x4d35a2[_0x3fed64(0x1a1)](_0x4382e1=>{const _0x567965=_0x3fed64,_0x171494=_0x4382e1['id'];if(!_0x3c11a1[_0x567965(0x1cf)][_0x171494])_0x3c11a1[_0x567965(0x1cf)][_0x171494]={};if(!_0x3c11a1[_0x567965(0x1cf)][_0x171494][_0x1818b5])_0x3c11a1[_0x567965(0x1cf)][_0x171494][_0x1818b5]={};if(!_0x3c11a1[_0x567965(0x1cf)][_0x171494][_0x1818b5][_0x507298])_0x3c11a1[_0x567965(0x1cf)][_0x171494][_0x1818b5][_0x507298]={};document[_0x567965(0x18b)]('input.nilai-tp[data-siswa-id=\x22'+_0x171494+'\x22]')[_0x567965(0x1a1)](_0x2bb34c=>{const _0x3e8ac0=_0x567965,_0x44d671=_0x2bb34c[_0x3e8ac0(0x1a8)]['tpId'],_0x277c5f=_0x2bb34c['value'][_0x3e8ac0(0x1db)]();if(_0x277c5f!=='')_0x3c11a1[_0x3e8ac0(0x1cf)][_0x171494][_0x1818b5][_0x507298][_0x44d671]=parseInt(_0x277c5f,0xa);else{if(_0x3c11a1[_0x3e8ac0(0x1cf)][_0x171494]?.[_0x1818b5]?.[_0x507298]?.[_0x44d671]!==undefined)delete _0x3c11a1[_0x3e8ac0(0x1cf)][_0x171494][_0x1818b5][_0x507298][_0x44d671];}});const _0x1dda0f=document[_0x567965(0x175)](_0x567965(0x177)+_0x171494),_0x4c4c5f=_0x1dda0f[_0x567965(0x1ca)][_0x567965(0x1db)]();if(_0x4c4c5f!=='')_0x3c11a1[_0x567965(0x1cf)][_0x171494][_0x1818b5][_0x507298][_0x567965(0x1c1)]=parseInt(_0x4c4c5f,0xa);else{if(_0x3c11a1[_0x567965(0x1cf)][_0x171494]?.[_0x1818b5]?.[_0x507298]?.['pas']!==undefined)delete _0x3c11a1[_0x567965(0x1cf)][_0x171494][_0x1818b5][_0x507298][_0x567965(0x1c1)];}const _0x2da7f6=_0x4eab9b(_0x171494),_0x32a569=_0x2da7f6[_0x567965(0x1a9)];if(_0x32a569!=='-'&&!isNaN(_0x32a569))_0x3c11a1[_0x567965(0x1cf)][_0x171494][_0x1818b5][_0x507298]['nilaiAkhir']=_0x32a569;else _0x3c11a1[_0x567965(0x1cf)][_0x171494]?.[_0x1818b5]?.[_0x507298]?.[_0x567965(0x17b)]!==undefined&&delete _0x3c11a1['nilai'][_0x171494][_0x1818b5][_0x507298]['nilaiAkhir'];});if(!_0x3c11a1[_0x3fed64(0x1b3)])_0x3c11a1[_0x3fed64(0x1b3)]={};if(!_0x3c11a1[_0x3fed64(0x1b3)][_0x1818b5])_0x3c11a1[_0x3fed64(0x1b3)][_0x1818b5]={};const _0x170035={'rr':parseFloat(document[_0x3fed64(0x175)]('bobotRR')[_0x3fed64(0x1ca)])||0x1,'pas':parseFloat(document[_0x3fed64(0x175)](_0x3fed64(0x1c8))['value'])||0x1,'tp':{}};document[_0x3fed64(0x18b)](_0x3fed64(0x1bd))['forEach'](_0x227cc4=>{const _0x1adfab=_0x3fed64,_0x4d9274=_0x227cc4['id'][_0x1adfab(0x1d3)](_0x1adfab(0x15c),'');_0x170035['tp'][_0x4d9274]=parseFloat(_0x227cc4[_0x1adfab(0x1ca)])||0x1;}),_0x3c11a1[_0x3fed64(0x1b3)][_0x1818b5][_0x507298]=_0x170035,saveData(_0x3c11a1),await showModal(_0x3fed64(0x168),_0x3fed64(0x1a7));}),_0x26411c[_0x2bdfa4(0x160)](_0x2bdfa4(0x1c7),()=>{const _0x54da91=_0x2bdfa4,_0x3a936e=_0x3c11a1['predikat']?.[_0x507298]||DEFAULT_PREDIKAT;_0x55f5b3[_0x54da91(0x189)]='',_0x4c9a6a[_0x54da91(0x17d)]=_0x54da91(0x171)+_0x3b4997,_0x3a936e['forEach']((_0x2d4d53,_0x2b7585)=>{const _0x289ae5=_0x54da91;_0x55f5b3[_0x289ae5(0x189)]+=_0x289ae5(0x1b4)+_0x2d4d53[_0x289ae5(0x1aa)]+_0x289ae5(0x19c)+_0x2b7585+'\x22\x20data-field=\x22dari\x22\x20required><input\x20type=\x22number\x22\x20placeholder=\x22Sampai\x22\x20value=\x22'+_0x2d4d53['sampai']+_0x289ae5(0x19c)+_0x2b7585+'\x22\x20data-field=\x22sampai\x22\x20required><input\x20type=\x22text\x22\x20placeholder=\x22Predikat\x20(e.g.,\x20Baik)\x22\x20value=\x22'+_0x2d4d53[_0x289ae5(0x196)]+'\x22\x20data-index=\x22'+_0x2b7585+_0x289ae5(0x1d5);}),_0x5cb71f['style'][_0x54da91(0x181)]='flex';}),_0x580b6c[_0x2bdfa4(0x160)](_0x2bdfa4(0x1c7),()=>_0x5cb71f['style'][_0x2bdfa4(0x181)]=_0x2bdfa4(0x1a6)),_0x574925['addEventListener'](_0x2bdfa4(0x1a4),async _0x58be27=>{const _0x35d619=_0x2bdfa4;_0x58be27['preventDefault']();const _0x34ffbf=[];let _0x1e4a56=!![];for(const _0x30cf2a of _0x55f5b3[_0x35d619(0x18b)](_0x35d619(0x1ef))){const _0x2cabb8=parseInt(_0x30cf2a[_0x35d619(0x1d6)]('[data-field=\x22dari\x22]')['value'],0xa),_0x11e440=_0x30cf2a['querySelector'](_0x35d619(0x1c4))['value'][_0x35d619(0x1db)]();if(isNaN(_0x2cabb8)||isNaN(_0x1cbc63)||!_0x11e440){_0x1e4a56=![];break;}_0x34ffbf['push']({'dari':_0x2cabb8,'sampai':_0x1cbc63,'predikat':_0x11e440});}if(!_0x1e4a56){await showModal(_0x35d619(0x194),_0x35d619(0x187));return;}if(!_0x3c11a1[_0x35d619(0x196)])_0x3c11a1['predikat']={};_0x3c11a1['predikat'][_0x507298]=_0x34ffbf,saveData(_0x3c11a1),_0x5cb71f[_0x35d619(0x19e)][_0x35d619(0x181)]='none',await showModal(_0x35d619(0x168),'Rentang\x20predikat\x20telah\x20disimpan\x20untuk\x20mata\x20pelajaran\x20ini.');}),_0x2d045c['addEventListener'](_0x2bdfa4(0x1c7),()=>_0x2dd02c[_0x2bdfa4(0x19e)][_0x2bdfa4(0x181)]='flex'),_0x13d977[_0x2bdfa4(0x160)](_0x2bdfa4(0x1c7),()=>{const _0x1a48f7=_0x2bdfa4;_0x2dd02c[_0x1a48f7(0x19e)][_0x1a48f7(0x181)]=_0x1a48f7(0x1a6),_0x4bc9cb=null,_0x3b43e0[_0x1a48f7(0x17d)]=_0x1a48f7(0x18d),_0x1019a7['disabled']=!![];}),_0x256335[_0x2bdfa4(0x160)](_0x2bdfa4(0x1c7),()=>{const _0x5bc7dd=_0x2bdfa4,_0x1c85da=[_0x5bc7dd(0x1ac),'Nama\x20Siswa'];_0x320f93[_0x5bc7dd(0x1a1)]((_0xa17882,_0x43ec85)=>_0x1c85da[_0x5bc7dd(0x191)](_0x5bc7dd(0x1ed)+(_0x43ec85+0x1))),_0x1c85da['push']('PAS');const _0x43b936=[_0x1c85da];_0x4d35a2['forEach'](_0x3fd366=>{const _0x4fa692=_0x5bc7dd,_0x50edb8=[_0x3fd366[_0x4fa692(0x1cc)],_0x3fd366[_0x4fa692(0x18c)]];_0x320f93[_0x4fa692(0x1a1)](()=>_0x50edb8[_0x4fa692(0x191)]('')),_0x50edb8['push'](''),_0x43b936['push'](_0x50edb8);});const _0x3b322f=XLSX[_0x5bc7dd(0x190)][_0x5bc7dd(0x174)](_0x43b936),_0x20e59a=XLSX[_0x5bc7dd(0x190)]['book_new']();XLSX[_0x5bc7dd(0x190)][_0x5bc7dd(0x19a)](_0x20e59a,_0x3b322f,_0x5bc7dd(0x186));const _0x2f3d16=_0x3c11a1[_0x5bc7dd(0x17f)][_0x5bc7dd(0x164)]||_0x1818b5,_0x157a0e=(_0x5bc7dd(0x1c3)+_0x3b4997+'_'+_0x2f3d16+'.xlsx')[_0x5bc7dd(0x1d3)](/[\/\\?%*:|"<> ]/g,'_');XLSX[_0x5bc7dd(0x17c)](_0x20e59a,_0x157a0e);}),_0x31e6ff['addEventListener'](_0x2bdfa4(0x1c7),()=>_0x2273af[_0x2bdfa4(0x1c7)]()),_0x2273af['addEventListener']('change',_0x2ec2ca=>{const _0x1c1868=_0x2bdfa4;_0x4bc9cb=_0x2ec2ca[_0x1c1868(0x1b1)][_0x1c1868(0x1e7)][0x0],_0x4bc9cb?(_0x3b43e0['textContent']=_0x4bc9cb[_0x1c1868(0x198)],_0x1019a7[_0x1c1868(0x1dc)]=![]):(_0x3b43e0[_0x1c1868(0x17d)]=_0x1c1868(0x18d),_0x1019a7[_0x1c1868(0x1dc)]=!![]),_0x2ec2ca[_0x1c1868(0x1b1)][_0x1c1868(0x1ca)]='';}),_0x1019a7[_0x2bdfa4(0x160)]('click',()=>{const _0xd9bf93=_0x2bdfa4;if(!_0x4bc9cb){showModal(_0xd9bf93(0x194),'Silakan\x20pilih\x20file\x20Excel\x20terlebih\x20dahulu.');return;}const _0x4771dc=new FileReader();_0x4771dc[_0xd9bf93(0x1b0)]=async _0x4b800d=>{const _0x1e0084=_0xd9bf93;try{const _0x3a139a=new Uint8Array(_0x4b800d[_0x1e0084(0x1b1)]['result']),_0x1145f1=XLSX[_0x1e0084(0x1bb)](_0x3a139a,{'type':_0x1e0084(0x1b9)}),_0x98c144=_0x1145f1['SheetNames'][0x0],_0x351bb1=_0x1145f1['Sheets'][_0x98c144],_0x229824=XLSX[_0x1e0084(0x190)][_0x1e0084(0x1cb)](_0x351bb1);let _0x395307=0x0;_0x229824['forEach'](_0x179b71=>{const _0x15b111=_0x1e0084,_0x28c052=_0x179b71[_0x15b111(0x1ac)],_0x159733=document[_0x15b111(0x1d6)](_0x15b111(0x19f)+_0x28c052+'\x22]');if(_0x159733){const _0x112a2b=_0x159733[_0x15b111(0x1d6)]('.nilai-input')[_0x15b111(0x1a8)]['siswaId'];_0x320f93['forEach']((_0x5a08e4,_0x3f125e)=>{const _0x10a06c=_0x15b111,_0x266e68=_0x10a06c(0x1ed)+(_0x3f125e+0x1),_0xfef11a=_0x179b71[_0x266e68];if(_0xfef11a!==undefined&&_0xfef11a!==null){const _0x547c50=_0x159733[_0x10a06c(0x1d6)]('input[data-tp-id=\x22'+_0x5a08e4['id']+'\x22]');if(_0x547c50)_0x547c50[_0x10a06c(0x1ca)]=_0xfef11a;}});const _0x2b1c9b=_0x179b71[_0x15b111(0x1ad)];if(_0x2b1c9b!==undefined&&_0x2b1c9b!==null){const _0x38d341=_0x159733[_0x15b111(0x1d6)](_0x15b111(0x1da));if(_0x38d341)_0x38d341['value']=_0x2b1c9b;}_0x395307++;}}),_0x2216f(),_0x13d977[_0x1e0084(0x1c7)](),await showModal(_0x1e0084(0x169),_0x395307+_0x1e0084(0x1b6));}catch(_0x5395be){await showModal(_0x1e0084(0x194),_0x1e0084(0x1a2)+_0x5395be[_0x1e0084(0x183)]);}},_0x4771dc['readAsArrayBuffer'](_0x4bc9cb);}),_0x55cbb9['addEventListener'](_0x2bdfa4(0x1c7),()=>_0x2278f8['style'][_0x2bdfa4(0x181)]=_0x2bdfa4(0x173)),_0x9cd9a['addEventListener'](_0x2bdfa4(0x1c7),()=>_0x2278f8[_0x2bdfa4(0x19e)]['display']='none'),_0x3ca942['addEventListener']('input',_0x3aebce=>{const _0x34d6e7=_0x2bdfa4,_0x5b8fe7=_0x3aebce['target'][_0x34d6e7(0x1ca)][_0x34d6e7(0x1d0)](),_0x37cefb=_0x3389df[_0x34d6e7(0x18b)]('tr');_0x37cefb[_0x34d6e7(0x1a1)](_0x523788=>{const _0x571c67=_0x34d6e7,_0x447118=_0x523788[_0x571c67(0x192)]('data-nama');_0x447118[_0x571c67(0x1bf)](_0x5b8fe7)?_0x523788[_0x571c67(0x19e)][_0x571c67(0x181)]='':_0x523788[_0x571c67(0x19e)][_0x571c67(0x181)]=_0x571c67(0x1a6);});});}));
+
+document.addEventListener('DOMContentLoaded', function() {
+    const btnExport = document.getElementById('eksporExcel');
+    
+    if (btnExport) {
+        btnExport.addEventListener('click', function() {
+            const mapelTitle = document.getElementById('judulMapel').innerText.replace('Input Nilai: ', '').trim() || 'Data_Nilai';
+            const cleanMapel = mapelTitle.replace(/[^a-zA-Z0-9]/g, '_');
+
+            let suffixKelas = "";
+            try {
+                if (typeof loadData === 'function') {
+                    const dataAplikasi = loadData();
+                    if (dataAplikasi && dataAplikasi.infoDasar && dataAplikasi.infoDasar.kelas) {
+                        suffixKelas = "_" + dataAplikasi.infoDasar.kelas.replace(/[^a-zA-Z0-9]/g, '_');
+                    }
+                }
+            } catch (e) {
+                console.warn("Gagal mengambil info kelas:", e);
+            }
+
+            const cleanFileName = `${cleanMapel}${suffixKelas}.xlsx`;
+            let data = [];
+
+            const thead = document.querySelector('#tabelNilai thead tr');
+            let headers = [];
+            if (thead) {
+
+                thead.querySelectorAll('th').forEach(th => {
+                    let clone = th.cloneNode(true);
+                    let inputs = clone.querySelectorAll('input');
+                    inputs.forEach(input => input.remove());
+
+                    let headerText = clone.textContent.trim().replace(/\n/g, ' ');
+                    headers.push(headerText);
+                });
+            }
+            data.push(headers);
+
+            const tbody = document.getElementById('tabelNilaiBody');
+            if (tbody) {
+
+                tbody.querySelectorAll('tr').forEach(tr => {
+                    let row = [];
+
+                    tr.querySelectorAll('td').forEach(td => {
+
+                        let input = td.querySelector('input');
+                        if (input) {
+                            row.push(input.value); 
+                        } else {
+                            row.push(td.textContent.trim()); 
+                        }
+                    });
+                    data.push(row);
+                });
+            }
+
+            if (typeof XLSX !== 'undefined') {
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                const wscols = headers.map(h => ({wch: h.length + 10})); 
+                ws['!cols'] = wscols;
+
+                XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai");
+                XLSX.writeFile(wb, cleanFileName);
+            } else {
+                alert("Sistem belum siap. Silakan muat ulang halaman.");
+            }
+        });
+    }
+});
+</script>
+</body>
+
+</html>
