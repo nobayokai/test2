@@ -208,7 +208,6 @@ document.addEventListener("DOMContentLoaded", () => {
         await originalLoadPage(page); 
         
         if (page === "latihan") {
-            // Referensi DOM baru dari latihan.html
             const btnLanjut = document.getElementById("btn-lanjut-ujian");
             const inputKode = document.getElementById("kode-ujian");
             const tahapKode = document.getElementById("input-kode-container");
@@ -220,82 +219,81 @@ document.addEventListener("DOMContentLoaded", () => {
             const btnMulaiUjian = document.getElementById("btn-konfirmasi-mulai");
             
             const areaUjian = document.getElementById("area-ujian");
-            const loadingSoal = document.createElement('div'); // Wadah loading sementara
-                loadingSoal.id = "loading-soal";
-                loadingSoal.style.cssText = "text-align: center; padding: 20px; display: none; color: #198754; font-weight: bold;";
-                loadingSoal.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mencari dan mengacak soal...`;
-            
-            tahapKode.appendChild(loadingSoal); // Taruh loading di bawah tombol input
+
+            // Variabel sementara untuk menampung soal yang sudah disaring (sesuai kode)
+            let soalSesuaiKode = [];
 
             if (btnLanjut) {
-                // Alur 1: Masukkan Kode -> Muncul Modal Konfirmasi (Gambar 1)
-                btnLanjut.addEventListener("click", () => {
+                // ALUR 1: Cek Kode Saat Klik 'Lanjut'
+                btnLanjut.addEventListener("click", async () => {
                     const kodeDiminta = inputKode.value.trim().toUpperCase();
                     if(!kodeDiminta) return;
                     
-                    currentExamCode = kodeDiminta; // Simpan kode
-                    labelKodeUjian.innerText = kodeDiminta; // Update label di modal
-                    modalKonfirmasi.style.display = "flex"; // Tampilkan modal
+                    // Ubah tombol jadi loading saat mengambil data dari Google Sheets
+                    btnLanjut.innerText = "Memeriksa Kode...";
+                    btnLanjut.disabled = true;
                     errorKode.style.display = "none";
+
+                    try {
+                        const response = await fetch(SCRIPT_URL);
+                        const semuaSoal = await response.json();
+
+                        // Saring hanya soal yang kodenya PERSIS sama dengan inputan siswa
+                        soalSesuaiKode = semuaSoal.filter(soal => soal.kode.toUpperCase() === kodeDiminta);
+
+                        if (soalSesuaiKode.length === 0) {
+                            // JIKA KODE TIDAK VALID ATAU TIDAK ADA
+                            errorKode.innerText = "Kode soal tidak valid! Pastikan kode soal sesuai.";
+                            errorKode.style.display = "block";
+                        } else {
+                            // JIKA KODE VALID
+                            currentExamCode = kodeDiminta; 
+                            labelKodeUjian.innerText = kodeDiminta; 
+                            modalKonfirmasi.style.display = "flex"; // Tampilkan Modal Konfirmasi
+                        }
+                    } catch (error) {
+                        errorKode.innerText = "Gagal terhubung ke server. Periksa koneksi internet.";
+                        errorKode.style.display = "block";
+                    } finally {
+                        // Kembalikan status tombol
+                        btnLanjut.innerText = "Lanjut";
+                        btnLanjut.disabled = false;
+                    }
                 });
             }
 
             if (btnBatal) {
+                // Tutup modal jika batal
                 btnBatal.addEventListener("click", () => {
                     modalKonfirmasi.style.display = "none";
                 });
             }
 
             if (btnMulaiUjian) {
-                // Alur 2: Klik 'Mulai' di Modal -> Muat Soal Satu per Satu (Gambar 2)
-                btnMulaiUjian.addEventListener("click", async () => {
+                // ALUR 2: Mulai Ujian setelah Konfirmasi
+                btnMulaiUjian.addEventListener("click", () => {
                     modalKonfirmasi.style.display = "none"; // Sembunyikan modal
                     tahapKode.style.display = "none"; // Sembunyikan input kode
-                    loadingSoal.style.display = "block"; // Tampilkan loading
 
-                    try {
-                        // Tarik semua soal dari Google Sheets via GET
-                        const response = await fetch(`${SCRIPT_URL}?action=get_questions&code=${currentExamCode}`);
-                        
-                        if (!response.ok) throw new Error("Gagal mengambil soal.");
-                        
-                        let semuaSoal = await response.json();
+                    // Acak urutan soal yang HANYA SESUAI KODE tadi
+                    loadedQuestions = acakUrutan(soalSesuaiKode); 
+                    currentQuestionIndex = 0; // Mulai dari soal no 1
+                    detailJawaban = {}; // Kosongkan jawaban sebelumnya (jika ada)
 
-                        // Jika kodenya salah atau soal tidak ada
-                        if (semuaSoal.length === 0) {
-                            loadingSoal.style.display = "none";
-                            tahapKode.style.display = "block";
-                            errorKode.style.display = "block";
-                            return;
-                        }
+                    // Update informasi di UI
+                    document.getElementById("label-kode-aktif").innerText = currentExamCode;
+                    document.getElementById("total-soal").innerText = loadedQuestions.length;
 
-                        // 1. Acak urutan soal secara random
-                        semuaSoal = acakUrutan(semuaSoal);
-                        
-                        // 2. Simpan ke memori global
-                        loadedQuestions = semuaSoal; 
-                        currentQuestionIndex = 0; // Reset ke nomor 1
-                        detailJawaban = {}; // Reset jawaban siswa
-
-                        // 3. Update Label UI
-                        document.getElementById("label-kode-aktif").innerText = currentExamCode;
-                        document.getElementById("total-soal").innerText = loadedQuestions.length;
-
-                        // 4. Tampilkan Soal Pertama dan Area Ujian
-                        displayQuestion(0);
-                        loadingSoal.style.display = "none";
-                        areaUjian.style.display = "block";
-                        
-                    } catch (error) {
-                        loadingSoal.innerHTML = `<span style="color:red;">Gagal memuat soal. Periksa koneksi atau URL Script Anda.</span>`;
-                    }
+                    // Tampilkan soal pertama dan buka area ujian
+                    displayQuestion(0);
+                    areaUjian.style.display = "block";
                 });
             }
 
-            // Tombol Navigasi Soal
+            // --- Tombol Navigasi Soal (Sebelumnya, Berikutnya, Selesai) ---
             document.getElementById("btn-sebelumnya").addEventListener("click", () => {
                 if(currentQuestionIndex > 0) {
-                    saveCurrentAnswer(); // Simpan jawaban saat ini
+                    saveCurrentAnswer(); 
                     currentQuestionIndex--;
                     displayQuestion(currentQuestionIndex);
                 }
@@ -303,20 +301,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
             document.getElementById("btn-berikutnya").addEventListener("click", () => {
                 if(currentQuestionIndex < loadedQuestions.length - 1) {
-                    saveCurrentAnswer(); // Simpan jawaban saat ini
+                    saveCurrentAnswer(); 
                     currentQuestionIndex++;
                     displayQuestion(currentQuestionIndex);
                 }
             });
 
             document.getElementById("btn-selesai-ujian").addEventListener("click", () => {
-                saveCurrentAnswer(); // Simpan jawaban terakhir
-                // Trigger form submit otomatis
+                saveCurrentAnswer(); 
                 submitUjian(); 
             });
         }
     };
-
+    
     // --- FUNGSI TAMPILKAN SOAL SATU PER SATU ---
     function displayQuestion(index) {
         const wadahTempatSoal = document.getElementById("tempat-soal");
