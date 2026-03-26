@@ -1,20 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRXV4GyA1RM7vpCpExb5LM8Tf6IXcxSVuziFOiGspnoZCnUxldV-B4zszMHyqzFS8U/exec";
+    
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
 
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRXV4GyA1RM7vpCpExb5LM8Tf6IXcxSVuziFOiGspnoZCnUxldV-B4zszMHyqzFS8U/exec";
     
     const contentArea = document.getElementById("content-area");
     const navItems = document.querySelectorAll(".nav-item");
-
+    const btnLogoutNav = document.getElementById("tombol-logout-nav");
 
     // --- TAMBAHKAN KODE INI UNTUK CEK SESI SAAT REFRESH ---
     const savedRole = sessionStorage.getItem("userRole");
     if (savedRole) {
         // Jika sudah login, sembunyikan tombol login di nav
         document.getElementById("tombol-login-nav").style.display = "none";
+        document.getElementById("tombol-logout-nav").style.display = "block"; // Munculkan tombol logout
         
         // Jika role-nya guru, munculkan menu rapor
         if (savedRole.toLowerCase() === "guru") {
@@ -64,6 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                     // Sembunyikan tombol login di navbar karena sudah masuk
                     document.getElementById("tombol-login-nav").style.display = "none";
+                    document.getElementById("tombol-logout-nav").style.display = "block"; // Munculkan tombol logout
                     // --------------------------
 
                     // Arahkan ke halaman dashboard (bisa Anda buat nanti di pages/dashboard.html)
@@ -151,4 +154,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Muat halaman beranda secara default saat web pertama kali dibuka
     loadPage("beranda");
+
+    if (btnLogoutNav) {
+        btnLogoutNav.addEventListener("click", (e) => {
+            e.preventDefault(); // Mencegah reload halaman
+            
+            // 1. Hapus data sesi dari browser
+            sessionStorage.removeItem("userRole");
+            sessionStorage.removeItem("userName");
+            
+            // 2. Sembunyikan menu khusus dan tombol logout
+            document.getElementById("menu-rapor").style.display = "none";
+            document.getElementById("tombol-logout-nav").style.display = "none";
+            
+            // 3. Munculkan kembali tombol Login
+            document.getElementById("tombol-login-nav").style.display = "block";
+            
+            // 4. Tutup menu hamburger jika sedang dibuka di HP
+            navMenu.classList.remove("active");
+            
+            // 5. Beri notifikasi dan kembalikan ke halaman beranda
+            alert("Anda telah berhasil keluar dari sistem.");
+            loadPage("beranda");
+        });
+    }
 });
