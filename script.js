@@ -5,6 +5,11 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
+    
+    const contentArea = document.getElementById("content-area");
+    const navItems = document.querySelectorAll(".nav-item");
+    const btnLogoutNav = document.getElementById("tombol-logout-nav");
+
     mobileMenuBtn.addEventListener("click", () => {
         // Menambah/menghapus class 'active' untuk memunculkan/menyembunyikan menu
         navMenu.classList.toggle("active");
@@ -19,9 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
     
-    const contentArea = document.getElementById("content-area");
-    const navItems = document.querySelectorAll(".nav-item");
-    const btnLogoutNav = document.getElementById("tombol-logout-nav");
 
     // --- TAMBAHKAN KODE INI UNTUK CEK SESI SAAT REFRESH ---
     const savedRole = sessionStorage.getItem("userRole");
