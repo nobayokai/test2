@@ -465,7 +465,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (isBenar === true) totalSkor += soal.poin;
             
             // Simpan detail untuk database (Kode Soal: Pertanyaan => Jawaban)
-            finalDetailJawaban[soal.pertanyaan.substring(0, 30) + "..."] = userJawaban;
+            finalDetailJawaban[soal.pertanyaan] = userJawaban;
         });
 
         // Kirim hasil ke Google Sheets via POST
