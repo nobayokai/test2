@@ -1,31 +1,41 @@
-<div style="padding: 30px 20px; max-width: 800px; margin: auto; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-    <h2 style="color: #198754; text-align: center;">Latihan Ujian</h2>
-    
-    <div id="tahap-kode-ujian" style="text-align: center; padding: 20px;">
-        <p style="color: #666; margin-bottom: 20px;">Silakan masukkan Kode Ujian yang diberikan oleh Guru Anda untuk memulai.</p>
-        
-        <input type="text" id="input-kode-ujian" placeholder="Contoh: TKA-01" style="width: 100%; max-width: 300px; padding: 12px; border: 2px solid #ccc; border-radius: 4px; margin-bottom: 15px; text-transform: uppercase; font-size: 16px; text-align: center; font-weight: bold;">
+<div style="padding: 30px 20px; max-width: 800px; margin: auto; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative;">
+    <h2 style="color: #198754; text-align: center;">Latihan Ujian TKA</h2>
+    <hr style="margin: 20px 0;">
+
+    <div id="input-kode-container" style="text-align: center; margin-bottom: 30px;">
+        <label for="kode-ujian" style="display: block; margin-bottom: 10px; font-weight: bold; color: #495057;">Masukkan Kode Ujian:</label>
+        <input type="text" id="kode-ujian" placeholder="Contoh: TKA-01" style="width: 100%; max-width: 300px; padding: 12px; border: 2px solid #ccc; border-radius: 5px; text-transform: uppercase; font-size: 16px; font-weight: bold; text-align: center;">
         <br>
-        <button id="btn-mulai-ujian" style="padding: 12px 30px; background-color: #198754; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px;">Mulai Ujian</button>
-        
+        <button id="btn-lanjut-ujian" style="margin-top: 15px; padding: 12px 30px; background-color: #198754; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px;">Lanjut</button>
         <div id="error-kode" style="color: #dc3545; font-weight: bold; margin-top: 15px; display: none;">Kode Ujian tidak ditemukan!</div>
     </div>
 
-    <div id="loading-soal" style="text-align: center; padding: 20px; display: none; color: #198754; font-weight: bold;">
-        <i class="fa-solid fa-spinner fa-spin"></i> Mencari dan mengacak soal...
+    <div id="modal-konfirmasi" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <h3 style="color: #2c3e50; margin-bottom: 15px; font-size: 1.5rem;">Mulai Ujian?</h3>
+            <p style="color: #666; margin-bottom: 25px; line-height: 1.6; font-size: 1.1rem;">Apakah Anda yakin ingin memulai ujian untuk kode <b id="label-kode-ujian" style="color: #198754;"></b>? Waktu akan segera dihitung setelah Anda mengklik 'Mulai'.</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button id="btn-batal-mulai" style="flex: 1; padding: 12px; background-color: #f8f9fa; color: #495057; border: 1px solid #ddd; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px;">Batal</button>
+                <button id="btn-konfirmasi-mulai" style="flex: 1; padding: 12px; background-color: #198754; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px;">Mulai</button>
+            </div>
+        </div>
     </div>
-    
-    <form id="form-ujian" style="display: none;">
-        <p style="text-align: right; color: #666; margin-bottom: 15px; font-size: 14px; font-weight: bold;">Kode Ujian: <span id="label-kode-aktif" style="color:#198754;"></span></p>
+
+    <div id="area-ujian" style="display: none;">
+        <p style="text-align: center; color: #666; margin-bottom: 10px; font-weight: bold;">Kode Ujian: <span id="label-kode-aktif" style="color: #198754;"></span></p>
         
-        <input type="hidden" id="kode-soal-aktif" name="kode_soal_aktif" value="">
+        <p style="text-align: center; font-size: 14px; margin-bottom: 20px; font-weight: bold;">Soal <span id="nomor-soal-aktif"></span> dari <span id="total-soal"></span></p>
         
-        <div id="tempat-soal"></div>
-        
-        <button type="submit" id="btn-submit-ujian" style="width: 100%; padding: 15px; background-color: #198754; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 20px;">
-            Kumpulkan Jawaban
-        </button>
-    </form>
-    
-    <div id="hasil-ujian-alert" style="display: none; padding: 20px; margin-top: 20px; border-radius: 5px; text-align: center; font-weight: bold; border: 2px dashed #198754;"></div>
+        <div id="tempat-soal" style="margin-bottom: 30px;">
+            </div>
+
+        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+            <button id="btn-sebelumnya" style="flex: 1; padding: 12px; background-color: #f8f9fa; color: #495057; border: 1px solid #ddd; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px; display: none;">Sebelumnya</button>
+            <button id="btn-berikutnya" style="flex: 1; padding: 12px; background-color: #198754; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px;">Berikutnya</button>
+            <button id="btn-selesai-ujian" style="flex: 1; padding: 12px; background-color: #dc3545; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px; display: none;">Selesai</button>
+        </div>
+    </div>
+
+    <div id="hasil-ujian-alert" style="display: none; padding: 20px; margin-top: 30px; border-radius: 5px; text-align: center; font-weight: bold; border: 2px dashed #198754; background-color: #d1e7dd; color: #0f5132;"></div>
+
 </div>
