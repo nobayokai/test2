@@ -1,0 +1,31 @@
+<div style="padding: 30px 20px; max-width: 800px; margin: auto; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+    <h2 style="color: #198754; text-align: center;">Latihan Ujian</h2>
+    
+    <div id="tahap-kode-ujian" style="text-align: center; padding: 20px;">
+        <p style="color: #666; margin-bottom: 20px;">Silakan masukkan Kode Ujian yang diberikan oleh Guru Anda untuk memulai.</p>
+        
+        <input type="text" id="input-kode-ujian" placeholder="Contoh: TKA-01" style="width: 100%; max-width: 300px; padding: 12px; border: 2px solid #ccc; border-radius: 4px; margin-bottom: 15px; text-transform: uppercase; font-size: 16px; text-align: center; font-weight: bold;">
+        <br>
+        <button id="btn-mulai-ujian" style="padding: 12px 30px; background-color: #198754; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px;">Mulai Ujian</button>
+        
+        <div id="error-kode" style="color: #dc3545; font-weight: bold; margin-top: 15px; display: none;">Kode Ujian tidak ditemukan!</div>
+    </div>
+
+    <div id="loading-soal" style="text-align: center; padding: 20px; display: none; color: #198754; font-weight: bold;">
+        <i class="fa-solid fa-spinner fa-spin"></i> Mencari dan mengacak soal...
+    </div>
+    
+    <form id="form-ujian" style="display: none;">
+        <p style="text-align: right; color: #666; margin-bottom: 15px; font-size: 14px; font-weight: bold;">Kode Ujian: <span id="label-kode-aktif" style="color:#198754;"></span></p>
+        
+        <input type="hidden" id="kode-soal-aktif" name="kode_soal_aktif" value="">
+        
+        <div id="tempat-soal"></div>
+        
+        <button type="submit" id="btn-submit-ujian" style="width: 100%; padding: 15px; background-color: #198754; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 20px;">
+            Kumpulkan Jawaban
+        </button>
+    </form>
+    
+    <div id="hasil-ujian-alert" style="display: none; padding: 20px; margin-top: 20px; border-radius: 5px; text-align: center; font-weight: bold; border: 2px dashed #198754;"></div>
+</div>
