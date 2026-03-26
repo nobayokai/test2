@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // Arahkan ke halaman dashboard (bisa Anda buat nanti di pages/dashboard.html)
                     setTimeout(() => {
-                        loadPage("dashboard"); // Memuat halaman dashboard secara dinamis
+                        loadPage("beranda"); // Memuat halaman dashboard secara dinamis
                     }, 1500);
 
                 } else {
