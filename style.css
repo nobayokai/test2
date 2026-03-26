@@ -167,224 +167,91 @@
 
 /* ... (kode sebelumnya) ... */
 
-/* LOADING, ERROR, SUKSES TEXT */
-.loading-text, .error-text, .success-text {
-    text-align: center;
-    padding: 50px;
-}
-.error-text { color: red; }
-.success-text { color: green; }
+/* --- CSS UNTUK CBT PROFESIONAL --- */
 
-/* ALERT BOX */
-.alert-box {
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-    text-align: center;
-    font-size: 14px;
-}
-.alert-box.sukses {
-    background-color: #d1e7dd;
-    color: #0f5132;
-}
-.alert-box.error {
-    background-color: #f8d7da;
-    color: #842029;
-}
-
-/* MODAL CONFIRMATION */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    overflow: auto;
-}
-.modal-content {
-    background-color: #fefefe;
-    margin: 15% auto;
-    padding: 30px;
+/* Gaya untuk wadah soal */
+.wadah-soal {
+    padding: 20px;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
-    width: 80%;
-    max-width: 500px;
-    text-align: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-}
-.modal-content h3 {
-    color: #198754;
-    margin-bottom: 15px;
-}
-.modal-content p {
-    margin-bottom: 10px;
-}
-.modal-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 25px;
-}
-
-/* BUTTONS */
-.btn-primary {
-    background-color: #198754;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
-.btn-primary:hover {
-    background-color: #146c43;
-}
-.btn-secondary {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-.btn-secondary:hover {
-    background-color: #5a6268;
-}
-
-/* LATIHAN PAGE (INPUT KODE) */
-.latihan-container {
-    padding: 50px 20px;
-    text-align: center;
-    max-width: 500px;
-    margin: 0 auto;
-}
-.latihan-container h2 {
-    color: #198754;
-    margin-bottom: 15px;
-}
-.latihan-container p {
-    margin-bottom: 30px;
-    color: #495057;
-}
-.kode-soal-form input[type="text"] {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border: 1px solid #ced4da;
-    border-radius: 5px;
-    text-align: center;
-    font-size: 16px;
-}
-.kode-soal-form button {
-    width: 100%;
-    padding: 12px;
-    background-color: #198754;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 16px;
-}
-.kode-soal-form button:hover {
-    background-color: #146c43;
-}
-
-/* SOAL PAGE */
-.soal-container {
-    padding: 30px 20px;
-    max-width: 800px;
-    margin: 0 auto;
-}
-.soal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #e0e0e0;
-}
-.soal-header h2 {
-    color: #198754;
-}
-.timer {
-    font-size: 18px;
-    font-weight: bold;
-    color: red;
-    background-color: #f8d7da;
-    padding: 8px 15px;
-    border-radius: 5px;
-}
-
-.soal-content {
-    margin-bottom: 40px;
-}
-.soal-pertanyaan {
-    font-size: 18px;
+    background: #fafafa;
     margin-bottom: 20px;
+}
+
+/* Gaya untuk teks pertanyaan */
+.pertanyaan {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
     line-height: 1.6;
 }
-.soal-poin {
-    font-size: 14px;
+
+/* Gaya untuk indikator poin soal */
+.poin-soal {
+    font-size: 0.9rem;
     color: #198754;
+    font-weight: normal;
+    float: right;
     margin-left: 10px;
 }
-.soal-jawaban-area {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+
+/* Gaya untuk pilihan jawaban (radio/checkbox) */
+.wadah-pilihan {
+    display: block;
+    margin-bottom: 10px;
+    cursor: pointer;
+    background: white;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: background-color 0.3s;
 }
-.soal-jawaban-area label {
+
+.wadah-pilihan:hover {
+    background-color: #f1f8f5;
+}
+
+/* Gaya input di dalam pilihan */
+.wadah-pilihan input {
+    margin-right: 10px;
+    transform: scale(1.1);
+}
+
+/* Gaya untuk area Tarik Garis (Matching Dropdown) agar rapi */
+.wadah-tarik-garis {
     display: flex;
     align-items: center;
-    gap: 10px;
-    background-color: white;
-    padding: 15px;
-    border-radius: 5px;
-    border: 1px solid #ced4da;
-    cursor: pointer;
+    gap: 15px;
+    margin-bottom: 10px;
 }
-.soal-jawaban-area label:hover {
-    background-color: #f8f9fa;
+
+.item-tarik-garis {
+    flex: 1;
+    background: #e9ecef;
+    padding: 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    color: #495057;
 }
-.soal-jawaban-area input[type="text"],
-.soal-jawaban-area textarea {
+
+.select-tarik-garis {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 15px;
+}
+
+/* Gaya untuk Isian Singkat dan Esai */
+.input-isian, .input-esai {
     width: 100%;
     padding: 12px;
-    border: 1px solid #ced4da;
-    border-radius: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 15px;
 }
 
-.soal-navigation {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 30px;
+.input-esai {
+    resize: vertical;
 }
-.btn-nav {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
-.btn-nav:hover {
-    background-color: #0069d9;
-}
-.btn-submit {
-    background-color: #28a745;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
-.btn-submit:hover {
-    background-color: #218838;
-}
-
-.warning-text { color: orange; font-style: italic; }
