@@ -4,7 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
 
-    mobileMenuBtn.addEventListener("click", () => {
+
+    
+    const contentArea = document.getElementById("content-area");
+    const navItems = document.querySelectorAll(".nav-item");
+
+        mobileMenuBtn.addEventListener("click", () => {
         // Menambah/menghapus class 'active' untuk memunculkan/menyembunyikan menu
         navMenu.classList.toggle("active");
     });
@@ -17,9 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
-    
-    const contentArea = document.getElementById("content-area");
-    const navItems = document.querySelectorAll(".nav-item");
 
     // Fungsi untuk memuat halaman
     async function loadPage(page) {
