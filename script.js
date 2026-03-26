@@ -1,416 +1,513 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // --- Konfigurasi ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyc_fPgK9yeYrcqHn4GRmdqsJTWjQJJD_DA4EAEqjV-5c_Pj-D2uN3LEA42RtOAh0O2/exec"; // GANTI DENGAN URL GAS ANDA
 
-    // --- Elemen-elemen DOM ---
-    const contentArea = document.getElementById("content-area");
+    // --- Logika Menu Hamburger untuk HP ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzoa9ne43bhfZFD-lJ0zejgc4i2iEfM0fwsmo8q6sUgFqyMQndsnm8ufxVp-ptgFzo-/exec";
+    
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
+    
+    const contentArea = document.getElementById("content-area");
     const navItems = document.querySelectorAll(".nav-item");
     const btnLogoutNav = document.getElementById("tombol-logout-nav");
 
-    // Elemen-elemen Modal
-    const confirmModal = document.getElementById("confirm-modal");
-    const modalKodeSoalText = document.getElementById("modal-kode-soal");
-    const btnCancelModal = document.getElementById("btn-cancel-modal");
-    const btnStartExam = document.getElementById("btn-start-exam");
-
-    // Variabel Global untuk Ujian
-    let ujianData = {
-        kodeSoal: "",
-        semuaSoal: [],
-        currentSoalIndex: 0,
-        jawabanSiswa: {}, // Format: {soalId: "jawaban"}
-        timer: null,
-        sisaWaktuDetik: 0
-    };
-
-    // --- Inisialisasi ---
-    loadPage("beranda"); // Muat beranda secara default
-
-    // --- Logika Navigasi ---
     if (mobileMenuBtn && navMenu) {
         mobileMenuBtn.addEventListener("click", () => {
             navMenu.classList.toggle("active");
         });
     }
 
+
+    
+
+    // --- TAMBAHKAN KODE INI UNTUK CEK SESI SAAT REFRESH ---
+    const savedRole = sessionStorage.getItem("userRole");
+    if (savedRole) {
+        // Jika sudah login, sembunyikan tombol login di nav
+        document.getElementById("tombol-login-nav").style.display = "none";
+        document.getElementById("tombol-logout-nav").style.display = "block"; // Munculkan tombol logout
+        
+        // Jika role-nya guru, munculkan menu rapor
+        if (savedRole.toLowerCase() === "guru") {
+            document.getElementById("menu-rapor").style.display = "block";
+        }
+        if (savedRole.toLowerCase() === "siswa") {
+            const menuLatihan = document.getElementById("menu-latihan");
+            if (menuLatihan) menuLatihan.style.display = "block";
+        }
+    }
+    // -----------------------------------------------------
+
+
+    // Event Delegation untuk menangani form login yang dimuat dinamis
+    contentArea.addEventListener("submit", async function(e) {
+        if (e.target.id === "login-form") {
+            e.preventDefault(); // Mencegah form reload halaman
+
+            const userVal = document.getElementById("username").value;
+            const passVal = document.getElementById("password").value;
+            const btnLogin = document.getElementById("btn-login");
+            const loginAlert = document.getElementById("login-alert");
+
+            // Ubah tampilan tombol saat proses loading
+            btnLogin.innerText = "Memeriksa...";
+            btnLogin.disabled = true;
+            loginAlert.style.display = "none";
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ action: "login", username: userVal, password: passVal })
+                });
+
+                const result = await response.json();
+
+                if (result.status === "sukses") {
+                    loginAlert.style.backgroundColor = "#d1e7dd";
+                    loginAlert.style.color = "#0f5132";
+                    loginAlert.innerText = `Selamat datang, ${result.nama}! (Role: ${result.role})`;
+                    loginAlert.style.display = "block";
+
+                    // Simpan sesi login sederhana ke SessionStorage
+                    sessionStorage.setItem("userRole", result.role);
+                    sessionStorage.setItem("userName", result.nama);
+
+                    // --- TAMBAHKAN KODE INI ---
+                    // Cek jika role adalah Guru (pastikan tulisan sesuai dengan database di Google Sheet)
+                    if (result.role.toLowerCase() === "guru") {
+                        document.getElementById("menu-rapor").style.display = "block"; // Munculkan menu
+                    }
+                    if (result.role.toLowerCase() === "siswa") {
+                        const menuLatihan = document.getElementById("menu-latihan");
+                        if(menuLatihan) menuLatihan.style.display = "block";
+                    }
+                    // Sembunyikan tombol login di navbar karena sudah masuk
+                    document.getElementById("tombol-login-nav").style.display = "none";
+                    document.getElementById("tombol-logout-nav").style.display = "block"; // Munculkan tombol logout
+                    // --------------------------
+
+                    // Arahkan ke halaman dashboard (bisa Anda buat nanti di pages/dashboard.html)
+                    setTimeout(() => {
+                        loadPage("beranda"); // Memuat halaman dashboard secara dinamis
+                    }, 1500);
+
+                } else {
+                    // Jika gagal login
+                    loginAlert.style.backgroundColor = "#f8d7da";
+                    loginAlert.style.color = "#842029";
+                    loginAlert.innerText = result.message;
+                    loginAlert.style.display = "block";
+                }
+            } catch (error) {
+                loginAlert.style.backgroundColor = "#f8d7da";
+                loginAlert.style.color = "#842029";
+                loginAlert.innerText = "Terjadi kesalahan koneksi.";
+                loginAlert.style.display = "block";
+            } finally {
+                // Kembalikan tombol seperti semula
+                btnLogin.innerText = "Masuk";
+                btnLogin.disabled = false;
+            }
+        }
+    });
+
+    
+        
+
+    // Fungsi untuk memuat halaman
+    async function loadPage(page) {
+        try {
+            contentArea.innerHTML = '<h3 style="text-align:center; padding:50px;">Memuat...</h3>';
+            
+            // LOGIKA KHUSUS UNTUK MENU RAPOR (Menggunakan Iframe)
+            if (page === "nilai") {
+                contentArea.innerHTML = `
+                    <iframe 
+                        src="Nilai/index.html" 
+                        style="width: 100%; height: 85vh; border: none; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" 
+                        title="Aplikasi e-Rapor">
+                    </iframe>
+                `;
+                return; // Hentikan fungsi di sini agar tidak menjalankan fetch di bawah
+            }
+            
+            // LOGIKA UNTUK HALAMAN LAIN (beranda, profil, dll)
+            const response = await fetch(`pages/${page}.html`);
+            
+            if (!response.ok) {
+                throw new Error("Halaman tidak ditemukan");
+            }
+            
+            const html = await response.text();
+            contentArea.innerHTML = html;
+        } catch (error) {
+            contentArea.innerHTML = `<h3 style="text-align:center; padding:50px; color:red;">Error 404: ${error.message}</h3>`;
+        }
+    }
+
+    // Event listener untuk setiap menu navigasi
     navItems.forEach(item => {
         item.addEventListener("click", (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Mencegah reload halaman browser
             const pageName = item.getAttribute("data-page");
             loadPage(pageName);
-            if (window.innerWidth <= 768 && navMenu) {
-                navMenu.classList.remove("active");
-            }
+            
+            // Opsional: Ubah URL agar terlihat rapi tanpa reload (History API)
+            window.history.pushState({ page: pageName }, "", `#${pageName}`);
         });
     });
 
-    // --- Cek Sesi Refresh ---
-    const savedRole = sessionStorage.getItem("userRole");
-    if (savedRole) {
-        setLoggedInUI(savedRole);
+    // Muat halaman beranda secara default saat web pertama kali dibuka
+    loadPage("beranda");
+
+    if (btnLogoutNav) {
+        btnLogoutNav.addEventListener("click", (e) => {
+            e.preventDefault(); // Mencegah reload halaman
+            
+            // 1. Hapus data sesi dari browser
+            sessionStorage.removeItem("userRole");
+            sessionStorage.removeItem("userName");
+            
+            // 2. Sembunyikan menu khusus dan tombol logout
+            document.getElementById("menu-rapor").style.display = "none";
+            document.getElementById("tombol-logout-nav").style.display = "none";
+            
+            // 3. Munculkan kembali tombol Login
+            document.getElementById("tombol-login-nav").style.display = "block";
+            
+            // 4. Tutup menu hamburger jika sedang dibuka di HP
+            navMenu.classList.remove("active");
+            
+            // 5. Beri notifikasi dan kembalikan ke halaman beranda
+            alert("Anda telah berhasil keluar dari sistem.");
+            loadPage("beranda");
+        });
     }
 
-    // --- Fungsi Utama untuk Memuat Halaman (SPA) ---
-    async function loadPage(page) {
-        try {
-            contentArea.innerHTML = '<h3 class="loading-text">Memuat...</h3>';
 
-            // Logika Khusus Halaman
-            if (page === "nilai") {
-                loadNilaiIframe();
-                return;
-            } else if (page === "latihan") {
-                loadLatihanInputPage();
-                return;
-            } else if (page === "soal") {
-                // Jangan muat halaman soal langsung, harus lewat alur kode soal -> mulai
-                if (!ujianData.semuaSoal.length) {
-                    loadPage("latihan");
-                    return;
+   // --- KODE SISTEM UJIAN (LATIHAN TKA) ---
+    // --- KODE SISTEM UJIAN (LATIHAN TKA) ---
+    // Variabel global untuk CBT
+    let currentExamCode = "";
+    let loadedQuestions = [];
+    let currentQuestionIndex = 0;
+    let detailJawaban = {}; // Menyimpan jawaban siswa
+
+    // Fungsi untuk mengacak urutan elemen dalam array (Fisher-Yates Shuffle)
+    function acakUrutan(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
+    const originalLoadPage = loadPage;
+    loadPage = async function(page) {
+        await originalLoadPage(page); 
+        
+        if (page === "latihan") {
+            // Referensi DOM baru dari latihan.html
+            const btnLanjut = document.getElementById("btn-lanjut-ujian");
+            const inputKode = document.getElementById("kode-ujian");
+            const tahapKode = document.getElementById("input-kode-container");
+            const errorKode = document.getElementById("error-kode");
+            
+            const modalKonfirmasi = document.getElementById("modal-konfirmasi");
+            const labelKodeUjian = document.getElementById("label-kode-ujian");
+            const btnBatal = document.getElementById("btn-batal-mulai");
+            const btnMulaiUjian = document.getElementById("btn-konfirmasi-mulai");
+            
+            const areaUjian = document.getElementById("area-ujian");
+            const loadingSoal = document.createElement('div'); // Wadah loading sementara
+                loadingSoal.id = "loading-soal";
+                loadingSoal.style.cssText = "text-align: center; padding: 20px; display: none; color: #198754; font-weight: bold;";
+                loadingSoal.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mencari dan mengacak soal...`;
+            
+            tahapKode.appendChild(loadingSoal); // Taruh loading di bawah tombol input
+
+            if (btnLanjut) {
+                // Alur 1: Masukkan Kode -> Muncul Modal Konfirmasi (Gambar 1)
+                btnLanjut.addEventListener("click", () => {
+                    const kodeDiminta = inputKode.value.trim().toUpperCase();
+                    if(!kodeDiminta) return;
+                    
+                    currentExamCode = kodeDiminta; // Simpan kode
+                    labelKodeUjian.innerText = kodeDiminta; // Update label di modal
+                    modalKonfirmasi.style.display = "flex"; // Tampilkan modal
+                    errorKode.style.display = "none";
+                });
+            }
+
+            if (btnBatal) {
+                btnBatal.addEventListener("click", () => {
+                    modalKonfirmasi.style.display = "none";
+                });
+            }
+
+            if (btnMulaiUjian) {
+                // Alur 2: Klik 'Mulai' di Modal -> Muat Soal Satu per Satu (Gambar 2)
+                btnMulaiUjian.addEventListener("click", async () => {
+                    modalKonfirmasi.style.display = "none"; // Sembunyikan modal
+                    tahapKode.style.display = "none"; // Sembunyikan input kode
+                    loadingSoal.style.display = "block"; // Tampilkan loading
+
+                    try {
+                        // Tarik semua soal dari Google Sheets via GET
+                        const response = await fetch(`${SCRIPT_URL}?action=get_questions&code=${currentExamCode}`);
+                        
+                        if (!response.ok) throw new Error("Gagal mengambil soal.");
+                        
+                        let semuaSoal = await response.json();
+
+                        // Jika kodenya salah atau soal tidak ada
+                        if (semuaSoal.length === 0) {
+                            loadingSoal.style.display = "none";
+                            tahapKode.style.display = "block";
+                            errorKode.style.display = "block";
+                            return;
+                        }
+
+                        // 1. Acak urutan soal secara random
+                        semuaSoal = acakUrutan(semuaSoal);
+                        
+                        // 2. Simpan ke memori global
+                        loadedQuestions = semuaSoal; 
+                        currentQuestionIndex = 0; // Reset ke nomor 1
+                        detailJawaban = {}; // Reset jawaban siswa
+
+                        // 3. Update Label UI
+                        document.getElementById("label-kode-aktif").innerText = currentExamCode;
+                        document.getElementById("total-soal").innerText = loadedQuestions.length;
+
+                        // 4. Tampilkan Soal Pertama dan Area Ujian
+                        displayQuestion(0);
+                        loadingSoal.style.display = "none";
+                        areaUjian.style.display = "block";
+                        
+                    } catch (error) {
+                        loadingSoal.innerHTML = `<span style="color:red;">Gagal memuat soal. Periksa koneksi atau URL Script Anda.</span>`;
+                    }
+                });
+            }
+
+            // Tombol Navigasi Soal
+            document.getElementById("btn-sebelumnya").addEventListener("click", () => {
+                if(currentQuestionIndex > 0) {
+                    saveCurrentAnswer(); // Simpan jawaban saat ini
+                    currentQuestionIndex--;
+                    displayQuestion(currentQuestionIndex);
                 }
-            }
-
-            // Muat Halaman Lainnya
-            const response = await fetch(`pages/${page}.html`);
-            if (!response.ok) throw new Error("Halaman tidak ditemukan");
-            const html = await response.text();
-            contentArea.innerHTML = html;
-
-            // Inisialisasi Spesifik Halaman
-            if (page === "soal") {
-                initSoalPage();
-            }
-
-        } catch (error) {
-            contentArea.innerHTML = `<h3 class="error-text">Error 404: ${error.message}</h3>`;
-        }
-    }
-
-    // --- Fungsi Pendukung Navigasi ---
-    function loadNilaiIframe() {
-        contentArea.innerHTML = `
-            <iframe 
-                src="Nilai/index.html" 
-                class="rapor-iframe"
-                title="Aplikasi e-Rapor">
-            </iframe>
-        `;
-    }
-
-    // --- Logika Halaman Latihan (Input Kode Soal) ---
-    function loadLatihanInputPage() {
-        contentArea.innerHTML = `
-            <div class="latihan-container">
-                <h2>Latihan TKA</h2>
-                <p>Silakan masukkan kode soal ujian Anda untuk memulai.</p>
-                <form id="kode-soal-form" class="kode-soal-form">
-                    <input type="text" id="kode-soal-input" placeholder="Contoh: TKA01" required>
-                    <button type="submit">Lanjut</button>
-                    <div id="kode-alert" class="alert-box" style="display:none;"></div>
-                </form>
-            </div>
-        `;
-
-        document.getElementById("kode-soal-form").addEventListener("submit", handleKodeSoalSubmit);
-    }
-
-    async function handleKodeSoalSubmit(e) {
-        e.preventDefault();
-        const kodeSoalInput = document.getElementById("kode-soal-input").value;
-        const kodeAlert = document.getElementById("kode-alert");
-
-        // Cek Kode Soal ke Server
-        kodeAlert.style.display = "none";
-        kodeAlert.innerText = "";
-        
-        try {
-            // Kita gunakan doGet di GAS untuk mengambil semua soal dan memfilternya di client
-            const response = await fetch(`${SCRIPT_URL}?action=getSoalByKode&kode=${kodeSoalInput}`);
-            const result = await response.json();
-
-            if (result.status === "sukses") {
-                ujianData.semuaSoal = result.data;
-                ujianData.kodeSoal = kodeSoalInput;
-                showConfirmModal(kodeSoalInput);
-            } else {
-                kodeAlert.innerText = result.message;
-                kodeAlert.className = "alert-box error";
-                kodeAlert.style.display = "block";
-            }
-        } catch (error) {
-            kodeAlert.innerText = "Terjadi kesalahan koneksi.";
-            kodeAlert.className = "alert-box error";
-            kodeAlert.style.display = "block";
-        }
-    }
-
-    // --- Logika Modal Konfirmasi ---
-    function showConfirmModal(kodeSoal) {
-        modalKodeSoalText.innerText = kodeSoal;
-        confirmModal.style.display = "block";
-    }
-
-    function closeConfirmModal() {
-        confirmModal.style.display = "none";
-    }
-
-    btnCancelModal.addEventListener("click", closeConfirmModal);
-
-    btnStartExam.addEventListener("click", () => {
-        closeConfirmModal();
-        loadPage("soal");
-    });
-
-    // --- Logika Halaman Soal (Pagination) ---
-    function initSoalPage() {
-        ujianData.currentSoalIndex = 0;
-        ujianData.jawabanSiswa = {}; // Reset jawaban
-        
-        document.getElementById("soal-kode-display").innerText = ujianData.kodeSoal;
-
-        // Ambil waktu dari database soal (jika ada, asumsi sisaWaktuDetik dari server)
-        // ujianData.sisaWaktuDetik = result.waktu * 60;
-        
-        renderCurrentSoal();
-        // startTimer(); // Implementasikan fungsi timer jika diperlukan
-
-        document.getElementById("btn-prev-soal").addEventListener("click", showPreviousSoal);
-        document.getElementById("btn-next-soal").addEventListener("click", showNextSoal);
-        document.getElementById("btn-submit-ujian").addEventListener("click", handleSubmitUjian);
-    }
-
-    function renderCurrentSoal() {
-        const soal = ujianData.semuaSoal[ujianData.currentSoalIndex];
-        const soalContent = document.getElementById("soal-content");
-        
-        // Buat HTML untuk satu soal
-        const html = renderSoalItem(soal, ujianData.currentSoalIndex + 1);
-        soalContent.innerHTML = html;
-
-        // Set Jawaban yang Sudah Disimpan (jika siswa kembali ke soal ini)
-        if (ujianData.jawabanSiswa[soal.id]) {
-            setSavedJawaban(soal, ujianData.jawabanSiswa[soal.id]);
-        }
-
-        updateNavigationButtons();
-    }
-
-    function renderSoalItem(soal, nomor) {
-        let html = `
-            <div class="soal-item" data-soal-id="${soal.id}" data-tipe="${soal.tipe}">
-                <p class="soal-pertanyaan"><strong>${nomor}.</strong> ${soal.pertanyaan} <span class="soal-poin">(${soal.poin} Poin)</span></p>
-                <div class="soal-jawaban-area">
-        `;
-
-        // Render Opsi Jawaban berdasarkan Tipe
-        if (soal.tipe === "PG") {
-            soal.pilihan.forEach(pil => {
-                html += `<label><input type="radio" name="jawaban_${soal.id}" value="${pil}"> ${pil}</label>`;
             });
-        } else if (soal.tipe === "PG_Kompleks") {
-            soal.pilihan.forEach(pil => {
-                html += `<label><input type="checkbox" name="jawaban_${soal.id}" value="${pil}"> ${pil}</label>`;
+
+            document.getElementById("btn-berikutnya").addEventListener("click", () => {
+                if(currentQuestionIndex < loadedQuestions.length - 1) {
+                    saveCurrentAnswer(); // Simpan jawaban saat ini
+                    currentQuestionIndex++;
+                    displayQuestion(currentQuestionIndex);
+                }
             });
-        } else if (soal.tipe === "Isian") {
-            html += `<input type="text" name="jawaban_${soal.id}" placeholder="Ketik jawaban Anda di sini">`;
-        } else if (soal.tipe === "Esai") {
-            html += `<textarea name="jawaban_${soal.id}" rows="4" placeholder="Ketik jawaban lengkap Anda di sini"></textarea>`;
-        } else if (soal.tipe === "Tarik_Garis") {
-            // Implementasikan logika Tarik Garis (mungkin butuh library external atau logic tersendiri)
-            html += `<p class="warning-text">Fitur Tarik Garis belum diimplementasikan sepenuhnya.</p>`;
-        } else if (soal.tipe === "Benar_Salah") {
-            html += `<label><input type="radio" name="jawaban_${soal.id}" value="Benar"> Benar</label>`;
-            html += `<label><input type="radio" name="jawaban_${soal.id}" value="Salah"> Salah</label>`;
+
+            document.getElementById("btn-selesai-ujian").addEventListener("click", () => {
+                saveCurrentAnswer(); // Simpan jawaban terakhir
+                // Trigger form submit otomatis
+                submitUjian(); 
+            });
         }
+    };
 
-        html += `
-                </div>
-            </div>
-        `;
-        return html;
-    }
+    // --- FUNGSI TAMPILKAN SOAL SATU PER SATU ---
+    function displayQuestion(index) {
+        const wadahTempatSoal = document.getElementById("tempat-soal");
+        const soal = loadedQuestions[index];
+        const no = index + 1;
+        
+        // Update Indikator Nomor
+        document.getElementById("nomor-soal-aktif").innerText = no;
 
-    function showPreviousSoal() {
-        saveCurrentJawaban();
-        ujianData.currentSoalIndex--;
-        renderCurrentSoal();
-    }
+        // Navigasi Tampilan Tombol
+        document.getElementById("btn-sebelumnya").style.display = (index === 0) ? "none" : "block";
+        document.getElementById("btn-berikutnya").style.display = (index === loadedQuestions.length - 1) ? "none" : "block";
+        document.getElementById("btn-selesai-ujian").style.display = (index === loadedQuestions.length - 1) ? "block" : "none";
 
-    function showNextSoal() {
-        saveCurrentJawaban();
-        ujianData.currentSoalIndex++;
-        renderCurrentSoal();
-    }
-
-    function updateNavigationButtons() {
-        const btnPrev = document.getElementById("btn-prev-soal");
-        const btnNext = document.getElementById("btn-next-soal");
-        const btnSubmit = document.getElementById("btn-submit-ujian");
-
-        btnPrev.style.display = (ujianData.currentSoalIndex === 0) ? "none" : "block";
-        btnNext.style.display = (ujianData.currentSoalIndex === ujianData.semuaSoal.length - 1) ? "none" : "block";
-        btnSubmit.style.display = (ujianData.currentSoalIndex === ujianData.semuaSoal.length - 1) ? "block" : "none";
-    }
-
-    function saveCurrentJawaban() {
-        const soalItem = document.querySelector(".soal-item");
-        const soalId = soalItem.dataset.soalId;
-        const tipe = soalItem.dataset.tipe;
-        let jawaban = "";
-
-        if (tipe === "PG" || tipe === "Benar_Salah") {
-            const selected = document.querySelector(`input[name="jawaban_${soalId}"]:checked`);
-            if (selected) jawaban = selected.value;
-        } else if (tipe === "PG_Kompleks") {
-            const selected = document.querySelectorAll(`input[name="jawaban_${soalId}"]:checked`);
-            jawaban = Array.from(selected).map(input => input.value).join(",");
-        } else if (tipe === "Isian") {
-            jawaban = document.querySelector(`input[name="jawaban_${soalId}"]`).value;
-        } else if (tipe === "Esai") {
-            jawaban = document.querySelector(`textarea[name="jawaban_${soalId}"]`).value;
-        }
-
-        if (jawaban) {
-            ujianData.jawabanSiswa[soalId] = jawaban;
-        }
-    }
-
-    function setSavedJawaban(soal, jawaban) {
+        let htmlSoal = "";
+        htmlSoal += `<div class="wadah-soal">`;
+        htmlSoal += `<p class="pertanyaan">${soal.pertanyaan} <span class="poin-soal">(${soal.poin} Poin)</span></p>`;
+        
+        // Render berdasarkan Tipe Soal
         if (soal.tipe === "PG" || soal.tipe === "Benar_Salah") {
-            const input = document.querySelector(`input[name="jawaban_${soal.id}"][value="${jawaban}"]`);
-            if (input) input.checked = true;
-        } else if (soal.tipe === "PG_Kompleks") {
-            const jawabanArray = jawaban.split(",");
-            jawabanArray.forEach(jwb => {
-                const input = document.querySelector(`input[name="jawaban_${soal.id}"][value="${jwb}"]`);
-                if (input) input.checked = true;
+            // Ambil pilihan aslinya, tidak diacak urutannya agar Benar/Salah tidak terbalik
+            soal.pilihan.forEach(pil => {
+                if(pil.trim() !== "") {
+                    // Cek apakah siswa sudah menjawab sebelumnya
+                    const checked = (detailJawaban[soal.id] === pil) ? "checked" : "";
+                    htmlSoal += `<label class="wadah-pilihan">
+                        <input type="radio" name="jawaban_${soal.id}" value="${pil}" ${checked}> ${pil}
+                    </label>`;
+                }
             });
-        } else if (soal.tipe === "Isian") {
-            document.querySelector(`input[name="jawaban_${soal.id}"]`).value = jawaban;
-        } else if (soal.tipe === "Esai") {
-            document.querySelector(`textarea[name="jawaban_${soal.id}"]`).value = jawaban;
+        } 
+        else if (soal.tipe === "PG_Kompleks") {
+            // Ambil jawaban sebelumnya, pisahkan koma
+            const savedAnswers = detailJawaban[soal.id] ? detailJawaban[soal.id].split(',') : [];
+            soal.pilihan.forEach(pil => {
+                if(pil.trim() !== "") {
+                    const checked = savedAnswers.includes(pil) ? "checked" : "";
+                    htmlSoal += `<label class="wadah-pilihan">
+                        <input type="checkbox" name="jawaban_${soal.id}" value="${pil}" ${checked}> ${pil}
+                    </label>`;
+                }
+            });
+        }
+        else if (soal.tipe === "Isian") {
+            const val = detailJawaban[soal.id] || "";
+            htmlSoal += `<input type="text" name="jawaban_${soal.id}" class="input-isian" placeholder="Ketik jawaban singkat Anda..." value="${val}">`;
+        }
+        else if (soal.tipe === "Esai") {
+            const val = detailJawaban[soal.id] || "";
+            htmlSoal += `<textarea name="jawaban_${soal.id}" class="input-esai" rows="5" placeholder="Ketik penjelasan / jawaban lengkap Anda di sini...">${val}</textarea>`;
+        }
+        else if (soal.tipe === "Tarik_Garis") {
+            htmlSoal += `<p style="font-size:13px; color:#666; margin-bottom:10px;"><i>Pilih pasangan yang tepat dari kotak dropdown:</i></p>`;
+            soal.pilihan.forEach((pasangan, pIndex) => {
+                if(pasangan.includes('=')) {
+                    const parts = pasangan.split('=');
+                    const savedVal = detailJawaban[`${soal.id}_${pIndex}`] || "";
+                    htmlSoal += `<div class="wadah-tarik-garis">
+                        <div class="item-tarik-garis">${parts[0]}</div>
+                        <select name="jawaban_${soal.id}_${pIndex}" class="select-tarik-garis">
+                            <option value="">-- Pilih Pasangan --</option>
+                            <option value="${parts[1]}" ${savedVal === parts[1] ? "selected" : ""}>${parts[1]}</option>
+                        </select>
+                    </div>`;
+                }
+            });
+        }
+        htmlSoal += `</div>`;
+        
+        wadahTempatSoal.innerHTML = htmlSoal;
+        // Scroll ke atas otomatis setiap pindah soal
+        window.scrollTo(0, 0);
+    }
+
+    // --- FUNGSI SIMPAN JAWABAN SEMENTARA DI MEMORI ---
+    function saveCurrentAnswer() {
+        if (loadedQuestions.length === 0) return;
+        const soal = loadedQuestions[currentQuestionIndex];
+        const tempatSoal = document.getElementById("tempat-soal");
+
+        if (soal.tipe === "PG" || soal.tipe === "Benar_Salah") {
+            const checkedRadio = tempatSoal.querySelector(`input[name="jawaban_${soal.id}"]:checked`);
+            detailJawaban[soal.id] = checkedRadio ? checkedRadio.value : "";
+        }
+        else if (soal.tipe === "PG_Kompleks") {
+            const checkedChecks = tempatSoal.querySelectorAll(`input[name="jawaban_${soal.id}"]:checked`);
+            const values = Array.from(checkedChecks).map(cb => cb.value);
+            detailJawaban[soal.id] = values.join(",");
+        }
+        else if (soal.tipe === "Isian" || soal.tipe === "Esai") {
+            const val = tempatSoal.querySelector(`[name="jawaban_${soal.id}"]`).value;
+            detailJawaban[soal.id] = val;
+        }
+        else if (soal.tipe === "Tarik_Garis") {
+            soal.pilihan.forEach((pasangan, pIndex) => {
+                if(pasangan.includes('=')) {
+                    const val = tempatSoal.querySelector(`[name="jawaban_${soal.id}_${pIndex}"]`).value;
+                    detailJawaban[`${soal.id}_${pIndex}`] = val; // Simpan per item
+                }
+            });
         }
     }
 
-    async function handleSubmitUjian() {
-        saveCurrentJawaban(); // Simpan jawaban soal terakhir
+    // --- LOGIKA PENGIRIMAN & PENILAIAN UJIAN CBT ---
+    async function submitUjian() {
+        const areaUjian = document.getElementById("area-ujian");
+        const btnSelesai = document.getElementById("btn-selesai-ujian");
+        const hasilAlert = document.getElementById("hasil-ujian-alert");
 
-        if (!confirm("Apakah Anda yakin ingin mengumpulkan ujian ini?")) return;
+        btnSelesai.innerText = "Mengirim Jawaban...";
+        btnSelesai.disabled = true;
+        
+        let totalSkor = 0;
+        let finalDetailJawaban = {}; // Untuk dikirim ke database
 
-        clearInterval(ujianData.timer);
-        contentArea.innerHTML = '<h3 class="loading-text">Menyimpan jawaban...</h3>';
+        // Kalkulasi poin otomatis berdasarkan tipe soal
+        loadedQuestions.forEach(soal => {
+            let userJawaban = "";
+            let isBenar = false;
 
-        const payload = {
-            action: "submit_ujian",
-            nama_siswa: sessionStorage.getItem("userName"),
-            kode_soal: ujianData.kodeSoal,
-            jawaban: ujianData.jawabanSiswa
-        };
+            if (soal.tipe === "PG" || soal.tipe === "Benar_Salah" || soal.tipe === "Isian") {
+                userJawaban = detailJawaban[soal.id] || "";
+                if (userJawaban.toLowerCase().trim() === soal.kunci.toLowerCase().trim()) isBenar = true;
+            } 
+            else if (soal.tipe === "PG_Kompleks") {
+                userJawaban = detailJawaban[soal.id] || "";
+                if (userJawaban === soal.kunci) isBenar = true;
+            }
+            else if (soal.tipe === "Tarik_Garis") {
+                let skorParsial = 0;
+                let itemTarikGaris = [];
+                soal.pilihan.forEach((pasangan, pIndex) => {
+                    if(pasangan.includes('=')) {
+                        const parts = pasangan.split('=');
+                        const jwb = detailJawaban[`${soal.id}_${pIndex}`] || "";
+                        itemTarikGaris.push(`${parts[0]}=>${jwb}`);
+                        if(jwb === parts[1]) skorParsial += (soal.poin / soal.pilihan.length);
+                    }
+                });
+                userJawaban = itemTarikGaris.join(" | ");
+                totalSkor += Math.round(skorParsial);
+                isBenar = null; 
+            }
+            else if (soal.tipe === "Esai") {
+                userJawaban = detailJawaban[soal.id] || "";
+                isBenar = null; // Dinilai manual guru
+            }
 
+            if (isBenar === true) totalSkor += soal.poin;
+            
+            // Simpan detail untuk database (Kode Soal: Pertanyaan => Jawaban)
+            finalDetailJawaban[soal.pertanyaan.substring(0, 30) + "..."] = userJawaban;
+        });
+
+        // Kirim hasil ke Google Sheets via POST
         try {
+            const payload = {
+                action: "submit_ujian",
+                nama_siswa: sessionStorage.getItem("userName"),
+                kode_soal: currentExamCode, 
+                total_poin: totalSkor,
+                detail_jawaban: finalDetailJawaban
+            };
+
             const response = await fetch(SCRIPT_URL, {
                 method: "POST",
                 body: JSON.stringify(payload)
             });
+            
             const result = await response.json();
-
-            if (result.status === "sukses") {
-                // Tampilkan halaman hasil ujian sederhana (Buat di `pages/hasil.html`)
-                loadPage("hasil"); 
-            } else {
-                alert("Gagal menyimpan jawaban: " + result.message);
-                // Kembalikan ke soal terakhir?
-                loadPage("soal");
-            }
-
-        } catch (error) {
-            alert("Terjadi kesalahan koneksi.");
-            loadPage("soal");
-        }
-    }
-
-    // --- Logika Login/Logout ---
-    contentArea.addEventListener("submit", async function(e) {
-        if (e.target.id === "login-form") {
-            handleLoginSubmit(e);
-        }
-    });
-
-    async function handleLoginSubmit(e) {
-        e.preventDefault();
-        const userVal = document.getElementById("username").value;
-        const passVal = document.getElementById("password").value;
-        const btnLogin = document.getElementById("btn-login");
-        const loginAlert = document.getElementById("login-alert");
-
-        btnLogin.innerText = "Memeriksa...";
-        btnLogin.disabled = true;
-        loginAlert.style.display = "none";
-
-        try {
-            const response = await fetch(SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "login", username: userVal, password: passVal })
-            });
-            const result = await response.json();
-
-            if (result.status === "sukses") {
-                loginAlert.innerText = `Selamat datang, ${result.nama}!`;
-                loginAlert.className = "alert-box sukses";
-                loginAlert.style.display = "block";
-
-                sessionStorage.setItem("userRole", result.role);
-                sessionStorage.setItem("userName", result.nama);
-
-                setLoggedInUI(result.role);
-
-                setTimeout(() => {
-                    loadPage("beranda");
-                }, 1500);
-
-            } else {
-                loginAlert.innerText = result.message;
-                loginAlert.className = "alert-box error";
-                loginAlert.style.display = "block";
+            
+            if(result.status === "sukses") {
+                areaUjian.style.display = "none";
+                hasilAlert.style.backgroundColor = "#d1e7dd";
+                hasilAlert.style.color = "#0f5132";
+                hasilAlert.innerHTML = `
+                    <h3 style="margin-bottom:10px; font-size:1.8rem;">Luar Biasa!</h3>
+                    <p>Jawaban untuk kode <b>${currentExamCode}</b> berhasil dikumpulkan.</p>
+                    <hr style="border-top:2px dashed #198754; margin:15px 0;">
+                    <p>Skor Pilihan Ganda/Objektif Anda:</p>
+                    <span style="font-size:48px; color:#198754; display:block; margin:15px 0; font-weight:bold;">${totalSkor}</span>
+                    <span style="font-size:12px; font-weight:normal; color:#666;">(Skor Esai menunggu pemeriksaan Bapak/Ibu Guru)</span>
+                `;
+                hasilAlert.style.display = "block";
+                window.scrollTo(0, 0);
             }
         } catch (error) {
-            loginAlert.innerText = "Terjadi kesalahan koneksi.";
-            loginAlert.className = "alert-box error";
-            loginAlert.style.display = "block";
-        } finally {
-            btnLogin.innerText = "Masuk";
-            btnLogin.disabled = false;
+            alert("Terjadi kesalahan koneksi saat mengirim hasil. Silakan coba klik Selesai lagi.");
+            btnSelesai.innerText = "Selesai";
+            btnSelesai.disabled = false;
         }
     }
-
-    if (btnLogoutNav) {
-        btnLogoutNav.addEventListener("click", handleLogout);
-    }
-
-    function handleLogout(e) {
-        e.preventDefault();
-        sessionStorage.removeItem("userRole");
-        sessionStorage.removeItem("userName");
         
-        // Sembunyikan menu khusus
-        document.getElementById("menu-rapor").style.display = "none";
-        btnLogoutNav.style.display = "none";
-        
-        document.getElementById("tombol-login-nav").style.display = "block";
-        navMenu.classList.remove("active");
-        
-        alert("Anda telah berhasil keluar.");
-        loadPage("beranda");
-    }
-
-    function setLoggedInUI(role) {
-        document.getElementById("tombol-login-nav").style.display = "none";
-        document.getElementById("tombol-logout-nav").style.display = "block";
-        
-        if (role.toLowerCase() === "guru") {
-            document.getElementById("menu-rapor").style.display = "block";
-        }
-    }
 });
