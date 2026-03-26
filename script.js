@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // --- Konfigurasi ---
-    const SCRIPT_URL = "URL_GOOGLE_APPS_SCRIPT_ANDA_DISINI"; // GANTI DENGAN URL GAS ANDA
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyc_fPgK9yeYrcqHn4GRmdqsJTWjQJJD_DA4EAEqjV-5c_Pj-D2uN3LEA42RtOAh0O2/exec"; // GANTI DENGAN URL GAS ANDA
 
     // --- Elemen-elemen DOM ---
     const contentArea = document.getElementById("content-area");
