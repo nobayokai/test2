@@ -111,13 +111,20 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             contentArea.innerHTML = '<h3 style="text-align:center; padding:50px;">Memuat...</h3>';
             
-            // Logika untuk menentukan folder sumber
-            let url = `pages/${page}.html`; // Default
+            // LOGIKA KHUSUS UNTUK MENU RAPOR (Menggunakan Iframe)
             if (page === "nilai") {
-                url = `nilai/index.html`; // Pengecualian untuk menu rapor
+                contentArea.innerHTML = `
+                    <iframe 
+                        src="nilai/index.html" 
+                        style="width: 100%; height: 85vh; border: none; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" 
+                        title="Aplikasi e-Rapor">
+                    </iframe>
+                `;
+                return; // Hentikan fungsi di sini agar tidak menjalankan fetch di bawah
             }
             
-            const response = await fetch(url);
+            // LOGIKA UNTUK HALAMAN LAIN (beranda, profil, dll)
+            const response = await fetch(`pages/${page}.html`);
             
             if (!response.ok) {
                 throw new Error("Halaman tidak ditemukan");
