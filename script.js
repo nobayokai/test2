@@ -5,7 +5,19 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
+    mobileMenuBtn.addEventListener("click", () => {
+        // Menambah/menghapus class 'active' untuk memunculkan/menyembunyikan menu
+        navMenu.classList.toggle("active");
+    });
 
+    // Menutup menu otomatis setelah salah satu link diklik (khusus di HP)
+    navItems.forEach(item => {
+        item.addEventListener("click", () => {
+            if (window.innerWidth <= 768) {
+                navMenu.classList.remove("active");
+            }
+        });
+    });
     
     const contentArea = document.getElementById("content-area");
     const navItems = document.querySelectorAll(".nav-item");
@@ -95,19 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     
-        mobileMenuBtn.addEventListener("click", () => {
-        // Menambah/menghapus class 'active' untuk memunculkan/menyembunyikan menu
-        navMenu.classList.toggle("active");
-    });
-
-    // Menutup menu otomatis setelah salah satu link diklik (khusus di HP)
-    navItems.forEach(item => {
-        item.addEventListener("click", () => {
-            if (window.innerWidth <= 768) {
-                navMenu.classList.remove("active");
-            }
-        });
-    });
+        
 
     // Fungsi untuk memuat halaman
     async function loadPage(page) {
