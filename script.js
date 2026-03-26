@@ -16,14 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Menutup menu otomatis setelah salah satu link diklik (khusus di HP)
-    navItems.forEach(item => {
-        item.addEventListener("click", () => {
-            if (window.innerWidth <= 768) {
-                navMenu.classList.remove("active");
-            }
-        });
-    });
+
     
 
     // --- TAMBAHKAN KODE INI UNTUK CEK SESI SAAT REFRESH ---
