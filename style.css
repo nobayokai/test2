@@ -93,10 +93,8 @@
 }
 
 .hero-section img {
-    width: 100%;
-    height: auto;
-    display: block; /* Mencegah ada celah kosong di bawah gambar */
-    margin: 0 auto; /* Menengahkan gambar */
+    max-width: 100%;
+    margin-top: 20px;
 }
 
 /* Sembunyikan tombol hamburger di layar laptop/komputer */
