@@ -1,0 +1,97 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Top Bar */
+.top-bar {
+    background-color: #198754; /* Hijau khas */
+    color: white;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 8px 20px;
+    font-size: 14px;
+}
+
+.top-bar span i { margin-right: 5px; }
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 50px;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #2c3e50;
+}
+
+.logo h1 {
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #495057;
+    font-weight: 500;
+    font-size: 15px;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover { color: #198754; }
+.nav-links a i { margin-right: 5px; }
+
+/* Tombol Khusus */
+.search-btn {
+    background-color: #198754;
+    color: white !important;
+    padding: 8px 12px;
+    border-radius: 5px;
+}
+
+.login-btn {
+    background-color: #198754;
+    color: white !important;
+    padding: 8px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.search-btn:hover, .login-btn:hover {
+    background-color: #146c43;
+}
+
+/* Area Konten Utama */
+#content-area {
+    min-height: 80vh;
+    background-color: #f8f9fa;
+}
+
+/* Contoh Style untuk Halaman Beranda */
+.hero-section {
+    text-align: center;
+    padding: 50px 20px;
+    background: linear-gradient(to bottom, #fde4ce, #fad0c4);
+    min-height: 600px;
+}
+
+.hero-section img {
+    max-width: 100%;
+    margin-top: 20px;
+}
