@@ -25,6 +25,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // Jika sudah login, sembunyikan tombol login di nav
         document.getElementById("tombol-login-nav").style.display = "none";
         document.getElementById("tombol-logout-nav").style.display = "block"; // Munculkan tombol logout
+        // Sembunyikan menu Publik (Visi Misi & Profil)
+        document.querySelector('[data-page="visi-misi"]').style.display = "none";
+        document.querySelector('[data-page="profil"]').style.display = "none";
         
         // Jika role-nya guru, munculkan menu rapor
         if (savedRole.toLowerCase() === "guru") {
@@ -71,15 +74,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     sessionStorage.setItem("userRole", result.role);
                     sessionStorage.setItem("userName", result.nama);
 
+                    // Sembunyikan menu Publik saat berhasil login
+                        document.querySelector('[data-page="visi-misi"]').style.display = "none";
+                        document.querySelector('[data-page="profil"]').style.display = "none";
+
                     // --- TAMBAHKAN KODE INI ---
                     // Cek jika role adalah Guru (pastikan tulisan sesuai dengan database di Google Sheet)
                     if (result.role.toLowerCase() === "guru") {
-                        document.getElementById("menu-rapor").style.display = "block"; // Munculkan menu
-                    }
-                    if (result.role.toLowerCase() === "siswa") {
-                        const menuLatihan = document.getElementById("menu-latihan");
-                        if(menuLatihan) menuLatihan.style.display = "block";
-                    }
+                            const menuRapor = document.getElementById("menu-rapor");
+                            if(menuRapor) menuRapor.style.display = "block";
+                        }
+                        if (result.role.toLowerCase() === "siswa") {
+                            const menuLatihan = document.getElementById("menu-latihan");
+                            if(menuLatihan) menuLatihan.style.display = "block";
+                        }
                     // Sembunyikan tombol login di navbar karena sudah masuk
                     document.getElementById("tombol-login-nav").style.display = "none";
                     document.getElementById("tombol-logout-nav").style.display = "block"; // Munculkan tombol logout
@@ -168,23 +176,29 @@ document.addEventListener("DOMContentLoaded", () => {
             sessionStorage.removeItem("userName");
             
             // 2. Sembunyikan menu khusus dan tombol logout
-            document.getElementById("menu-rapor").style.display = "none";
-            document.getElementById("tombol-logout-nav").style.display = "none";
+            const menuRapor = document.getElementById("menu-rapor");
+            if(menuRapor) menuRapor.style.display = "none";
             
-            // 3. Munculkan kembali tombol Login
+            const menuLatihan = document.getElementById("menu-latihan");
+            if(menuLatihan) menuLatihan.style.display = "none"; 
+            
+            // Munculkan Kembali Menu Publik (Visi Misi & Profil)
+            document.querySelector('[data-page="visi-misi"]').style.display = "block";
+            document.querySelector('[data-page="profil"]').style.display = "block";
+            
+            // Kembalikan Tombol Login
+            btnLogoutNav.style.display = "none";
             document.getElementById("tombol-login-nav").style.display = "block";
             
-            // 4. Tutup menu hamburger jika sedang dibuka di HP
-            navMenu.classList.remove("active");
+            if(navMenu) navMenu.classList.remove("active");
             
-            // 5. Beri notifikasi dan kembalikan ke halaman beranda
             alert("Anda telah berhasil keluar dari sistem.");
             loadPage("beranda");
         });
     }
 
 
-   // --- KODE SISTEM UJIAN (LATIHAN TKA) ---
+   
     // --- KODE SISTEM UJIAN (LATIHAN TKA) ---
     // Variabel global untuk CBT
     let currentExamCode = "";
