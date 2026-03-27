@@ -534,24 +534,52 @@ document.addEventListener("DOMContentLoaded", () => {
                 hasilAlert.style.display = "block";
                 window.scrollTo(0, 0);
 
-                // --- LOGIKA PEMBUATAN PDF ---
+                // --- LOGIKA PEMBUATAN PDF (TEKS MURNI / NATIVE PRINT) ---
                 document.getElementById("btn-download-pdf").addEventListener("click", function() {
                     const elemenPdf = document.getElementById("wadah-rapor-pdf");
-                    elemenPdf.style.display = "block"; // Munculkan sebentar untuk di-capture
                     
-                    const opt = {
-                      margin:       [10, 10, 10, 10], // Margin atas, kanan, bawah, kiri
-                      filename:     `Rapor_${currentExamCode}_${payload.nama_siswa.replace(/\s+/g, '_')}.pdf`,
-                      image:        { type: 'jpeg', quality: 0.98 },
-                      html2canvas:  { scale: 2, windowWidth: 800 }, // windowWidth merapikan margin teks
-                      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }, // Ganti Ukuran Kertas
-                      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // Fitur anti-potong teks
-                    };
+                    // Buka tab/jendela baru di belakang layar
+                    const printWindow = window.open('', '_blank');
                     
-                    // Generate PDF, lalu sembunyikan lagi elemennya
-                    html2pdf().set(opt).from(elemenPdf).save().then(() => {
-                        elemenPdf.style.display = "none";
-                    });
+                    // Tulis ulang elemen ke dalam tab baru dengan pengaturan anti-potong
+                    printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Rapor_${currentExamCode}_${payload.nama_siswa.replace(/\s+/g, '_')}</title>
+                            <style>
+                                body { 
+                                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                                    color: #333; 
+                                    padding: 20px;
+                                }
+                                /* Memastikan warna latar (seperti hijau) ikut tercetak */
+                                @media print {
+                                    body { 
+                                        -webkit-print-color-adjust: exact; 
+                                        print-color-adjust: exact; 
+                                    }
+                                    /* Mencegah paragraf terpotong di tengah halaman */
+                                    div, p, tr { 
+                                        page-break-inside: avoid; 
+                                    }
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            ${elemenPdf.innerHTML}
+                        </body>
+                        </html>
+                    `);
+                    
+                    printWindow.document.close();
+                    printWindow.focus();
+                    
+                    // Beri jeda 0.5 detik agar browser merender teks, lalu munculkan dialog cetak
+                    setTimeout(() => {
+                        printWindow.print();
+                        printWindow.close(); // Tutup tab otomatis setelah selesai
+                    }, 500);
                 });
             }
         } catch (error) {
