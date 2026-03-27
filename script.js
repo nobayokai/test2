@@ -815,12 +815,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         btn.innerHTML = teksAwal;
                         btn.disabled = false;
                     }).catch(err => {
-                        alert("Terjadi kesalahan saat membuat PDF. Pastikan memori tablet Anda cukup.");
+                        alert("Terjadi kesalahan saat membuat PDF. Pastikan memori Anda cukup.");
                         elemenPdf.style.display = "none";
                         btn.innerHTML = teksAwal;
                         btn.disabled = false;
                     });
-                });
+               });
+            }
+        } catch (error) {
+            alert("Terjadi kesalahan saat mengirim jawaban.");
+            const btnSelesai = document.getElementById("btn-selesai-ujian");
+            if(btnSelesai) {
+                btnSelesai.innerText = "Selesai";
+                btnSelesai.disabled = false;
             }
         }
     }
