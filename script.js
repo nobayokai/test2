@@ -397,7 +397,15 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("cb-ragu").checked = statusRagu[soal.id] ? true : false;
 
         let htmlSoal = `<div class="wadah-soal" style="border:none; padding:0; background:transparent;">`;
-        htmlSoal += `<p class="pertanyaan">${soal.pertanyaan} <span class="poin-soal">(${soal.poin} Poin)</span></p><hr style="margin: 15px 0; border-top: 1px solid #eee;">`;
+        
+        let teksPertanyaan = soal.pertanyaan;
+        // Cek jika ada tag [IMG:url] dari database
+        if (teksPertanyaan.includes("[IMG:")) {
+            const urlGambar = teksPertanyaan.match(/\[IMG:(.*?)\]/)[1];
+            teksPertanyaan = teksPertanyaan.replace(/\[IMG:.*?\]/, `<br><img src="${urlGambar}" style="max-width:100%; margin-top:10px; border-radius:5px;"><br>`);
+        }
+        
+        htmlSoal += `<p class="pertanyaan">${teksPertanyaan} <span class="poin-soal">(${soal.poin} Poin)</span></p><hr style="margin: 15px 0; border-top: 1px solid #eee;">`;
         
         // Render Tipe Soal (Logikanya sama seperti sebelumnya)
         if (soal.tipe === "PG" || soal.tipe === "Benar_Salah") {
