@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwlVq72nYV_cu_c24WTpvVCjvslwJHmMrqwxWSdTWbwG7wZJjLnd5sXBIXk2PFxeL6l/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbziQt3U6ZJYwgMxrY2MXaQb55Zi6UB7_ftpmRJJsKsWKiiM9izOSpXHM78laVpEBg/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
@@ -37,6 +37,10 @@ document.addEventListener("DOMContentLoaded", () => {
             // TAMBAHKAN INI
             const menuBuatSoal = document.getElementById("menu-buat-soal");
             if (menuBuatSoal) menuBuatSoal.style.display = "block";
+
+            //menu lihat soal
+            const menuLihatSoal = document.getElementById("menu-lihat-soal");
+            if(menuLihatSoal) menuLihatSoal.style.display = "block";
         }
         if (savedRole.toLowerCase() === "siswa") {
             const menuLatihan = document.getElementById("menu-latihan");
@@ -93,6 +97,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             const menuBuatSoal = document.getElementById("menu-buat-soal");
                             if(menuBuatSoal) menuBuatSoal.style.display = "block";
                             // -----------------------------
+
+                            // tampilkan menu lihat soal
+                            const menuLihatSoal = document.getElementById("menu-lihat-soal");
+                            if(menuLihatSoal) menuLihatSoal.style.display = "block";
                         
                         }
                         if (result.role.toLowerCase() === "siswa") {
@@ -198,6 +206,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const menuBuatSoal = document.getElementById("menu-buat-soal");
             if(menuBuatSoal) menuBuatSoal.style.display = "none";
             // -----------------------------
+
+            // sembunyikan menu lihat soal
+            const menuLihatSoal = document.getElementById("menu-lihat-soal");
+            if(menuLihatSoal) menuLihatSoal.style.display = "none";
+            
             
             // Munculkan Kembali Menu Publik (Visi Misi & Profil)
             document.querySelector('[data-page="visi-misi"]').style.display = "block";
@@ -390,6 +403,125 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
         }
+
+        
+        // --- LOGIKA HALAMAN LIHAT SOAL ---
+        if (page === "lihat-soal") {
+            let allSoalData = [];
+            const filterSelect = document.getElementById("filter-kode-soal");
+            const tbody = document.getElementById("body-tabel-soal");
+
+            // Fungsi mengambil semua soal dari Sheets
+            async function fetchSemuaSoalUntukGuru() {
+                try {
+                    const response = await fetch(SCRIPT_URL);
+                    allSoalData = await response.json();
+
+                    // Cari kode soal apa saja yang tersedia (unik)
+                    const uniqueCodes = [...new Set(allSoalData.map(item => item.kode))];
+                    
+                    filterSelect.innerHTML = `<option value="">-- Pilih Kode Soal --</option>`;
+                    uniqueCodes.forEach(kode => {
+                        filterSelect.innerHTML += `<option value="${kode}">${kode}</option>`;
+                    });
+                } catch (error) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Gagal memuat data dari server.</td></tr>`;
+                }
+            }
+
+            // Fungsi merender isi tabel sesuai dropdown yang dipilih
+            window.renderTabelSoal = function(kode) {
+                if (!kode) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px; font-style: italic;">Silakan pilih kode soal di atas.</td></tr>`;
+                    return;
+                }
+
+                const filteredSoal = allSoalData.filter(soal => soal.kode === kode);
+
+                if (filteredSoal.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px;">Tidak ada soal yang ditemukan.</td></tr>`;
+                    return;
+                }
+
+                let html = "";
+                filteredSoal.forEach((soal, index) => {
+                    // Sembunyikan URL panjang jika ada gambar agar tabel rapi
+                    let previewPertanyaan = soal.pertanyaan.replace(/\[IMG:.*?\]/, "<br><span style='color:#198754; font-size:12px;'><i class='fa-solid fa-image'></i> [Dilengkapi Gambar]</span>");
+                    let previewPilihan = soal.pilihan ? soal.pilihan.join(" | ") : "-";
+
+                    html += `
+                        <tr>
+                            <td style="text-align:center;">${index + 1}</td>
+                            <td>${soal.tipe}</td>
+                            <td>${previewPertanyaan}</td>
+                            <td>${previewPilihan}</td>
+                            <td style="font-weight:bold; color:#198754;">${soal.kunci || "-"}</td>
+                            <td style="text-align:center; font-weight:bold;">${soal.poin}</td>
+                            <td style="text-align:center;">
+                                <button class="btn-hapus-soal" id="btn-hapus-${soal.id}" onclick="hapusSoal('${soal.kode}', \`${soal.pertanyaan.replace(/`/g, "\\`")}\`, '${soal.id}')">
+                                    <i class="fa-solid fa-trash-can"></i> Hapus
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            };
+
+            // Jalankan saat dropdown berubah
+            if(filterSelect) {
+                filterSelect.addEventListener("change", (e) => {
+                    renderTabelSoal(e.target.value);
+                });
+            }
+
+            // Fungsi Hapus Soal menembak ke API Google
+            window.hapusSoal = async function(kode, pertanyaan, rowId) {
+                const konfirmasi = confirm(`🚨 PERINGATAN!\n\nApakah Anda yakin ingin MENGHAPUS soal ini?\nData akan dihapus secara permanen dari Google Sheets.`);
+                
+                if (konfirmasi) {
+                    const btnHapus = document.getElementById(`btn-hapus-${rowId}`);
+                    btnHapus.innerHTML = "Menghapus...";
+                    btnHapus.disabled = true;
+
+                    try {
+                        const payload = {
+                            action: "hapus_soal",
+                            kode_soal: kode,
+                            pertanyaan: pertanyaan
+                        };
+
+                        const response = await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if(result.status === "sukses") {
+                            alert("✅ Soal berhasil dihapus dari Database!");
+                            // Segarkan ulang data dari Google Sheet
+                            await fetchSemuaSoalUntukGuru(); 
+                            // Render ulang tabel dengan kode yang sama
+                            renderTabelSoal(document.getElementById("filter-kode-soal").value);
+                        } else {
+                            alert("❌ Gagal menghapus soal: " + result.message);
+                            btnHapus.innerHTML = `<i class="fa-solid fa-trash-can"></i> Hapus`;
+                            btnHapus.disabled = false;
+                        }
+                    } catch (error) {
+                        alert("Terjadi kesalahan sistem saat mencoba menghapus.");
+                        btnHapus.innerHTML = `<i class="fa-solid fa-trash-can"></i> Hapus`;
+                        btnHapus.disabled = false;
+                    }
+                }
+            };
+
+            // Panggil data pertama kali halaman dimuat
+            fetchSemuaSoalUntukGuru();
+        }
+
+        
     };
 
     // --- FUNGSI TAMPILKAN SOAL ---
