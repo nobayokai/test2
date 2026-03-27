@@ -388,3 +388,57 @@
     border-radius: 4px;
     font-size: 15px;
 }
+
+
+/* --- STYLING TABEL LIHAT SOAL --- */
+.tabel-stylish {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background-color: white;
+}
+.tabel-stylish th, .tabel-stylish td {
+    border: 1px solid #dee2e6;
+    padding: 12px 10px;
+    vertical-align: middle;
+}
+.tabel-stylish th {
+    background-color: #e9ecef;
+    color: #495057;
+    text-align: center;
+    font-weight: bold;
+}
+.tabel-stylish tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+.tabel-stylish tbody tr:hover {
+    background-color: #e2e3e5;
+}
+.tabel-stylish td {
+    color: #333;
+}
+.btn-hapus-soal {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+.btn-hapus-soal:hover {
+    background-color: #bb2d3b;
+}
+.btn-hapus-soal:disabled {
+    background-color: #e9ecef;
+    color: #adb5bd;
+    cursor: not-allowed;
+}
+
+
