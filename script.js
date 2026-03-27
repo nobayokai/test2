@@ -767,8 +767,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if(result.status === "sukses") {
                 clearExamSession(); // HAPUS SESI UJIAN KARENA SUDAH SELESAI
 
-                if(result.status === "sukses") {
-                clearExamSession(); // HAPUS SESI UJIAN KARENA SUDAH SELESAI
                 
                 // --- KELUARKAN DARI MODE FULLSCREEN OTOMATIS ---
                 if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
