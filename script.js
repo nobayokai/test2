@@ -299,6 +299,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 mulaiTimer();
                 renderGridNavigasi();
                 displayQuestion(currentQuestionIndex);
+
+
+                // --- TAMBAHKAN BLOK KODE INI ---
+                // Paksa Blokir Layar jika siswa masuk via Refresh (F5)
+                setTimeout(() => {
+                    if (typeof tampilkanPeringatanPelanggaran === "function") {
+                        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+                        if (!isFullscreen) {
+                            tampilkanPeringatanPelanggaran();
+                        }
+                    }
+                }, 500);
+                // -------------------------------
             }
 
             // ALUR 1: Cek Kode
@@ -676,7 +689,8 @@ document.addEventListener("DOMContentLoaded", () => {
         clearInterval(timerInterval);
         const display = document.getElementById("timer-display");
         
-        timerInterval = setInterval(() => {
+        // Buat fungsi hitung mundur yang berdiri sendiri
+        function hitungMundur() {
             let now = new Date().getTime();
             let distance = examEndTime - now;
 
@@ -698,7 +712,13 @@ document.addEventListener("DOMContentLoaded", () => {
             seconds = (seconds < 10) ? "0" + seconds : seconds;
 
             display.innerText = `${hours}:${minutes}:${seconds}`;
-        }, 1000);
+        }
+
+        // KUNCI PERBAIKAN: Panggil 1x secara langsung agar tidak ada jeda 02:00:00
+        hitungMundur(); 
+        
+        // Baru jalankan perulangannya setiap 1 detik
+        timerInterval = setInterval(hitungMundur, 1000);
     }
 
     // --- LOGIKA SUBMIT UJIAN ---
@@ -955,10 +975,60 @@ document.addEventListener("DOMContentLoaded", () => {
             const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
             
             // Jika layar tidak fullscreen lagi, beri peringatan keras!
+            // Jika layar tidak fullscreen lagi, Munculkan Layar Blokir Hitam!
             if (!isFullscreen) {
-                alert("🚨 PERINGATAN PELANGGARAN! 🚨\n\nAnda telah keluar dari mode Layar Penuh (Fullscreen) di tengah ujian!\n\nSistem mencatat aktivitas ini. Harap fokus mengerjakan ujian Anda!");
+                tampilkanPeringatanPelanggaran();
             }
         }
+    }
+
+    // Fungsi membuat Layar Blokir (Mencegah klik soal & Memaksa kembali fullscreen)
+    function tampilkanPeringatanPelanggaran() {
+        if (document.getElementById("overlay-pelanggaran")) return;
+
+        const overlay = document.createElement("div");
+        overlay.id = "overlay-pelanggaran";
+        overlay.style.position = "fixed";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.width = "100vw";
+        overlay.style.height = "100vh";
+        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.96)"; // Latar Hitam Pekat
+        overlay.style.color = "white";
+        overlay.style.display = "flex";
+        overlay.style.flexDirection = "column";
+        overlay.style.justifyContent = "center";
+        overlay.style.alignItems = "center";
+        overlay.style.zIndex = "999999"; // Posisi paling atas menutupi seluruh web
+        overlay.style.textAlign = "center";
+        overlay.style.padding = "20px";
+
+        overlay.innerHTML = `
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 80px; color: #dc3545; margin-bottom: 20px;"></i>
+            <h1 style="color: #dc3545; margin-bottom: 10px; font-size: 32px;">PELANGGARAN TERDETEKSI!</h1>
+            <p style="font-size: 18px; margin-bottom: 30px; max-width: 600px; line-height: 1.6;">Anda telah keluar dari mode Layar Penuh atau melakukan <i>Refresh</i>.<br>Ujian Anda diblokir sementara untuk alasan keamanan!</p>
+            <button id="btn-kembali-ujian" style="padding: 15px 30px; font-size: 18px; font-weight: bold; background-color: #0dcaf0; color: #000; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                <i class="fa-solid fa-expand"></i> Kembali ke Layar Penuh & Lanjutkan
+            </button>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // Saat tombol di layar blokir diklik, aktifkan kembali Fullscreen
+        document.getElementById("btn-kembali-ujian").addEventListener("click", () => {
+            const elem = document.documentElement;
+            let requestFS = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
+            
+            if (requestFS) {
+                requestFS.call(elem).then(() => {
+                    overlay.remove(); // Hapus layar hitam jika sukses fullscreen
+                }).catch(err => {
+                    alert("Gagal masuk ke fullscreen. Pastikan browser Anda mendukung fitur ini.");
+                });
+            } else {
+                overlay.remove(); // Otomatis lepas jika browser HP lawas tidak mendukung
+            }
+        });
     }
         
 });
