@@ -782,70 +782,45 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.scrollTo(0, 0);
 
                 // --- LOGIKA PEMBUATAN PDF (TEKS MURNI / NATIVE PRINT) ---
+                // --- LOGIKA PEMBUATAN PDF (DIRECT DOWNLOAD UNTUK TABLET/HP) ---
                 document.getElementById("btn-download-pdf").addEventListener("click", function() {
                     const elemenPdf = document.getElementById("wadah-rapor-pdf");
+                    const btn = this;
+                    const teksAwal = btn.innerHTML;
                     
-                    // Buka tab/jendela baru di belakang layar
-                    const printWindow = window.open('', '_blank');
+                    // Ubah tombol jadi loading agar siswa tidak klik berkali-kali
+                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyusun PDF...`;
+                    btn.disabled = true;
                     
-                    // Tulis ulang elemen ke dalam tab baru dengan pengaturan anti-potong
-                    printWindow.document.write(`
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <title>Rapor_${currentExamCode}_${payload.nama_siswa.replace(/\s+/g, '_')}</title>
-                            <style>
-                                body { 
-                                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                                    color: #333; 
-                                    padding: 30px;
-                                    font-size: 14px;
-                                }
-                                /* Memastikan warna latar (seperti hijau) ikut tercetak */
-                                @media print {
-                                    body { 
-                                        -webkit-print-color-adjust: exact; 
-                                        print-color-adjust: exact; 
-                                    }
-                                    /* Mencegah paragraf terpotong di tengah halaman */
-                                    tr { 
-                                        page-break-inside: avoid; 
-                                    }
-                                    /* Cegah judul terpisah dari paragraf pertamanya */
-                                    h2, h3 {
-                                        page-break-after: avoid; 
-                                        margin-bottom: 10px;
-                                    }
-                                    /* Cegah paragraf terpotong menjadi 1 baris saja di akhir/awal halaman */
-                                    p {
-                                        orphans: 3;
-                                        widows: 3;
-                                    }
-                                    
-                                }
-                            </style>
-                        </head>
-                        <body>
-                            ${elemenPdf.innerHTML}
-                        </body>
-                        </html>
-                    `);
+                    // 1. Munculkan wadah PDF dan rapikan ukurannya untuk difoto
+                    elemenPdf.style.display = "block"; 
+                    elemenPdf.style.width = "800px"; // Kunci lebar agar teks tidak berantakan di tablet
+                    elemenPdf.style.margin = "0 auto";
+                    elemenPdf.style.backgroundColor = "white"; // Pastikan background tidak transparan
                     
-                    printWindow.document.close();
-                    printWindow.focus();
-                    
-                    // Beri jeda 0.5 detik agar browser merender teks, lalu munculkan dialog cetak
-                    setTimeout(() => {
-                        printWindow.print();
-                        printWindow.close(); // Tutup tab otomatis setelah selesai
-                    }, 500);
+                    // 2. Pengaturan PDF
+                    const opt = {
+                      margin:       15, // Margin 1,5 cm di semua sisi kertas
+                      filename:     `Rapor_${currentExamCode}_${payload.nama_siswa.replace(/\s+/g, '_')}.pdf`,
+                      image:        { type: 'jpeg', quality: 0.98 },
+                      html2canvas:  { scale: 2, scrollX: 0, scrollY: 0, useCORS: true }, 
+                      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+
+                    // 3. Proses Generate dan Download Otomatis
+                    html2pdf().set(opt).from(elemenPdf).save().then(() => {
+                        // Sembunyikan lagi wadahnya setelah berhasil diunduh
+                        elemenPdf.style.display = "none";
+                        // Kembalikan tombol seperti semula
+                        btn.innerHTML = teksAwal;
+                        btn.disabled = false;
+                    }).catch(err => {
+                        alert("Terjadi kesalahan saat membuat PDF. Pastikan memori tablet Anda cukup.");
+                        elemenPdf.style.display = "none";
+                        btn.innerHTML = teksAwal;
+                        btn.disabled = false;
+                    });
                 });
-            }
-        } catch (error) {
-            alert("Terjadi kesalahan saat memproses hasil ujian.");
-            btnSelesai.innerText = "Selesai";
-            btnSelesai.disabled = false;
-        }
     }
 
 
