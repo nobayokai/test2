@@ -1,0 +1,54 @@
+<div class="cbt-layout" style="max-width: 900px; margin: auto;">
+    <div class="cbt-main" style="padding: 30px;">
+        <h2 style="color: #198754; border-bottom: 2px solid #198754; padding-bottom: 10px; margin-bottom: 20px;">Tambah Soal Ujian</h2>
+        
+        <form id="form-buat-soal">
+            <div class="form-group">
+                <label>Kode Ujian (Bank Soal):</label>
+                <input type="text" id="bs-kode" placeholder="Contoh: TKA-01" required style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+                <label>Tipe Soal:</label>
+                <select id="bs-tipe" required>
+                    <option value="PG">Pilihan Ganda (PG)</option>
+                    <option value="PG_Kompleks">PG Kompleks (Banyak Jawaban)</option>
+                    <option value="Isian">Isian Singkat</option>
+                    <option value="Esai">Esai</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Pertanyaan Soal:</label>
+                <textarea id="bs-pertanyaan" rows="4" placeholder="Ketik pertanyaan di sini..." required></textarea>
+            </div>
+
+            <div class="form-group" style="background: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px dashed #ccc;">
+                <label>Upload Gambar Soal (Opsional):</label>
+                <input type="file" id="bs-gambar" accept="image/*" style="margin-top: 5px;">
+                <small style="color: #666; display: block; margin-top: 5px;">Maksimal ukuran 2MB.</small>
+            </div>
+
+            <div class="form-group" id="area-pilihan">
+                <label>Pilihan Jawaban (Pisahkan dengan tanda |):</label>
+                <input type="text" id="bs-pilihan" placeholder="Contoh: Jakarta|Bandung|Surabaya">
+                <small style="color: #666;">Abaikan jika tipe soal Isian / Esai.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Kunci Jawaban:</label>
+                <input type="text" id="bs-kunci" placeholder="Kunci jawaban persis seperti di pilihan" required>
+            </div>
+
+            <div class="form-group">
+                <label>Poin Soal:</label>
+                <input type="number" id="bs-poin" placeholder="Contoh: 10" required>
+            </div>
+
+            <button type="submit" id="btn-simpan-soal" class="btn-cbt btn-blue" style="width: 100%; padding: 15px; font-size: 16px; margin-top: 20px;">
+                <i class="fa-solid fa-save"></i> Simpan ke Database
+            </button>
+            <div id="alert-buat-soal" style="display: none; padding: 15px; margin-top: 15px; border-radius: 5px; text-align: center; font-weight: bold;"></div>
+        </form>
+    </div>
+</div>
