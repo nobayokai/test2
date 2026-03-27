@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbziQt3U6ZJYwgMxrY2MXaQb55Zi6UB7_ftpmRJJsKsWKiiM9izOSpXHM78laVpEBg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXG1jl4to6Qm39uwA3ZoPLgqBttjbds63yq58kX0GJmyBHjnXlheZaP1TmbWIIlCJl/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
@@ -41,6 +41,10 @@ document.addEventListener("DOMContentLoaded", () => {
             //menu lihat soal
             const menuLihatSoal = document.getElementById("menu-lihat-soal");
             if(menuLihatSoal) menuLihatSoal.style.display = "block";
+
+            //menu hasil ujian
+            const menuHasilUjian = document.getElementById("menu-hasil-ujian");
+            if(menuHasilUjian) menuHasilUjian.style.display = "block";
         }
         if (savedRole.toLowerCase() === "siswa") {
             const menuLatihan = document.getElementById("menu-latihan");
@@ -101,6 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             // tampilkan menu lihat soal
                             const menuLihatSoal = document.getElementById("menu-lihat-soal");
                             if(menuLihatSoal) menuLihatSoal.style.display = "block";
+
+                            // tampilkan menu hasil ujian
+                            const menuHasilUjian = document.getElementById("menu-hasil-ujian");
+                            if(menuHasilUjian) menuHasilUjian.style.display = "block";
                         
                         }
                         if (result.role.toLowerCase() === "siswa") {
@@ -210,6 +218,10 @@ document.addEventListener("DOMContentLoaded", () => {
             // sembunyikan menu lihat soal
             const menuLihatSoal = document.getElementById("menu-lihat-soal");
             if(menuLihatSoal) menuLihatSoal.style.display = "none";
+
+            // sembunyikan menu hasil ujian
+            const menuHasilUjian = document.getElementById("menu-hasil-ujian");
+            if(menuHasilUjian) menuHasilUjian.style.display = "none";
             
             
             // Munculkan Kembali Menu Publik (Visi Misi & Profil)
@@ -543,6 +555,161 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Panggil data pertama kali halaman dimuat
             fetchSemuaSoalUntukGuru();
+        }
+
+
+        // --- LOGIKA HALAMAN HASIL UJIAN ---
+        if (page === "hasil-ujian") {
+            window.allHasilData = []; // Simpan di global agar bisa diakses tombol Print
+            const filterSelect = document.getElementById("filter-hasil-kode");
+            const tbody = document.getElementById("body-tabel-hasil");
+            const btnRefresh = document.getElementById("btn-refresh-hasil");
+
+            async function fetchSemuaHasilUjian() {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> Mengambil data dari server...</td></tr>`;
+                try {
+                    // Kita gunakan POST agar lebih aman mengambil data sheet Hasil
+                    const response = await fetch(SCRIPT_URL, {
+                        method: "POST",
+                        body: JSON.stringify({ action: "get_hasil_ujian" })
+                    });
+                    const result = await response.json();
+                    
+                    if(result.status === "sukses") {
+                        allHasilData = result.data;
+                        
+                        // Ekstrak kode soal unik untuk dropdown
+                        const uniqueCodes = [...new Set(allHasilData.map(item => item.kode))];
+                        
+                        let selectHtml = `<option value="">-- Semua Kode Soal --</option>`;
+                        uniqueCodes.forEach(kode => {
+                            selectHtml += `<option value="${kode}">${kode}</option>`;
+                        });
+                        filterSelect.innerHTML = selectHtml;
+                        
+                        renderTabelHasil(""); // Tampilkan semua di awal
+                    } else {
+                        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: red;">${result.message}</td></tr>`;
+                    }
+                } catch (error) {
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: red;">Gagal terhubung ke server.</td></tr>`;
+                }
+            }
+
+            window.renderTabelHasil = function(kodeFilter) {
+                let filteredData = allHasilData;
+                if (kodeFilter !== "") {
+                    filteredData = allHasilData.filter(item => item.kode === kodeFilter);
+                }
+
+                if (filteredData.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 30px;">Tidak ada data hasil ujian yang ditemukan.</td></tr>`;
+                    return;
+                }
+
+                let html = "";
+                filteredData.forEach((hasil, index) => {
+                    // Potong teks AI agar tidak membuat tabel terlalu panjang
+                    let previewAI = hasil.analisis.substring(0, 80) + "...";
+                    
+                    // Format waktu
+                    let waktuLengkap = new Date(hasil.waktu).toLocaleString('id-ID');
+
+                    html += `
+                        <tr>
+                            <td style="text-align:center;">${index + 1}</td>
+                            <td style="font-size:12px; color:#666;">${waktuLengkap}</td>
+                            <td style="font-weight:bold;">${hasil.nama}</td>
+                            <td style="text-align:center;">${hasil.kode}</td>
+                            <td style="text-align:center; font-weight:bold; color:#198754; font-size:16px;">${hasil.skor}</td>
+                            <td style="font-size:12px;">${previewAI}</td>
+                            <td style="text-align:center;">
+                                <button class="btn-hapus-soal" onclick="hapusHasilUjian('${hasil.waktu}', '${hasil.nama}', '${hasil.kode}')" style="width:auto; padding:5px 10px; font-size:12px;">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
+                            <td style="text-align:center;">
+                                <button onclick="cetakPDFLagi(${hasil.indexAsli})" class="btn-cbt btn-blue" style="width:auto; padding:5px 10px; font-size:12px; border-radius:4px;" title="Cetak PDF">
+                                    <i class="fa-solid fa-print"></i> PDF
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            };
+
+            // Event Listeners
+            if(filterSelect) filterSelect.addEventListener("change", (e) => renderTabelHasil(e.target.value));
+            if(btnRefresh) btnRefresh.addEventListener("click", fetchSemuaHasilUjian);
+
+            // --- FUNGSI HAPUS HASIL UJIAN ---
+            window.hapusHasilUjian = async function(waktu, nama, kode) {
+                if(confirm(`Yakin ingin menghapus nilai siswa bernama ${nama} (Kode: ${kode})? Data akan hilang permanen!`)) {
+                    try {
+                        const response = await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify({ action: "hapus_hasil", waktu: waktu, nama: nama, kode_soal: kode })
+                        });
+                        const res = await response.json();
+                        if(res.status === "sukses") {
+                            alert("✅ Hasil ujian berhasil dihapus.");
+                            fetchSemuaHasilUjian(); // Refresh otomatis
+                        } else {
+                            alert("❌ Gagal: " + res.message);
+                        }
+                    } catch (error) {
+                        alert("Terjadi kesalahan jaringan.");
+                    }
+                }
+            };
+
+            // --- FUNGSI CETAK PDF DARI TABEL ---
+            window.cetakPDFLagi = function(indexAsli) {
+                // Cari data aslinya
+                const dataSiswa = allHasilData.find(item => item.indexAsli === indexAsli);
+                if(!dataSiswa) return;
+
+                // Isi data ke template
+                document.getElementById("pdf-cetak-nama").innerText = dataSiswa.nama;
+                document.getElementById("pdf-cetak-kode").innerText = dataSiswa.kode;
+                document.getElementById("pdf-cetak-skor").innerText = dataSiswa.skor;
+                
+                // Susun paragraf AI
+                const paragraphs = dataSiswa.analisis.split('\\n').filter(p => p.trim() !== '');
+                let formattedFeedback = '';
+                paragraphs.forEach(p => {
+                    formattedFeedback += `<p style="margin-bottom: 12px; line-height: 1.6;">${p}</p>`;
+                });
+                document.getElementById("pdf-cetak-analisis").innerHTML = formattedFeedback;
+
+                // Siapkan wadah untuk html2pdf
+                const elemenPdf = document.getElementById("wadah-rapor-pdf-cetak");
+                elemenPdf.style.display = "block"; 
+                elemenPdf.style.width = "100%"; 
+                elemenPdf.style.maxWidth = "100%"; 
+                elemenPdf.style.boxSizing = "border-box";
+                elemenPdf.style.padding = "20px"; 
+                elemenPdf.style.backgroundColor = "white"; 
+
+                const opt = {
+                    margin:       10, 
+                    filename:     `Rapor_${dataSiswa.kode}_${dataSiswa.nama.replace(/\\s+/g, '_')}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, scrollX: 0, scrollY: 0, useCORS: true }, 
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                // Bikin toast alert sederhana agar user tahu proses berjalan
+                alert("Sedang menyusun PDF... Silakan tunggu sebentar.");
+                
+                html2pdf().set(opt).from(elemenPdf).save().then(() => {
+                    elemenPdf.style.display = "none";
+                });
+            };
+
+            // Panggil fungsi saat halaman pertama dimuat
+            fetchSemuaHasilUjian();
         }
 
         
