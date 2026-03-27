@@ -544,7 +544,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       filename:     `Rapor_${currentExamCode}_${payload.nama_siswa.replace(/\s+/g, '_')}.pdf`,
                       image:        { type: 'jpeg', quality: 0.98 },
                       html2canvas:  { scale: 2, windowWidth: 800 }, // windowWidth merapikan margin teks
-                      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }, // Ganti Ukuran Kertas
+                      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }, // Ganti Ukuran Kertas
                       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // Fitur anti-potong teks
                     };
                     
