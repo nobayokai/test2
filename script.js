@@ -806,7 +806,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if(aiTextContainer) {
                         aiTextContainer.style.wordWrap = "break-word";
                         aiTextContainer.style.textAlign = "justify";
-
+                    }
                         
                     // 2. Pengaturan PDF
                     const opt = {
