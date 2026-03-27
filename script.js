@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTkst4SPxsk8T-ZOB4aZdaZ6ry6UetdOp8tYO_4aFVUd6nEr7bKW4Dts0TxfJKE2q6/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwlVq72nYV_cu_c24WTpvVCjvslwJHmMrqwxWSdTWbwG7wZJjLnd5sXBIXk2PFxeL6l/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
