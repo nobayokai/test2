@@ -514,7 +514,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 let formattedFeedback = '';
                 paragraphs.forEach(p => {
                 // CSS page-break-inside: avoid akan mencegah elemen ini terbelah dua
-                formattedFeedback += `<div style="page-break-inside: avoid; margin-bottom: 12px;">${p}</div>`;
+                formattedFeedback += `<p style="margin-bottom: 12px; line-height: 1.6;">${p}</p>`;
                 });
                 document.getElementById("pdf-analisis-ai").innerHTML = formattedFeedback;
 
@@ -551,7 +551,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                 body { 
                                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                                     color: #333; 
-                                    padding: 20px;
+                                    padding: 30px;
+                                    font-size: 14px;
                                 }
                                 /* Memastikan warna latar (seperti hijau) ikut tercetak */
                                 @media print {
@@ -560,9 +561,20 @@ document.addEventListener("DOMContentLoaded", () => {
                                         print-color-adjust: exact; 
                                     }
                                     /* Mencegah paragraf terpotong di tengah halaman */
-                                    div, p, tr { 
+                                    tr { 
                                         page-break-inside: avoid; 
                                     }
+                                    /* Cegah judul terpisah dari paragraf pertamanya */
+                                    h2, h3 {
+                                        page-break-after: avoid; 
+                                        margin-bottom: 10px;
+                                    }
+                                    /* Cegah paragraf terpotong menjadi 1 baris saja di akhir/awal halaman */
+                                    p {
+                                        orphans: 3;
+                                        widows: 3;
+                                    }
+                                    
                                 }
                             </style>
                         </head>
