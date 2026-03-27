@@ -782,55 +782,53 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.scrollTo(0, 0);
 
                 // --- LOGIKA PEMBUATAN PDF (TEKS MURNI / NATIVE PRINT) ---
-                // --- LOGIKA PEMBUATAN PDF (DIRECT DOWNLOAD UNTUK TABLET/HP) ---
+               // --- LOGIKA PEMBUATAN PDF (DIRECT DOWNLOAD UNTUK TABLET/HP) ---
                 document.getElementById("btn-download-pdf").addEventListener("click", function() {
                     const elemenPdf = document.getElementById("wadah-rapor-pdf");
                     const btn = this;
                     const teksAwal = btn.innerHTML;
                     
-                    // Ubah tombol jadi loading agar siswa tidak klik berkali-kali
+                    // Ubah tombol jadi loading
                     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyusun PDF...`;
                     btn.disabled = true;
                     
-                    // 1. Munculkan wadah PDF dan rapikan ukurannya untuk difoto
+                    // 1. Munculkan wadah PDF (Gunakan 100% agar teks membungkus/wrap otomatis sesuai layar tablet)
                     elemenPdf.style.display = "block"; 
-                    elemenPdf.style.width = "100%"; // Kunci lebar agar teks tidak berantakan di tablet
-                    elemenPdf.style.maxWidth = "100%"; // Wajib: agar tidak dibatasi oleh lebar layar tablet
-                    elemenPdf.style.padding = "20px";
-                    elemenPdf.style.backgroundColor = "white"; // Pastikan background tidak transparan
+                    elemenPdf.style.width = "100%"; // <-- KUNCI PERBAIKAN
+                    elemenPdf.style.maxWidth = "100%"; 
                     elemenPdf.style.boxSizing = "border-box";
-
-
+                    elemenPdf.style.padding = "20px"; // Jarak aman dalam HTML
+                    elemenPdf.style.backgroundColor = "white"; 
+                    
                     // 2. Paksa teks analisis AI agar rata kiri-kanan dan tidak menabrak batas pinggir
                     const aiTextContainer = document.getElementById("pdf-analisis-ai");
                     if(aiTextContainer) {
                         aiTextContainer.style.wordWrap = "break-word";
                         aiTextContainer.style.textAlign = "justify";
                     }
-                        
-                    // 2. Pengaturan PDF
+                    
+                    // 3. Pengaturan PDF
                     const opt = {
-                      margin:       10, // Margin 1,5 cm di semua sisi kertas
+                      margin:       10, // Margin 10mm sangat aman
                       filename:     `Rapor_${currentExamCode}_${payload.nama_siswa.replace(/\s+/g, '_')}.pdf`,
                       image:        { type: 'jpeg', quality: 0.98 },
+                      // Hapus paksaan windowWidth agar kamera mengikuti ukuran asli layar tablet
                       html2canvas:  { scale: 2, scrollX: 0, scrollY: 0, useCORS: true }, 
                       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                     };
 
-                    // 3. Proses Generate dan Download Otomatis
+                    // 4. Proses Generate dan Download Otomatis
                     html2pdf().set(opt).from(elemenPdf).save().then(() => {
-                        // Sembunyikan lagi wadahnya setelah berhasil diunduh
                         elemenPdf.style.display = "none";
-                        // Kembalikan tombol seperti semula
                         btn.innerHTML = teksAwal;
                         btn.disabled = false;
                     }).catch(err => {
-                        alert("Terjadi kesalahan saat membuat PDF. Pastikan memori Anda cukup.");
+                        alert("Terjadi kesalahan saat membuat PDF. Pastikan memori tablet Anda cukup.");
                         elemenPdf.style.display = "none";
                         btn.innerHTML = teksAwal;
                         btn.disabled = false;
                     });
-               });
+                });
             }
         } catch (error) {
             alert("Terjadi kesalahan saat mengirim jawaban.");
