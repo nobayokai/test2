@@ -174,6 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // 1. Hapus data sesi dari browser
             sessionStorage.removeItem("userRole");
             sessionStorage.removeItem("userName");
+            clearExamSession(); // TAMBAHKAN BARIS INI
             
             // 2. Sembunyikan menu khusus dan tombol logout
             const menuRapor = document.getElementById("menu-rapor");
@@ -201,12 +202,16 @@ document.addEventListener("DOMContentLoaded", () => {
    
     // --- KODE SISTEM UJIAN (LATIHAN TKA) ---
     // Variabel global untuk CBT
+    // --- KODE SISTEM UJIAN (LATIHAN TKA) CBT PRO ---
     let currentExamCode = "";
     let loadedQuestions = [];
     let currentQuestionIndex = 0;
-    let detailJawaban = {}; // Menyimpan jawaban siswa
+    let detailJawaban = {}; 
+    let statusRagu = {}; // Menyimpan status ragu-ragu
+    let examEndTime = null;
+    let timerInterval = null;
 
-    // Fungsi untuk mengacak urutan elemen dalam array (Fisher-Yates Shuffle)
+    // Fungsi Fisher-Yates Shuffle
     function acakUrutan(array) {
         let currentIndex = array.length, randomIndex;
         while (currentIndex !== 0) {
@@ -217,6 +222,25 @@ document.addEventListener("DOMContentLoaded", () => {
         return array;
     }
 
+    // Fungsi menyimpan sesi (Auto-Save ke Browser)
+    function saveExamSession() {
+        const sessionData = {
+            code: currentExamCode,
+            questions: loadedQuestions,
+            currentIndex: currentQuestionIndex,
+            answers: detailJawaban,
+            ragu: statusRagu,
+            endTime: examEndTime
+        };
+        sessionStorage.setItem("cbt_active_session", JSON.stringify(sessionData));
+    }
+
+    // Fungsi menghapus sesi ujian
+    function clearExamSession() {
+        sessionStorage.removeItem("cbt_active_session");
+        clearInterval(timerInterval);
+    }
+
     const originalLoadPage = loadPage;
     loadPage = async function(page) {
         await originalLoadPage(page); 
@@ -225,149 +249,166 @@ document.addEventListener("DOMContentLoaded", () => {
             const btnLanjut = document.getElementById("btn-lanjut-ujian");
             const inputKode = document.getElementById("kode-ujian");
             const tahapKode = document.getElementById("input-kode-container");
-            const errorKode = document.getElementById("error-kode");
-            
             const modalKonfirmasi = document.getElementById("modal-konfirmasi");
-            const labelKodeUjian = document.getElementById("label-kode-ujian");
-            const btnBatal = document.getElementById("btn-batal-mulai");
-            const btnMulaiUjian = document.getElementById("btn-konfirmasi-mulai");
-            
             const areaUjian = document.getElementById("area-ujian");
 
-            // Variabel sementara untuk menampung soal yang sudah disaring (sesuai kode)
-            let soalSesuaiKode = [];
+            // --- CEK SESI REFRESH ---
+            // Jika ada ujian yang belum selesai, langsung muat!
+            const savedSession = sessionStorage.getItem("cbt_active_session");
+            if (savedSession) {
+                const data = JSON.parse(savedSession);
+                currentExamCode = data.code;
+                loadedQuestions = data.questions;
+                currentQuestionIndex = data.currentIndex;
+                detailJawaban = data.answers;
+                statusRagu = data.ragu;
+                examEndTime = data.endTime;
 
-            if (btnLanjut) {
-                // ALUR 1: Cek Kode Saat Klik 'Lanjut'
+                tahapKode.style.display = "none";
+                areaUjian.style.display = "flex";
+                
+                mulaiTimer();
+                renderGridNavigasi();
+                displayQuestion(currentQuestionIndex);
+            }
+
+            // ALUR 1: Cek Kode
+            if (btnLanjut && !savedSession) {
                 btnLanjut.addEventListener("click", async () => {
                     const kodeDiminta = inputKode.value.trim().toUpperCase();
                     if(!kodeDiminta) return;
                     
-                    // Ubah tombol jadi loading saat mengambil data dari Google Sheets
-                    btnLanjut.innerText = "Memeriksa Kode...";
+                    btnLanjut.innerText = "Memeriksa...";
                     btnLanjut.disabled = true;
-                    errorKode.style.display = "none";
 
                     try {
                         const response = await fetch(SCRIPT_URL);
                         const semuaSoal = await response.json();
-
-                        // Saring hanya soal yang kodenya PERSIS sama dengan inputan siswa
-                        soalSesuaiKode = semuaSoal.filter(soal => soal.kode.toUpperCase() === kodeDiminta);
+                        let soalSesuaiKode = semuaSoal.filter(soal => soal.kode.toUpperCase() === kodeDiminta);
 
                         if (soalSesuaiKode.length === 0) {
-                            // JIKA KODE TIDAK VALID ATAU TIDAK ADA
-                            errorKode.innerText = "Kode soal tidak valid! Pastikan kode soal sesuai.";
-                            errorKode.style.display = "block";
+                            document.getElementById("error-kode").style.display = "block";
                         } else {
-                            // JIKA KODE VALID
                             currentExamCode = kodeDiminta; 
-                            labelKodeUjian.innerText = kodeDiminta; 
-                            modalKonfirmasi.style.display = "flex"; // Tampilkan Modal Konfirmasi
+                            document.getElementById("label-kode-ujian").innerText = kodeDiminta; 
+                            modalKonfirmasi.style.display = "flex"; 
+                            // Acak soal dan simpan ke memory
+                            loadedQuestions = acakUrutan(soalSesuaiKode); 
                         }
                     } catch (error) {
-                        errorKode.innerText = "Gagal terhubung ke server. Periksa koneksi internet.";
-                        errorKode.style.display = "block";
+                        alert("Gagal terhubung ke server.");
                     } finally {
-                        // Kembalikan status tombol
                         btnLanjut.innerText = "Lanjut";
                         btnLanjut.disabled = false;
                     }
                 });
             }
 
-            if (btnBatal) {
-                // Tutup modal jika batal
-                btnBatal.addEventListener("click", () => {
+            if (document.getElementById("btn-batal-mulai")) {
+                document.getElementById("btn-batal-mulai").addEventListener("click", () => {
                     modalKonfirmasi.style.display = "none";
                 });
             }
 
-            if (btnMulaiUjian) {
-                // ALUR 2: Mulai Ujian setelah Konfirmasi
-                btnMulaiUjian.addEventListener("click", () => {
-                    modalKonfirmasi.style.display = "none"; // Sembunyikan modal
-                    tahapKode.style.display = "none"; // Sembunyikan input kode
+            // ALUR 2: Mulai Ujian Baru
+            if (document.getElementById("btn-konfirmasi-mulai")) {
+                document.getElementById("btn-konfirmasi-mulai").addEventListener("click", () => {
+                    modalKonfirmasi.style.display = "none"; 
+                    tahapKode.style.display = "none"; 
 
-                    // Acak urutan soal yang HANYA SESUAI KODE tadi
-                    loadedQuestions = acakUrutan(soalSesuaiKode); 
-                    currentQuestionIndex = 0; // Mulai dari soal no 1
-                    detailJawaban = {}; // Kosongkan jawaban sebelumnya (jika ada)
-
-                    // Update informasi di UI
-                    document.getElementById("label-kode-aktif").innerText = currentExamCode;
-                    document.getElementById("total-soal").innerText = loadedQuestions.length;
-
-                    // Tampilkan soal pertama dan buka area ujian
+                    currentQuestionIndex = 0; 
+                    detailJawaban = {}; 
+                    statusRagu = {};
+                    
+                    // Set waktu ujian: 120 menit dari sekarang
+                    examEndTime = new Date().getTime() + (120 * 60 * 1000); 
+                    
+                    saveExamSession(); // Auto-save pertama kali
+                    mulaiTimer();
+                    renderGridNavigasi();
                     displayQuestion(0);
-                    areaUjian.style.display = "block";
+                    
+                    areaUjian.style.display = "flex";
                 });
             }
 
-            // --- Tombol Navigasi Soal (Sebelumnya, Berikutnya, Selesai) ---
+            // EVENT: Saat siswa menjawab di area soal (Auto-Save Realtime)
+            document.getElementById("tempat-soal").addEventListener("input", () => {
+                saveCurrentAnswer();
+                renderGridNavigasi();
+                saveExamSession();
+            });
+
+            // TOMBOL NAVIGASI
             document.getElementById("btn-sebelumnya").addEventListener("click", () => {
                 if(currentQuestionIndex > 0) {
-                    saveCurrentAnswer(); 
                     currentQuestionIndex--;
                     displayQuestion(currentQuestionIndex);
+                    renderGridNavigasi();
+                    saveExamSession();
                 }
             });
 
             document.getElementById("btn-berikutnya").addEventListener("click", () => {
                 if(currentQuestionIndex < loadedQuestions.length - 1) {
-                    saveCurrentAnswer(); 
                     currentQuestionIndex++;
                     displayQuestion(currentQuestionIndex);
+                    renderGridNavigasi();
+                    saveExamSession();
                 }
             });
 
+            // TOMBOL RAGU-RAGU
+            document.getElementById("btn-ragu").addEventListener("click", () => {
+                const soalId = loadedQuestions[currentQuestionIndex].id;
+                statusRagu[soalId] = !statusRagu[soalId]; // Toggle status
+                
+                document.getElementById("cb-ragu").checked = statusRagu[soalId];
+                renderGridNavigasi();
+                saveExamSession();
+            });
+
             document.getElementById("btn-selesai-ujian").addEventListener("click", () => {
-                saveCurrentAnswer(); 
-                submitUjian(); 
+                if(confirm("Apakah Anda yakin ingin menyelesaikan ujian? Jawaban tidak bisa diubah lagi.")) {
+                    submitUjian(); 
+                }
             });
         }
     };
-    
-    // --- FUNGSI TAMPILKAN SOAL SATU PER SATU ---
+
+    // --- FUNGSI TAMPILKAN SOAL ---
     function displayQuestion(index) {
         const wadahTempatSoal = document.getElementById("tempat-soal");
         const soal = loadedQuestions[index];
-        const no = index + 1;
         
-        // Update Indikator Nomor
-        document.getElementById("nomor-soal-aktif").innerText = no;
+        document.getElementById("nomor-soal-aktif").innerText = index + 1;
 
         // Navigasi Tampilan Tombol
-        document.getElementById("btn-sebelumnya").style.display = (index === 0) ? "none" : "block";
-        document.getElementById("btn-berikutnya").style.display = (index === loadedQuestions.length - 1) ? "none" : "block";
-        document.getElementById("btn-selesai-ujian").style.display = (index === loadedQuestions.length - 1) ? "block" : "none";
+        document.getElementById("btn-sebelumnya").style.display = (index === 0) ? "none" : "flex";
+        document.getElementById("btn-berikutnya").style.display = (index === loadedQuestions.length - 1) ? "none" : "flex";
+        document.getElementById("btn-selesai-ujian").style.display = (index === loadedQuestions.length - 1) ? "flex" : "none";
 
-        let htmlSoal = "";
-        htmlSoal += `<div class="wadah-soal">`;
-        htmlSoal += `<p class="pertanyaan">${soal.pertanyaan} <span class="poin-soal">(${soal.poin} Poin)</span></p>`;
+        // Update Checkbox Ragu-Ragu
+        document.getElementById("cb-ragu").checked = statusRagu[soal.id] ? true : false;
+
+        let htmlSoal = `<div class="wadah-soal" style="border:none; padding:0; background:transparent;">`;
+        htmlSoal += `<p class="pertanyaan">${soal.pertanyaan} <span class="poin-soal">(${soal.poin} Poin)</span></p><hr style="margin: 15px 0; border-top: 1px solid #eee;">`;
         
-        // Render berdasarkan Tipe Soal
+        // Render Tipe Soal (Logikanya sama seperti sebelumnya)
         if (soal.tipe === "PG" || soal.tipe === "Benar_Salah") {
-            // Ambil pilihan aslinya, tidak diacak urutannya agar Benar/Salah tidak terbalik
             soal.pilihan.forEach(pil => {
                 if(pil.trim() !== "") {
-                    // Cek apakah siswa sudah menjawab sebelumnya
                     const checked = (detailJawaban[soal.id] === pil) ? "checked" : "";
-                    htmlSoal += `<label class="wadah-pilihan">
-                        <input type="radio" name="jawaban_${soal.id}" value="${pil}" ${checked}> ${pil}
-                    </label>`;
+                    htmlSoal += `<label class="wadah-pilihan"><input type="radio" name="jawaban_${soal.id}" value="${pil}" ${checked}> ${pil}</label>`;
                 }
             });
         } 
         else if (soal.tipe === "PG_Kompleks") {
-            // Ambil jawaban sebelumnya, pisahkan koma
             const savedAnswers = detailJawaban[soal.id] ? detailJawaban[soal.id].split(',') : [];
             soal.pilihan.forEach(pil => {
                 if(pil.trim() !== "") {
                     const checked = savedAnswers.includes(pil) ? "checked" : "";
-                    htmlSoal += `<label class="wadah-pilihan">
-                        <input type="checkbox" name="jawaban_${soal.id}" value="${pil}" ${checked}> ${pil}
-                    </label>`;
+                    htmlSoal += `<label class="wadah-pilihan"><input type="checkbox" name="jawaban_${soal.id}" value="${pil}" ${checked}> ${pil}</label>`;
                 }
             });
         }
@@ -377,10 +418,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         else if (soal.tipe === "Esai") {
             const val = detailJawaban[soal.id] || "";
-            htmlSoal += `<textarea name="jawaban_${soal.id}" class="input-esai" rows="5" placeholder="Ketik penjelasan / jawaban lengkap Anda di sini...">${val}</textarea>`;
+            htmlSoal += `<textarea name="jawaban_${soal.id}" class="input-esai" rows="5" placeholder="Ketik jawaban lengkap di sini...">${val}</textarea>`;
         }
         else if (soal.tipe === "Tarik_Garis") {
-            htmlSoal += `<p style="font-size:13px; color:#666; margin-bottom:10px;"><i>Pilih pasangan yang tepat dari kotak dropdown:</i></p>`;
+            htmlSoal += `<p style="font-size:13px; color:#666; margin-bottom:10px;"><i>Pilih pasangan yang tepat:</i></p>`;
             soal.pilihan.forEach((pasangan, pIndex) => {
                 if(pasangan.includes('=')) {
                     const parts = pasangan.split('=');
@@ -388,7 +429,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     htmlSoal += `<div class="wadah-tarik-garis">
                         <div class="item-tarik-garis">${parts[0]}</div>
                         <select name="jawaban_${soal.id}_${pIndex}" class="select-tarik-garis">
-                            <option value="">-- Pilih Pasangan --</option>
+                            <option value="">-- Pilih --</option>
                             <option value="${parts[1]}" ${savedVal === parts[1] ? "selected" : ""}>${parts[1]}</option>
                         </select>
                     </div>`;
@@ -396,13 +437,45 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
         htmlSoal += `</div>`;
-        
         wadahTempatSoal.innerHTML = htmlSoal;
-        // Scroll ke atas otomatis setiap pindah soal
-        window.scrollTo(0, 0);
     }
 
-    // --- FUNGSI SIMPAN JAWABAN SEMENTARA DI MEMORI ---
+    // --- FUNGSI MENGGAMBAR GRID NOMOR SOAL ---
+    function renderGridNavigasi() {
+        const grid = document.getElementById("grid-nomor-soal");
+        if (!grid) return;
+        
+        let htmlGrid = "";
+        loadedQuestions.forEach((soal, index) => {
+            let cls = "btn-nomor";
+            
+            // Cek apakah sudah dijawab
+            let isAnswered = false;
+            if (soal.tipe === "Tarik_Garis") {
+                // Dianggap dijawab jika minimal 1 ditarik garis
+                isAnswered = Object.keys(detailJawaban).some(key => key.startsWith(soal.id) && detailJawaban[key] !== "");
+            } else {
+                isAnswered = detailJawaban[soal.id] && detailJawaban[soal.id].trim() !== "";
+            }
+
+            if (isAnswered) cls += " dijawab";
+            if (statusRagu[soal.id]) cls += " ragu"; // Ragu menimpa warna dijawab
+            if (index === currentQuestionIndex) cls += " aktif";
+
+            htmlGrid += `<div class="${cls}" onclick="lompatKeSoal(${index})">${index + 1}</div>`;
+        });
+        grid.innerHTML = htmlGrid;
+    }
+
+    // Fungsi dipanggil saat nomor di grid diklik
+    window.lompatKeSoal = function(index) {
+        currentQuestionIndex = index;
+        displayQuestion(index);
+        renderGridNavigasi();
+        saveExamSession();
+    };
+
+    // --- FUNGSI AMBIL JAWABAN SAAT INI ---
     function saveCurrentAnswer() {
         if (loadedQuestions.length === 0) return;
         const soal = loadedQuestions[currentQuestionIndex];
@@ -425,25 +498,54 @@ document.addEventListener("DOMContentLoaded", () => {
             soal.pilihan.forEach((pasangan, pIndex) => {
                 if(pasangan.includes('=')) {
                     const val = tempatSoal.querySelector(`[name="jawaban_${soal.id}_${pIndex}"]`).value;
-                    detailJawaban[`${soal.id}_${pIndex}`] = val; // Simpan per item
+                    detailJawaban[`${soal.id}_${pIndex}`] = val; 
                 }
             });
         }
     }
 
-    // --- LOGIKA PENGIRIMAN & PENILAIAN UJIAN CBT ---
+    // --- FUNGSI TIMER MUNDUR ---
+    function mulaiTimer() {
+        clearInterval(timerInterval);
+        const display = document.getElementById("timer-display");
+        
+        timerInterval = setInterval(() => {
+            let now = new Date().getTime();
+            let distance = examEndTime - now;
+
+            if (distance <= 0) {
+                clearInterval(timerInterval);
+                display.innerText = "00:00:00";
+                alert("WAKTU HABIS! Jawaban Anda akan dikumpulkan otomatis.");
+                submitUjian();
+                return;
+            }
+
+            let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // Format 00:00:00
+            hours = (hours < 10) ? "0" + hours : hours;
+            minutes = (minutes < 10) ? "0" + minutes : minutes;
+            seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+            display.innerText = `${hours}:${minutes}:${seconds}`;
+        }, 1000);
+    }
+
+    // --- LOGIKA SUBMIT UJIAN ---
     async function submitUjian() {
         const areaUjian = document.getElementById("area-ujian");
         const btnSelesai = document.getElementById("btn-selesai-ujian");
         const hasilAlert = document.getElementById("hasil-ujian-alert");
 
-        btnSelesai.innerText = "Mengirim Jawaban...";
+        btnSelesai.innerText = "Mengirim...";
         btnSelesai.disabled = true;
         
         let totalSkor = 0;
-        let finalDetailJawaban = {}; // Untuk dikirim ke database
+        let finalDetailJawaban = {}; 
 
-        // Kalkulasi poin otomatis berdasarkan tipe soal
         loadedQuestions.forEach(soal => {
             let userJawaban = "";
             let isBenar = false;
@@ -473,16 +575,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             else if (soal.tipe === "Esai") {
                 userJawaban = detailJawaban[soal.id] || "";
-                isBenar = null; // Dinilai manual guru
+                isBenar = null;
             }
 
             if (isBenar === true) totalSkor += soal.poin;
-            
-            // Simpan detail untuk database (Kode Soal: Pertanyaan => Jawaban)
             finalDetailJawaban[soal.pertanyaan] = userJawaban;
         });
 
-        // Kirim hasil ke Google Sheets via POST
         try {
             const payload = {
                 action: "submit_ujian",
@@ -492,43 +591,35 @@ document.addEventListener("DOMContentLoaded", () => {
                 detail_jawaban: finalDetailJawaban
             };
 
-            // Beri tahu siswa bahwa AI sedang bekerja
-            btnSelesai.innerText = "Mengirim & Menganalisis dengan AI...";
-
             const response = await fetch(SCRIPT_URL, {
                 method: "POST",
                 body: JSON.stringify(payload)
             });
-            
             const result = await response.json();
             
             if(result.status === "sukses") {
-                areaUjian.style.display = "none";
+                clearExamSession(); // HAPUS SESI UJIAN KARENA SUDAH SELESAI
                 
-                // Isi data ke dalam template PDF yang tersembunyi
+                areaUjian.style.display = "none";
                 document.getElementById("pdf-nama-siswa").innerText = payload.nama_siswa;
                 document.getElementById("pdf-kode-ujian").innerText = currentExamCode;
                 document.getElementById("pdf-skor-objektif").innerText = totalSkor;
-                // Pecah teks AI menjadi paragraf agar tidak terpotong di tengah baris
+                
                 const paragraphs = result.ai_feedback.split('\n').filter(p => p.trim() !== '');
                 let formattedFeedback = '';
                 paragraphs.forEach(p => {
-                // CSS page-break-inside: avoid akan mencegah elemen ini terbelah dua
-                formattedFeedback += `<p style="margin-bottom: 12px; line-height: 1.6;">${p}</p>`;
+                    formattedFeedback += `<p style="margin-bottom: 12px; line-height: 1.6;">${p}</p>`;
                 });
                 document.getElementById("pdf-analisis-ai").innerHTML = formattedFeedback;
 
-                // Tampilkan alert sukses dan tombol download PDF
-                hasilAlert.style.backgroundColor = "#d1e7dd";
-                hasilAlert.style.color = "#0f5132";
                 hasilAlert.innerHTML = `
                     <h3 style="margin-bottom:10px; font-size:1.8rem;">Luar Biasa!</h3>
-                    <p>Jawaban untuk kode <b>${currentExamCode}</b> berhasil dikumpulkan dan telah dianalisis.</p>
+                    <p>Jawaban berhasil dikumpulkan.</p>
                     <hr style="border-top:2px dashed #198754; margin:15px 0;">
-                    <p>Skor Pilihan Ganda/Objektif Anda:</p>
+                    <p>Skor Objektif Anda:</p>
                     <span style="font-size:48px; color:#198754; display:block; margin:10px 0; font-weight:bold;">${totalSkor}</span>
-                    <button id="btn-download-pdf" style="margin-top: 15px; padding: 12px 20px; background-color: #0dcaf0; color: #000; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                        <i class="fa-solid fa-file-pdf"></i> Unduh Analisis Rapor PDF
+                    <button id="btn-download-pdf" style="margin-top: 15px; padding: 12px 20px; background-color: #0dcaf0; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">
+                        Unduh Analisis Rapor PDF
                     </button>
                 `;
                 hasilAlert.style.display = "block";
