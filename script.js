@@ -509,7 +509,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("pdf-nama-siswa").innerText = payload.nama_siswa;
                 document.getElementById("pdf-kode-ujian").innerText = currentExamCode;
                 document.getElementById("pdf-skor-objektif").innerText = totalSkor;
-                document.getElementById("pdf-analisis-ai").innerText = result.ai_feedback;
+                // Pecah teks AI menjadi paragraf agar tidak terpotong di tengah baris
+                const paragraphs = result.ai_feedback.split('\n').filter(p => p.trim() !== '');
+                let formattedFeedback = '';
+                paragraphs.forEach(p => {
+                // CSS page-break-inside: avoid akan mencegah elemen ini terbelah dua
+                formattedFeedback += `<div style="page-break-inside: avoid; margin-bottom: 12px;">${p}</div>`;
+                });
+                document.getElementById("pdf-analisis-ai").innerHTML = formattedFeedback;
 
                 // Tampilkan alert sukses dan tombol download PDF
                 hasilAlert.style.backgroundColor = "#d1e7dd";
@@ -533,13 +540,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     elemenPdf.style.display = "block"; // Munculkan sebentar untuk di-capture
                     
                     const opt = {
-                      margin:       0.5,
+                      margin:       [0.5, 0.5, 0.5, 0.5], // Margin atas, kanan, bawah, kiri
                       filename:     `Rapor_${currentExamCode}_${payload.nama_siswa.replace(/\s+/g, '_')}.pdf`,
                       image:        { type: 'jpeg', quality: 0.98 },
-                      html2canvas:  { scale: 2 },
-                      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                      html2canvas:  { scale: 2, windowWidth: 800 }, // windowWidth merapikan margin teks
+                      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }, // Ganti Ukuran Kertas
+                      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // Fitur anti-potong teks
                     };
-
+                    
                     // Generate PDF, lalu sembunyikan lagi elemennya
                     html2pdf().set(opt).from(elemenPdf).save().then(() => {
                         elemenPdf.style.display = "none";
