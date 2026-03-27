@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXG1jl4to6Qm39uwA3ZoPLgqBttjbds63yq58kX0GJmyBHjnXlheZaP1TmbWIIlCJl/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxgtrfY00BiZDGMtvdrvwoVi7A44R-OKYQA9lsd8m3N8Za_BKTwepNqwLEjPVx89yQD/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
@@ -624,7 +624,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <td style="text-align:center; font-weight:bold; color:#198754; font-size:16px;">${hasil.skor}</td>
                             <td style="font-size:12px;">${previewAI}</td>
                             <td style="text-align:center;">
-                                <button class="btn-hapus-soal" onclick="hapusHasilUjian('${hasil.waktu}', '${hasil.nama}', '${hasil.kode}')" style="width:auto; padding:5px 10px; font-size:12px;">
+                                <button class="btn-hapus-soal" onclick="hapusHasilUjian(${hasil.indexAsli}, '${hasil.nama}', '${hasil.kode}')" style="width:auto; padding:5px 10px; font-size:12px;">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </td>
@@ -644,12 +644,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if(btnRefresh) btnRefresh.addEventListener("click", fetchSemuaHasilUjian);
 
             // --- FUNGSI HAPUS HASIL UJIAN ---
-            window.hapusHasilUjian = async function(waktu, nama, kode) {
+            window.hapusHasilUjian = async function(indexAsli, nama, kode) {
                 if(confirm(`Yakin ingin menghapus nilai siswa bernama ${nama} (Kode: ${kode})? Data akan hilang permanen!`)) {
                     try {
                         const response = await fetch(SCRIPT_URL, {
                             method: "POST",
-                            body: JSON.stringify({ action: "hapus_hasil", waktu: waktu, nama: nama, kode_soal: kode })
+                            // KITA KIRIM DATA BARIS (INDEX), BUKAN WAKTU LAGI
+                            body: JSON.stringify({ action: "hapus_hasil", baris: indexAsli, nama: nama, kode_soal: kode })
                         });
                         const res = await response.json();
                         if(res.status === "sukses") {
