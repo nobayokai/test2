@@ -821,7 +821,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         btn.disabled = false;
                     });
                 });
+            }
+        }
     }
+
 
 
 // --- LOGIKA SIMPAN SOAL OLEH GURU ---
