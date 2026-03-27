@@ -367,3 +367,24 @@
     .cbt-actions { flex-direction: column; gap: 10px; }
     .btn-cbt { justify-content: center; }
 }
+
+/* --- FORM BUAT SOAL --- */
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #495057;
+}
+.form-group input[type="text"], 
+.form-group input[type="number"], 
+.form-group select, 
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 15px;
+}
