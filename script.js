@@ -540,7 +540,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     elemenPdf.style.display = "block"; // Munculkan sebentar untuk di-capture
                     
                     const opt = {
-                      margin:       [0.5, 0.5, 0.5, 0.5], // Margin atas, kanan, bawah, kiri
+                      margin:       [10, 10, 10, 10], // Margin atas, kanan, bawah, kiri
                       filename:     `Rapor_${currentExamCode}_${payload.nama_siswa.replace(/\s+/g, '_')}.pdf`,
                       image:        { type: 'jpeg', quality: 0.98 },
                       html2canvas:  { scale: 2, windowWidth: 800 }, // windowWidth merapikan margin teks
