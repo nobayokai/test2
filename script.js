@@ -88,6 +88,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (result.role.toLowerCase() === "guru") {
                             const menuRapor = document.getElementById("menu-rapor");
                             if(menuRapor) menuRapor.style.display = "block";
+
+                            // --- TAMBAHKAN 2 BARIS INI ---
+                            const menuBuatSoal = document.getElementById("menu-buat-soal");
+                            if(menuBuatSoal) menuBuatSoal.style.display = "block";
+                            // -----------------------------
+                        
                         }
                         if (result.role.toLowerCase() === "siswa") {
                             const menuLatihan = document.getElementById("menu-latihan");
@@ -187,6 +193,11 @@ document.addEventListener("DOMContentLoaded", () => {
             
             const menuLatihan = document.getElementById("menu-latihan");
             if(menuLatihan) menuLatihan.style.display = "none"; 
+
+            // --- TAMBAHKAN 2 BARIS INI ---
+            const menuBuatSoal = document.getElementById("menu-buat-soal");
+            if(menuBuatSoal) menuBuatSoal.style.display = "none";
+            // -----------------------------
             
             // Munculkan Kembali Menu Publik (Visi Misi & Profil)
             document.querySelector('[data-page="visi-misi"]').style.display = "block";
