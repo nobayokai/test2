@@ -794,18 +794,26 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     // 1. Munculkan wadah PDF dan rapikan ukurannya untuk difoto
                     elemenPdf.style.display = "block"; 
-                    elemenPdf.style.width = "800px"; // Kunci lebar agar teks tidak berantakan di tablet
-                    elemenPdf.style.maxWidth = "none"; // Wajib: agar tidak dibatasi oleh lebar layar tablet
-                    elemenPdf.style.margin = "0 auto";
+                    elemenPdf.style.width = "100%"; // Kunci lebar agar teks tidak berantakan di tablet
+                    elemenPdf.style.maxWidth = "100%"; // Wajib: agar tidak dibatasi oleh lebar layar tablet
+                    elemenPdf.style.padding = "20px";
                     elemenPdf.style.backgroundColor = "white"; // Pastikan background tidak transparan
                     elemenPdf.style.boxSizing = "border-box";
-                    
+
+
+                    // 2. Paksa teks analisis AI agar rata kiri-kanan dan tidak menabrak batas pinggir
+                    const aiTextContainer = document.getElementById("pdf-analisis-ai");
+                    if(aiTextContainer) {
+                        aiTextContainer.style.wordWrap = "break-word";
+                        aiTextContainer.style.textAlign = "justify";
+
+                        
                     // 2. Pengaturan PDF
                     const opt = {
                       margin:       10, // Margin 1,5 cm di semua sisi kertas
                       filename:     `Rapor_${currentExamCode}_${payload.nama_siswa.replace(/\s+/g, '_')}.pdf`,
                       image:        { type: 'jpeg', quality: 0.98 },
-                      html2canvas:  { scale: 2, scrollX: 0, scrollY: 0, windowWidth: 800, width: 800, useCORS: true }, 
+                      html2canvas:  { scale: 2, scrollX: 0, scrollY: 0, useCORS: true }, 
                       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                     };
 
