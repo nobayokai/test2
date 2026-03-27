@@ -31,7 +31,12 @@ document.addEventListener("DOMContentLoaded", () => {
         
         // Jika role-nya guru, munculkan menu rapor
         if (savedRole.toLowerCase() === "guru") {
-            document.getElementById("menu-rapor").style.display = "block";
+            const menuRapor = document.getElementById("menu-rapor");
+            if (menuRapor) menuRapor.style.display = "block";
+    
+            // TAMBAHKAN INI
+            const menuBuatSoal = document.getElementById("menu-buat-soal");
+            if (menuBuatSoal) menuBuatSoal.style.display = "block";
         }
         if (savedRole.toLowerCase() === "siswa") {
             const menuLatihan = document.getElementById("menu-latihan");
@@ -691,5 +696,83 @@ document.addEventListener("DOMContentLoaded", () => {
             btnSelesai.disabled = false;
         }
     }
+
+
+// --- LOGIKA SIMPAN SOAL OLEH GURU ---
+    if (contentArea) {
+        contentArea.addEventListener("submit", async function(e) {
+            if (e.target.id === "form-buat-soal") {
+                e.preventDefault();
+                const btnSimpan = document.getElementById("btn-simpan-soal");
+                const alertInfo = document.getElementById("alert-buat-soal");
+                
+                btnSimpan.innerText = "Mengunggah Soal & Gambar...";
+                btnSimpan.disabled = true;
+                alertInfo.style.display = "none";
+
+                const fileInput = document.getElementById("bs-gambar");
+                let base64Image = "";
+                let mimeType = "";
+                let fileName = "";
+
+                // Fungsi untuk membaca gambar menjadi Base64
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    if(file.size > 2000000) { // Max 2MB
+                        alert("Ukuran gambar terlalu besar! Maksimal 2MB.");
+                        btnSimpan.innerText = "Simpan ke Database";
+                        btnSimpan.disabled = false;
+                        return;
+                    }
+                    mimeType = file.type;
+                    fileName = file.name;
+                    
+                    base64Image = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                const payload = {
+                    action: "simpan_soal",
+                    kode_soal: document.getElementById("bs-kode").value,
+                    tipe_soal: document.getElementById("bs-tipe").value,
+                    pertanyaan: document.getElementById("bs-pertanyaan").value,
+                    pilihan: document.getElementById("bs-pilihan").value || "-",
+                    kunci: document.getElementById("bs-kunci").value || "-",
+                    poin: document.getElementById("bs-poin").value,
+                    image_base64: base64Image,
+                    image_mime: mimeType,
+                    image_name: fileName
+                };
+
+                try {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+
+                    if(result.status === "sukses") {
+                        alertInfo.style.backgroundColor = "#d1e7dd";
+                        alertInfo.style.color = "#0f5132";
+                        alertInfo.innerText = "Soal berhasil ditambahkan ke Database!";
+                        alertInfo.style.display = "block";
+                        e.target.reset(); // Kosongkan form
+                    }
+                } catch (error) {
+                    alertInfo.style.backgroundColor = "#f8d7da";
+                    alertInfo.style.color = "#842029";
+                    alertInfo.innerText = "Gagal menghubungi server.";
+                    alertInfo.style.display = "block";
+                } finally {
+                    btnSimpan.innerHTML = `<i class="fa-solid fa-save"></i> Simpan ke Database`;
+                    btnSimpan.disabled = false;
+                }
+            }
+        });
+    }
+    
         
 });
