@@ -342,6 +342,17 @@ document.addEventListener("DOMContentLoaded", () => {
             // ALUR 2: Mulai Ujian Baru
             if (document.getElementById("btn-konfirmasi-mulai")) {
                 document.getElementById("btn-konfirmasi-mulai").addEventListener("click", () => {
+                    
+                    // --- FITUR KEAMANAN: PAKSA MASUK FULLSCREEN ---
+                    const elem = document.documentElement;
+                    if (elem.requestFullscreen) {
+                        elem.requestFullscreen().catch(err => console.log(err));
+                    } else if (elem.webkitRequestFullscreen) { /* Safari */
+                        elem.webkitRequestFullscreen();
+                    } else if (elem.msRequestFullscreen) { /* IE11 */
+                        elem.msRequestFullscreen();
+                    }
+                    
                     modalKonfirmasi.style.display = "none"; 
                     tahapKode.style.display = "none"; 
 
@@ -755,6 +766,22 @@ document.addEventListener("DOMContentLoaded", () => {
             
             if(result.status === "sukses") {
                 clearExamSession(); // HAPUS SESI UJIAN KARENA SUDAH SELESAI
+
+                if(result.status === "sukses") {
+                clearExamSession(); // HAPUS SESI UJIAN KARENA SUDAH SELESAI
+                
+                // --- KELUARKAN DARI MODE FULLSCREEN OTOMATIS ---
+                if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) { /* Safari */
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) { /* IE11 */
+                        document.msExitFullscreen();
+                    }
+                }
+                
+    
                 
                 areaUjian.style.display = "none";
                 document.getElementById("pdf-nama-siswa").innerText = payload.nama_siswa;
@@ -917,6 +944,23 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-    
+
+    // --- FITUR KEAMANAN: DETEKSI KELUAR FULLSCREEN CBT ---
+    document.addEventListener("fullscreenchange", checkFullscreenCBT);
+    document.addEventListener("webkitfullscreenchange", checkFullscreenCBT);
+    document.addEventListener("msfullscreenchange", checkFullscreenCBT);
+
+    function checkFullscreenCBT() {
+        const areaUjian = document.getElementById("area-ujian");
+        // Cek apakah siswa sedang berada di tengah ujian
+        if (areaUjian && areaUjian.style.display === "flex") {
+            const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+            
+            // Jika layar tidak fullscreen lagi, beri peringatan keras!
+            if (!isFullscreen) {
+                alert("🚨 PERINGATAN PELANGGARAN! 🚨\n\nAnda telah keluar dari mode Layar Penuh (Fullscreen) di tengah ujian!\n\nSistem mencatat aktivitas ini. Harap fokus mengerjakan ujian Anda!");
+            }
+        }
+    }
         
 });
