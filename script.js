@@ -193,24 +193,26 @@ document.addEventListener("DOMContentLoaded", () => {
             const html = await response.text();
             contentArea.innerHTML = html;
 
-            // --- INISIALISASI CKEDITOR 5 KHUSUS MENU BUAT SOAL ---
+            // --- KUNCI PERBAIKAN: INISIALISASI CKEDITOR KHUSUS MENU BUAT SOAL ---
             if (page === "buat-soal") {
-                // Hancurkan editor lama jika guru bolak-balik menu agar tidak menumpuk/error
-                if (window.editorSoal) {
-                    window.editorSoal.destroy().catch(error => console.log(error));
-                    window.editorSoal = null;
+                // Hapus instance lama jika guru bolak-balik menu agar tidak error
+                if (window.CKEDITOR && CKEDITOR.instances['bs-pertanyaan']) {
+                    CKEDITOR.instances['bs-pertanyaan'].destroy(true);
                 }
-                
-                // Sulap textarea biasa menjadi CKEditor 5
-                if (typeof ClassicEditor !== 'undefined') {
-                    ClassicEditor
-                        .create(document.querySelector('#bs-pertanyaan'))
-                        .then(editor => {
-                            window.editorSoal = editor; // Simpan di memori global agar bisa dibaca saat klik Simpan
-                        })
-                        .catch(error => {
-                            console.error("Gagal memuat CKEditor 5:", error);
-                        });
+                // Sulap textarea biasa menjadi Editor Canggih
+                if (window.CKEDITOR) {
+                    CKEDITOR.replace('bs-pertanyaan', {
+                        height: 200, // Tinggi kotak
+                        // Atur tombol apa saja yang muncul di atas kotak (Toolbar)
+                        toolbar: [
+                            ['Bold', 'Italic', 'Underline', 'Strike'],
+                            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
+                            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+                            ['Subscript', 'Superscript'],
+                            ['Styles', 'Format', 'Font', 'FontSize'],
+                            ['TextColor', 'BGColor']
+                        ]
+                    });
                 }
             }
             // ---------------------------------------------------------------------
@@ -1517,13 +1519,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 }
 
-                const payload = {
+               const payload = {
                     action: "simpan_soal",
                     kode_soal: document.getElementById("bs-kode").value,
                     tipe_soal: document.getElementById("bs-tipe").value,
-
-                    // --- AMBIL TEKS DARI CKEDITOR 5 ---
-                    pertanyaan: window.editorSoal ? window.editorSoal.getData() : document.getElementById("bs-pertanyaan").value,
+                    
+                    // --- AMBIL TEKS DARI CKEDITOR ---
+                    pertanyaan: window.CKEDITOR && CKEDITOR.instances['bs-pertanyaan'] ? CKEDITOR.instances['bs-pertanyaan'].getData() : document.getElementById("bs-pertanyaan").value,
                     
                     pilihan: document.getElementById("bs-pilihan").value || "-",
                     kunci: document.getElementById("bs-kunci").value || "-",
@@ -1540,16 +1542,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                     const result = await response.json();
 
-                    if(result.status === "sukses") {
+                   if(result.status === "sukses") {
                         alertInfo.style.backgroundColor = "#d1e7dd";
                         alertInfo.style.color = "#0f5132";
                         alertInfo.innerText = "Soal berhasil ditambahkan ke Database!";
                         alertInfo.style.display = "block";
-                        e.target.reset(); // Kosongkan form
-
+                        e.target.reset(); // Kosongkan form biasa
+                        
                         // --- KOSONGKAN CKEDITOR JUGA ---
-                        if (window.editorSoal) {
-                            window.editorSoal.setData('');
+                        if (window.CKEDITOR && CKEDITOR.instances['bs-pertanyaan']) {
+                            CKEDITOR.instances['bs-pertanyaan'].setData('');
                         }
                     }
                 } catch (error) {
