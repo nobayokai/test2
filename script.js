@@ -1308,10 +1308,197 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
         
+        // --- LOGIKA ARENA BERMAIN (TAHAP 3) ---
+        if (page === "arena-bermain") {
+            const pinRoom = sessionStorage.getItem("active_game_room");
+            const isHost = sessionStorage.getItem("is_game_host") === "true";
+            const myName = sessionStorage.getItem("userName");
+            
+            if (!pinRoom) { alert("Sesi game hilang!"); loadPage("tebak-kata"); return; }
 
+            document.getElementById("arena-pin").innerText = pinRoom;
+            
+            const roomRef = dbGame.ref('rooms/' + pinRoom);
+            let roomData = null;
+
+            // Jika Guru (Host), munculkan tombol kontrol
+            if (isHost) {
+                document.getElementById("btn-host-mulai").style.display = "block";
+            }
+
+            // 1. MENDENGARKAN PERUBAHAN DATABASE SECARA REAL-TIME
+            roomRef.on('value', (snapshot) => {
+                roomData = snapshot.val();
+                if (!roomData) {
+                    alert("Room telah ditutup oleh Guru.");
+                    keluarRoomGame();
+                    return;
+                }
+
+                document.getElementById("arena-materi").innerText = "Materi: " + roomData.materi;
+
+                // --- Update Daftar Pemain & Skor ---
+                let htmlPemain = "";
+                let players = roomData.pemain || {};
+                let playerNames = Object.keys(players);
+                
+                playerNames.forEach(nama => {
+                    let ikon = (nama === roomData.host) ? '<i class="fa-solid fa-crown" style="color: gold;"></i>' : '<i class="fa-solid fa-user"></i>';
+                    htmlPemain += `<li>${ikon} <b>${nama}</b> : <span style="color:#198754; font-weight:bold;">${players[nama].skor || 0} Poin</span></li>`;
+                });
+                document.getElementById("daftar-pemain").innerHTML = htmlPemain;
+
+                // --- Update Layar Status Permainan ---
+                const teksGiliran = document.getElementById("teks-status-giliran");
+                const teksKata = document.getElementById("teks-kata-rahasia");
+                const inputChat = document.getElementById("input-chat");
+
+                if (roomData.status === "lobby") {
+                    teksGiliran.innerText = "Menunggu Guru memulai permainan...";
+                    teksKata.innerText = "???";
+                    inputChat.placeholder = "Ngobrol santai sambil menunggu...";
+                } 
+                else if (roomData.status === "playing") {
+                    let kataAktif = roomData.kata_sekarang || "";
+                    let orangYangMenebak = roomData.giliran_siapa || "";
+
+                    if (myName === orangYangMenebak) {
+                        teksGiliran.innerText = "🔥 GILIRAN ANDA! Beri petunjuk ke teman-teman tanpa menyebut kata ini:";
+                        teksGiliran.style.color = "#dc3545";
+                        teksKata.innerText = kataAktif.toUpperCase();
+                        inputChat.disabled = true; // Yang ngasih petunjuk gak boleh ngetik jawaban!
+                        inputChat.placeholder = "Anda tidak bisa mengetik saat giliran Anda.";
+                    } else {
+                        teksGiliran.innerText = `Giliran ${orangYangMenebak} memberi petunjuk! Ayo tebak!`;
+                        teksGiliran.style.color = "#0d6efd";
+                        teksKata.innerText = kataAktif.replace(/[a-zA-Z]/g, "_ "); // Ubah kata jadi _ _ _ _
+                        inputChat.disabled = false;
+                        inputChat.placeholder = "Ketik tebakan Anda di sini...";
+                    }
+                }
+            });
+
+            // 2. MENDENGARKAN LIVE CHAT & SISTEM PENILAIAN OTOMATIS
+            const chatRef = dbGame.ref(`rooms/${pinRoom}/chat`);
+            chatRef.on('child_added', (snapshot) => {
+                const pesan = snapshot.val();
+                const areaChat = document.getElementById("area-chat");
+                
+                let chatBubble = "";
+                // Jika tebakan benar (Sistem mengirim pesan kemenangan)
+                if (pesan.isSystem) {
+                    chatBubble = `<div style="text-align:center; background:#d1e7dd; color:#0f5132; padding:5px; border-radius:5px; font-size:13px; font-weight:bold; margin: 5px 0;">🎉 ${pesan.teks} 🎉</div>`;
+                } else {
+                    let isMe = pesan.pengirim === myName;
+                    let align = isMe ? "flex-end" : "flex-start";
+                    let bg = isMe ? "#0d6efd" : "#e9ecef";
+                    let color = isMe ? "white" : "black";
+                    
+                    chatBubble = `
+                        <div style="display:flex; flex-direction:column; align-items:${align};">
+                            <small style="font-size:10px; color:#888;">${pesan.pengirim}</small>
+                            <div style="background:${bg}; color:${color}; padding:8px 12px; border-radius:15px; max-width:80%; word-wrap:break-word;">
+                                ${pesan.teks}
+                            </div>
+                        </div>
+                    `;
+                }
+                areaChat.innerHTML += chatBubble;
+                areaChat.scrollTop = areaChat.scrollHeight; // Auto scroll ke bawah
+
+                // --- GURU SEBAGAI JURI OTOMATIS ---
+                // Hanya aplikasi milik Guru (Host) yang bertugas mengecek kebenaran chat agar tidak double-point
+                if (isHost && roomData && roomData.status === "playing" && !pesan.isSystem) {
+                    let kataKunci = (roomData.kata_sekarang || "").toLowerCase().trim();
+                    let tebakan = pesan.teks.toLowerCase().trim();
+
+                    if (tebakan === kataKunci) {
+                        // TEBAKAN BENAR!
+                        // 1. Tambah Skor ke Penebak
+                        let skorPenebak = (roomData.pemain[pesan.pengirim]?.skor || 0) + 10;
+                        dbGame.ref(`rooms/${pinRoom}/pemain/${pesan.pengirim}/skor`).set(skorPenebak);
+                        
+                        // 2. Tambah Skor ke Pemberi Petunjuk (Dapat 5 Poin)
+                        let skorPetunjuk = (roomData.pemain[roomData.giliran_siapa]?.skor || 0) + 5;
+                        dbGame.ref(`rooms/${pinRoom}/pemain/${roomData.giliran_siapa}/skor`).set(skorPetunjuk);
+
+                        // 3. Umumkan di Chat
+                        chatRef.push({ isSystem: true, teks: `${pesan.pengirim} MENEBAK DENGAN BENAR! Kata: ${kataKunci.toUpperCase()}` });
+                        
+                        // 4. Hentikan Ronde
+                        dbGame.ref(`rooms/${pinRoom}/status`).set("lobby");
+                        document.getElementById("btn-host-mulai").style.display = "none";
+                        document.getElementById("btn-host-lanjut").style.display = "block";
+                    }
+                }
+            });
+
+            // 3. FUNGSI KIRIM PESAN CHAT
+            function kirimPesan() {
+                const input = document.getElementById("input-chat");
+                const teks = input.value.trim();
+                if (teks !== "") {
+                    chatRef.push({
+                        pengirim: myName,
+                        teks: teks
+                    });
+                    input.value = "";
+                }
+            }
+            document.getElementById("btn-kirim-chat").addEventListener("click", kirimPesan);
+            document.getElementById("input-chat").addEventListener("keypress", (e) => { if (e.key === "Enter") kirimPesan(); });
+
+            // 4. KONTROL HOST (GURU MENGATUR GILIRAN)
+            if (isHost) {
+                let indeksKata = 0;
+                
+                function jalankanRonde() {
+                    let players = Object.keys(roomData.pemain || {});
+                    if (players.length < 2) { alert("Butuh minimal 2 pemain untuk mulai!"); return; }
+                    
+                    let kataBaru = roomData.daftar_kata[indeksKata];
+                    if (!kataBaru) { 
+                        alert("Semua kata sudah habis dimainkan!"); 
+                        dbGame.ref('rooms/' + pinRoom).remove(); // Hapus room
+                        keluarRoomGame();
+                        return; 
+                    }
+
+                    // Acak siapa yang dapat giliran memberi petunjuk
+                    let yangDapatGiliran = players[Math.floor(Math.random() * players.length)];
+
+                    dbGame.ref('rooms/' + pinRoom).update({
+                        status: "playing",
+                        kata_sekarang: kataBaru,
+                        giliran_siapa: yangDapatGiliran
+                    });
+
+                    document.getElementById("btn-host-mulai").style.display = "none";
+                    document.getElementById("btn-host-lanjut").style.display = "none";
+                    indeksKata++;
+                }
+
+                document.getElementById("btn-host-mulai").addEventListener("click", jalankanRonde);
+                document.getElementById("btn-host-lanjut").addEventListener("click", jalankanRonde);
+            }
+
+            // 5. KELUAR ROOM
+            window.keluarRoomGame = function() {
+                // Jika Guru keluar, hapus room dari Firebase
+                if (isHost) {
+                    dbGame.ref('rooms/' + pinRoom).remove();
+                } else {
+                    // Jika siswa keluar, hapus namanya saja
+                    dbGame.ref(`rooms/${pinRoom}/pemain/${myName}`).remove();
+                }
+                sessionStorage.removeItem("active_game_room");
+                sessionStorage.removeItem("is_game_host");
+                loadPage("tebak-kata");
+            };
+        }
         
-    };
-
+    }; // ----- AKHIR dari loadPage = async function--------
+    
     // --- FUNGSI TAMPILKAN SOAL ---
     function displayQuestion(index) {
         const wadahTempatSoal = document.getElementById("tempat-soal");
