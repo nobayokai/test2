@@ -754,11 +754,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         else if (soal.tipe === "Isian") {
             const val = detailJawaban[soal.id] || "";
-            htmlSoal += `<input type="text" name="jawaban_${soal.id}" class="input-isian" placeholder="Ketik jawaban singkat Anda..." value="${val}">`;
+            htmlSoal += `<input type="text" name="jawaban_${soal.id}" class="input-isian" placeholder="Ketik jawaban singkat Anda..." value="${val}" autocomplete="off">`;
         }
         else if (soal.tipe === "Esai") {
             const val = detailJawaban[soal.id] || "";
-            htmlSoal += `<textarea name="jawaban_${soal.id}" class="input-esai" rows="5" placeholder="Ketik jawaban lengkap di sini...">${val}</textarea>`;
+            htmlSoal += `<textarea name="jawaban_${soal.id}" class="input-esai" rows="5" placeholder="Ketik jawaban lengkap di sini..." autocomplete="off">${val}</textarea>`;
         }
         else if (soal.tipe === "Tarik_Garis") {
             htmlSoal += `<p style="font-size:13px; color:#666; margin-bottom:10px;"><i>Pilih pasangan yang tepat:</i></p>`;
