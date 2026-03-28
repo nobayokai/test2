@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Jika role-nya guru, munculkan menu rapor
         if (savedRole.toLowerCase() === "guru") {
             const menuGuru = document.getElementById("menu-guru-dropdown");
-            if (menuGuru) menuGuru.style.display = "inline-block";
+            if (menuGuru) menuGuru.style.display = "";
         }
         if (savedRole.toLowerCase() === "siswa") {
             const menuLatihan = document.getElementById("menu-latihan");
@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     // Cek jika role adalah Guru (pastikan tulisan sesuai dengan database di Google Sheet)
                     if (result.role.toLowerCase() === "guru") {
                             const menuGuru = document.getElementById("menu-guru-dropdown");
-                            if(menuGuru) menuGuru.style.display = "inline-block";
+                            if(menuGuru) menuGuru.style.display = "";
                         }
                         if (result.role.toLowerCase() === "siswa") {
                             const menuLatihan = document.getElementById("menu-latihan");
