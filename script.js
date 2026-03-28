@@ -31,20 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
         
         // Jika role-nya guru, munculkan menu rapor
         if (savedRole.toLowerCase() === "guru") {
-            const menuRapor = document.getElementById("menu-rapor");
-            if (menuRapor) menuRapor.style.display = "block";
-    
-            // TAMBAHKAN INI
-            const menuBuatSoal = document.getElementById("menu-buat-soal");
-            if (menuBuatSoal) menuBuatSoal.style.display = "block";
-
-            //menu lihat soal
-            const menuLihatSoal = document.getElementById("menu-lihat-soal");
-            if(menuLihatSoal) menuLihatSoal.style.display = "block";
-
-            //menu hasil ujian
-            const menuHasilUjian = document.getElementById("menu-hasil-ujian");
-            if(menuHasilUjian) menuHasilUjian.style.display = "block";
+            const menuGuru = document.getElementById("menu-guru-dropdown");
+            if (menuGuru) menuGuru.style.display = "inline-block";
         }
         if (savedRole.toLowerCase() === "siswa") {
             const menuLatihan = document.getElementById("menu-latihan");
@@ -94,22 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     // --- TAMBAHKAN KODE INI ---
                     // Cek jika role adalah Guru (pastikan tulisan sesuai dengan database di Google Sheet)
                     if (result.role.toLowerCase() === "guru") {
-                            const menuRapor = document.getElementById("menu-rapor");
-                            if(menuRapor) menuRapor.style.display = "block";
-
-                            // --- TAMBAHKAN 2 BARIS INI ---
-                            const menuBuatSoal = document.getElementById("menu-buat-soal");
-                            if(menuBuatSoal) menuBuatSoal.style.display = "block";
-                            // -----------------------------
-
-                            // tampilkan menu lihat soal
-                            const menuLihatSoal = document.getElementById("menu-lihat-soal");
-                            if(menuLihatSoal) menuLihatSoal.style.display = "block";
-
-                            // tampilkan menu hasil ujian
-                            const menuHasilUjian = document.getElementById("menu-hasil-ujian");
-                            if(menuHasilUjian) menuHasilUjian.style.display = "block";
-                        
+                            const menuGuru = document.getElementById("menu-guru-dropdown");
+                            if(menuGuru) menuGuru.style.display = "inline-block";
                         }
                         if (result.role.toLowerCase() === "siswa") {
                             const menuLatihan = document.getElementById("menu-latihan");
@@ -204,24 +178,11 @@ document.addEventListener("DOMContentLoaded", () => {
             clearExamSession(); // TAMBAHKAN BARIS INI
             
             // 2. Sembunyikan menu khusus dan tombol logout
-            const menuRapor = document.getElementById("menu-rapor");
-            if(menuRapor) menuRapor.style.display = "none";
+            const menuGuru = document.getElementById("menu-guru-dropdown");
+            if(menuGuru) menuGuru.style.display = "none";
             
             const menuLatihan = document.getElementById("menu-latihan");
-            if(menuLatihan) menuLatihan.style.display = "none"; 
-
-            // --- TAMBAHKAN 2 BARIS INI ---
-            const menuBuatSoal = document.getElementById("menu-buat-soal");
-            if(menuBuatSoal) menuBuatSoal.style.display = "none";
-            // -----------------------------
-
-            // sembunyikan menu lihat soal
-            const menuLihatSoal = document.getElementById("menu-lihat-soal");
-            if(menuLihatSoal) menuLihatSoal.style.display = "none";
-
-            // sembunyikan menu hasil ujian
-            const menuHasilUjian = document.getElementById("menu-hasil-ujian");
-            if(menuHasilUjian) menuHasilUjian.style.display = "none";
+            if(menuLatihan) menuLatihan.style.display = "none";
             
             
             // Munculkan Kembali Menu Publik (Visi Misi & Profil)
