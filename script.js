@@ -306,7 +306,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (!kodeMateri) { alert("Pilih materi terlebih dahulu!"); return; }
 
                     const materiDipilih = window.bankKataGame.find(x => x.kode === kodeMateri);
-                    const daftarKata = materiDipilih.kata.split(",").map(k => k.trim()); // Pecah kata jadi array
+                    
+                   // 1. Pecah kata dari Google Sheets menjadi Array
+                    let daftarKata = materiDipilih.kata.split(",").map(k => k.trim()); 
+                    
+                    // 2. --- KUNCI PERBAIKAN: Acak urutan kata ---
+                    // Menggunakan fungsi Fisher-Yates (acakUrutan) yang sudah ada di file ini
+                    daftarKata = acakUrutan(daftarKata);
+                    // --------------------------------------------
+                    
 
                     // Buat PIN acak 5 angka
                     const pinRoom = Math.floor(10000 + Math.random() * 90000).toString();
@@ -1335,6 +1343,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
 
+                // --- TAMBAHKAN DETEKSI KICK DI SINI ---
+                // Jika kita siswa, dan nama kita tiba-tiba hilang dari database (dihapus guru)
+                if (!isHost && roomData.pemain && !roomData.pemain[myName]) {
+                    alert("⛔ Anda telah dikeluarkan dari Room oleh Guru.");
+                    sessionStorage.removeItem("active_game_room");
+                    sessionStorage.removeItem("is_game_host");
+                    loadPage("tebak-kata"); // Lempar kembali ke lobby
+                    return;
+                }
+
                 document.getElementById("arena-materi").innerText = "Materi: " + roomData.materi;
 
                 // --- Update Daftar Pemain & Skor ---
@@ -1344,8 +1362,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 playerNames.forEach(nama => {
                     let ikon = (nama === roomData.host) ? '<i class="fa-solid fa-crown" style="color: gold;"></i>' : '<i class="fa-solid fa-user"></i>';
-                    htmlPemain += `<li>${ikon} <b>${nama}</b> : <span style="color:#198754; font-weight:bold;">${players[nama].skor || 0} Poin</span></li>`;
+                    
+                    // --- KUNCI: Munculkan Tombol Kick Khusus Untuk Guru ---
+                    let tombolKick = "";
+                    if (isHost && nama !== roomData.host) {
+                        tombolKick = `<button onclick="kickSiswa('${nama}')" style="background:#dc3545; color:white; border:none; padding:3px 8px; border-radius:4px; font-size:11px; cursor:pointer;"><i class="fa-solid fa-ban"></i> Kick</button>`;
+                    }
+
+                    htmlPemain += `<li style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 5px 0;">
+                        <div>${ikon} <b>${nama}</b> : <span style="color:#198754; font-weight:bold;">${players[nama].skor || 0} Poin</span></div>
+                        ${tombolKick}
+                    </li>`;
                 });
+                
                 document.getElementById("daftar-pemain").innerHTML = htmlPemain;
 
                 // --- Update Layar Status Permainan ---
@@ -1429,6 +1458,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         dbGame.ref(`rooms/${pinRoom}/status`).set("lobby");
                         document.getElementById("btn-host-mulai").style.display = "none";
                         document.getElementById("btn-host-lanjut").style.display = "block";
+
+                        // Sembunyikan tombol Skip saat sedang istirahat
+                        const btnSkip = document.getElementById("btn-host-skip");
+                        if(btnSkip) btnSkip.style.display = "none";
                     }
                 }
             });
@@ -1481,6 +1514,41 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("btn-host-mulai").addEventListener("click", jalankanRonde);
                 document.getElementById("btn-host-lanjut").addEventListener("click", jalankanRonde);
             }
+
+            // --- FUNGSI GURU: KICK SISWA ---
+            window.kickSiswa = function(namaSiswa) {
+                if(confirm(`Yakin ingin mengeluarkan ${namaSiswa} dari permainan?`)) {
+                    dbGame.ref(`rooms/${pinRoom}/pemain/${namaSiswa}`).remove();
+                    
+                    // Jika siswa yang di-kick kebetulan sedang kebagian giliran memberi petunjuk
+                    if (roomData && roomData.status === "playing" && roomData.giliran_siapa === namaSiswa) {
+                        chatRef.push({ isSystem: true, teks: `Giliran dibatalkan karena ${namaSiswa} dikeluarkan dari permainan.` });
+                        jalankanRonde(); // Otomatis lempar ke siswa berikutnya
+                    }
+                }
+            };
+
+            // --- FUNGSI GURU: SKIP GILIRAN ---
+            if (isHost) {
+                const btnSkip = document.getElementById("btn-host-skip");
+                if (btnSkip) {
+                    btnSkip.addEventListener("click", () => {
+                        if (confirm("Siswa ini AFK/Diam saja? Lewati giliran anak ini dan ganti ke kata berikutnya?")) {
+                            chatRef.push({ isSystem: true, teks: `Giliran ${roomData.giliran_siapa} dilewati oleh Guru!` });
+                            jalankanRonde();
+                        }
+                    });
+                }
+                
+                // Modifikasi fungsi jalankanRonde agar memunculkan tombol Skip
+                const oldJalankanRonde = jalankanRonde;
+                jalankanRonde = function() {
+                    oldJalankanRonde(); // Jalankan kocokan kata seperti biasa
+                    // Munculkan tombol Skip saat giliran sedang berjalan
+                    document.getElementById("btn-host-skip").style.display = "block"; 
+                };
+            }
+            
 
             // 5. KELUAR ROOM
             window.keluarRoomGame = function() {
