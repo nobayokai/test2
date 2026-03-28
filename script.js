@@ -10,6 +10,50 @@ document.addEventListener("DOMContentLoaded", () => {
     const navItems = document.querySelectorAll(".nav-item");
     const btnLogoutNav = document.getElementById("tombol-logout-nav");
 
+    // --- FUNGSI KOMPRESI GAMBAR (CLIENT-SIDE) ---
+    // Menyusutkan ukuran gambar menggunakan HTML5 Canvas sebelum diupload
+    window.compressImage = function(file, maxWidth, maxHeight, quality) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Hitung rasio penyusutan
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round((height *= maxWidth / width));
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round((width *= maxHeight / height));
+                            height = maxHeight;
+                        }
+                    }
+
+                    // Gambar ulang ke dalam kanvas virtual
+                    const canvas = document.createElement("canvas");
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Konversi menjadi Base64 JPEG yang sudah dikompres
+                    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+                    resolve(dataUrl);
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
+        });
+    };
+
+    
     if (mobileMenuBtn && navMenu) {
         mobileMenuBtn.addEventListener("click", () => {
             navMenu.classList.toggle("active");
@@ -908,6 +952,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 tbody.innerHTML = html;
 
                 // Event Listener Konversi Gambar ke Base64
+                // Event Listener Konversi Gambar ke Base64 + KOMPRESI OTOMATIS
                 document.querySelectorAll(".prev-img").forEach(input => {
                     input.addEventListener("change", async function() {
                         const file = this.files[0];
@@ -915,23 +960,33 @@ document.addEventListener("DOMContentLoaded", () => {
                         const statusText = document.getElementById(`img-status-${id}`);
                         
                         if (file) {
-                            if(file.size > 2000000) {
-                                alert("Ukuran gambar maksimal 2MB!");
-                                this.value = ""; return;
+                            // Tampilkan status loading
+                            statusText.innerText = "⏳ Memeras ukuran gambar...";
+                            statusText.style.color = "#ffc107"; // Kuning peringatan
+                            
+                            try {
+                                // JALANKAN KOMPRESI: Lebar maksimal 800px, Kualitas 70% (0.7)
+                                // Ini akan mengubah gambar 2MB menjadi sekitar 80KB - 150KB
+                                const compressedDataUrl = await window.compressImage(file, 800, 800, 0.7);
+                                const base64Data = compressedDataUrl.split(',')[1]; 
+                                
+                                // Hitung perkiraan ukuran hasil kompresi dalam KB
+                                const sizeKB = Math.round((base64Data.length * (3/4)) / 1024);
+                                
+                                const item = previewData.find(x => x.id == id);
+                                if(item) {
+                                    item.imgBase64 = base64Data; 
+                                    item.imgMime = "image/jpeg"; // Hasil kompresi selalu JPEG
+                                    item.imgName = file.name.replace(/\.[^/.]+$/, "") + "_compressed.jpg";
+                                }
+                                statusText.innerText = `✅ Gambar siap (${sizeKB} KB)`;
+                                statusText.style.color = "#198754"; // Hijau sukses
+                            } catch (err) {
+                                statusText.innerText = "❌ Gagal memproses gambar";
+                                statusText.style.color = "#dc3545";
                             }
-                            statusText.innerText = "⏳ Memproses gambar...";
-                            const base64 = await new Promise(r => {
-                                const reader = new FileReader();
-                                reader.onloadend = () => r(reader.result.split(',')[1]);
-                                reader.readAsDataURL(file);
-                            });
-                            const item = previewData.find(x => x.id == id);
-                            if(item) {
-                                item.imgBase64 = base64; item.imgMime = file.type; item.imgName = file.name;
-                            }
-                            statusText.innerText = "✅ Gambar siap diupload";
                         } else {
-                            // Reset jika batal pilih
+                            // Reset jika batal pilih file
                             const item = previewData.find(x => x.id == id);
                             if(item) { item.imgBase64 = ""; item.imgMime = ""; item.imgName = ""; }
                             statusText.innerText = "";
