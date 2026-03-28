@@ -1,0 +1,44 @@
+<div class="cbt-layout" style="max-width: 1000px; margin: auto;">
+    <div class="cbt-main" style="padding: 20px; display: flex; flex-wrap: wrap; gap: 20px;">
+        
+        <div style="width: 100%; background: #0d6efd; color: white; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+            <div>
+                <h3 style="margin: 0;"><i class="fa-solid fa-satellite-dish fa-fade"></i> ROOM PIN: <span id="arena-pin" style="font-size: 24px; letter-spacing: 2px; color: #ffc107;">-----</span></h3>
+                <p id="arena-materi" style="margin: 5px 0 0 0; font-size: 14px;">Materi: Memuat...</p>
+            </div>
+            <div style="text-align: right;">
+                <h2 id="arena-waktu" style="margin: 0; font-size: 32px;">00:00</h2>
+            </div>
+        </div>
+
+        <div style="flex: 1; min-width: 250px; background: white; border: 1px solid #ccc; border-radius: 10px; padding: 15px;">
+            <h4 style="border-bottom: 2px solid #0d6efd; padding-bottom: 10px; margin-top: 0;"><i class="fa-solid fa-users"></i> Pemain & Skor</h4>
+            <ul id="daftar-pemain" style="list-style: none; padding: 0; margin: 0; line-height: 2;">
+                <li><i>Menunggu pemain bergabung...</i></li>
+            </ul>
+            <button id="btn-host-mulai" class="btn-cbt" style="background: #198754; color: white; width: 100%; margin-top: 20px; display: none;"><i class="fa-solid fa-play"></i> Mulai Game</button>
+            <button id="btn-host-lanjut" class="btn-cbt" style="background: #ffc107; color: black; width: 100%; margin-top: 10px; display: none;"><i class="fa-solid fa-forward-step"></i> Kata Berikutnya</button>
+        </div>
+
+        <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 15px;">
+            
+            <div style="background: #f8f9fa; border: 2px dashed #0d6efd; border-radius: 10px; padding: 30px; text-align: center; min-height: 150px; display: flex; flex-direction: column; justify-content: center;">
+                <h4 id="teks-status-giliran" style="color: #666; margin: 0 0 10px 0;">Menunggu Host memulai permainan...</h4>
+                <h1 id="teks-kata-rahasia" style="font-size: 40px; color: #0d6efd; margin: 0; letter-spacing: 2px;">???</h1>
+            </div>
+
+            <div style="background: white; border: 1px solid #ccc; border-radius: 10px; display: flex; flex-direction: column; height: 350px;">
+                <div id="area-chat" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="text-align: center; color: #999; font-size: 12px;">-- Obrolan Room Dimulai --</div>
+                </div>
+                <div style="padding: 10px; border-top: 1px solid #eee; background: #f8f9fa; display: flex; gap: 10px; border-radius: 0 0 10px 10px;">
+                    <input type="text" id="input-chat" placeholder="Ketik tebakan Anda di sini..." autocomplete="off" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none;">
+                    <button id="btn-kirim-chat" style="background: #0d6efd; color: white; border: none; padding: 0 20px; border-radius: 20px; cursor: pointer;"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+            
+            <button onclick="keluarRoomGame()" style="background: #dc3545; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; width: 150px; align-self: flex-end;"><i class="fa-solid fa-person-walking-arrow-right"></i> Keluar Room</button>
+        </div>
+
+    </div>
+</div>
