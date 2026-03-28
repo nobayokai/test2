@@ -494,6 +494,18 @@
 
 /* Penyesuaian untuk layar HP / Mobile */
 @media screen and (max-width: 768px) {
+    /* Paksa menu guru membentang penuh 100% dan rata kiri */
+    .dropdown-guru {
+        display: block !important; 
+        width: 100%;
+    }
+    
+    .dropdown-guru .dropbtn {
+        justify-content: flex-start; /* Memastikan ikon dan teks berada di kiri */
+        width: 100%;
+    }
+
+    /* Membuat isi dropdown tidak melayang, tapi mendorong menu lain ke bawah */
     .dropdown-content {
         position: static;
         box-shadow: none;
