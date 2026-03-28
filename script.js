@@ -521,9 +521,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 saveExamSession();
             });
 
+           // TOMBOL SELESAI UJIAN
             document.getElementById("btn-selesai-ujian").addEventListener("click", () => {
+                // 1. Matikan alarm anti-keluar sementara sebelum memunculkan popup!
+                window.isSubmittingExam = true; 
+                
                 if(confirm("Apakah Anda yakin ingin menyelesaikan ujian? Jawaban tidak bisa diubah lagi.")) {
                     submitUjian(); 
+                } else {
+                    // 2. Jika batal submit, hidupkan alarm lagi
+                    window.isSubmittingExam = false; 
+                    
+                    // Kembalikan siswa ke layar penuh (karena browser mengeluarkannya saat popup muncul)
+                    const elem = document.documentElement;
+                    let requestFS = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
+                    if (requestFS) requestFS.call(elem).catch(()=>{});
                 }
             });
         }
@@ -1338,6 +1350,30 @@ document.addEventListener("DOMContentLoaded", () => {
         const btnSelesai = document.getElementById("btn-selesai-ujian");
         const hasilAlert = document.getElementById("hasil-ujian-alert");
 
+        // --- TAMBAHKAN LAYAR LOADING ANIMASI ---
+        const loadingOverlay = document.createElement("div");
+        loadingOverlay.id = "loading-submit-ujian";
+        loadingOverlay.style.position = "fixed";
+        loadingOverlay.style.top = "0";
+        loadingOverlay.style.left = "0";
+        loadingOverlay.style.width = "100vw";
+        loadingOverlay.style.height = "100vh";
+        loadingOverlay.style.backgroundColor = "rgba(255, 255, 255, 0.98)"; // Latar putih bersih
+        loadingOverlay.style.zIndex = "9999999";
+        loadingOverlay.style.display = "flex";
+        loadingOverlay.style.flexDirection = "column";
+        loadingOverlay.style.justifyContent = "center";
+        loadingOverlay.style.alignItems = "center";
+        loadingOverlay.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin" style="font-size: 60px; color: #198754; margin-bottom: 20px;"></i>
+            <h2 style="color: #333; margin: 0 0 10px 0;">Mengumpulkan Jawaban...</h2>
+            <p style="color: #666; font-size: 16px;">Sistem sedang menganalisis hasil Anda. Mohon tunggu sebentar.</p>
+        `;
+        document.body.appendChild(loadingOverlay);
+        // ----------------------------------------
+
+        
+
         btnSelesai.innerText = "Mengirim...";
         btnSelesai.disabled = true;
         
@@ -1410,6 +1446,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if(result.status === "sukses") {
                 clearExamSession(); // HAPUS SESI UJIAN KARENA SUDAH SELESAI
 
+                // --- MATIKAN LAYAR LOADING & RESET SAKLAR ---
+                if (document.getElementById("loading-submit-ujian")) {
+                    document.body.removeChild(document.getElementById("loading-submit-ujian"));
+                }
+                window.isSubmittingExam = false; 
+                // --------------------------------------------
                 
                 // --- KELUARKAN DARI MODE FULLSCREEN OTOMATIS ---
                 if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
@@ -1500,6 +1542,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             alert("Terjadi kesalahan saat mengirim jawaban.");
+
+
+            // --- MATIKAN LAYAR LOADING & HIDUPKAN SAKLAR ALARM JIKA GAGAL ---
+            if (document.getElementById("loading-submit-ujian")) {
+                document.body.removeChild(document.getElementById("loading-submit-ujian"));
+            }
+            window.isSubmittingExam = false; 
+            // ----------------------------------------------------------------
+            
             const btnSelesai = document.getElementById("btn-selesai-ujian");
             if(btnSelesai) {
                 btnSelesai.innerText = "Selesai";
@@ -1600,6 +1651,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("msfullscreenchange", checkFullscreenCBT);
 
     function checkFullscreenCBT() {
+
+        // --- KUNCI PERBAIKAN: Abaikan sensor jika siswa sengaja menekan Selesai ---
+        if (window.isSubmittingExam) return;
+        
         const areaUjian = document.getElementById("area-ujian");
         // Cek apakah siswa sedang berada di tengah ujian
         if (areaUjian && areaUjian.style.display === "flex") {
