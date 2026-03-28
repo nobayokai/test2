@@ -1038,7 +1038,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (isBenar === true) totalSkor += soal.poin;
-            finalDetailJawaban[soal.pertanyaan] = userJawaban;
+            
+            // --- TRIK PROMPT AI: Beritahu AI Status & Poin Soal ---
+            let petunjukAI = "";
+            if (isBenar === true) {
+                petunjukAI = `[JAWABAN BENAR - Mendapat ${soal.poin} Poin]`;
+            } else if (isBenar === false) {
+                petunjukAI = `[JAWABAN SALAH - Poin Maksimal soal ini: ${soal.poin}]`;
+            } else {
+                petunjukAI = `[ESAI/MANUAL - Poin Maksimal soal ini: ${soal.poin}]`;
+            }
+            
+            // Gabungkan petunjuk, pertanyaan, dan jawaban siswa
+            finalDetailJawaban[`${petunjukAI} ${soal.pertanyaan}`] = userJawaban || "(Kosong / Tidak dijawab)";
         });
 
         try {
