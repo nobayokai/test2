@@ -175,25 +175,30 @@ document.addEventListener("DOMContentLoaded", () => {
             // 1. Hapus data sesi dari browser
             sessionStorage.removeItem("userRole");
             sessionStorage.removeItem("userName");
-            clearExamSession(); // TAMBAHKAN BARIS INI
+            clearExamSession(); // Menghapus sesi ujian jika ada
             
-            // 2. Sembunyikan menu khusus dan tombol logout
+            // 2. Sembunyikan Menu Khusus Role
+            // --- KUNCI PERBAIKAN: Sembunyikan ID Dropdown Guru yang baru ---
             const menuGuru = document.getElementById("menu-guru-dropdown");
-            if(menuGuru) menuGuru.style.display = "none";
+            if (menuGuru) menuGuru.style.display = "none";
             
             const menuLatihan = document.getElementById("menu-latihan");
-            if(menuLatihan) menuLatihan.style.display = "none";
+            if (menuLatihan) menuLatihan.style.display = "none"; 
             
+            // 3. Munculkan Kembali Menu Publik (Visi Misi & Profil)
+            const menuVisiMisi = document.querySelector('[data-page="visi-misi"]');
+            if (menuVisiMisi) menuVisiMisi.style.display = "block";
             
-            // Munculkan Kembali Menu Publik (Visi Misi & Profil)
-            document.querySelector('[data-page="visi-misi"]').style.display = "block";
-            document.querySelector('[data-page="profil"]').style.display = "block";
+            const menuProfil = document.querySelector('[data-page="profil"]');
+            if (menuProfil) menuProfil.style.display = "block";
             
-            // Kembalikan Tombol Login
+            // 4. Kembalikan Tombol Login & Sembunyikan Logout
             btnLogoutNav.style.display = "none";
-            document.getElementById("tombol-login-nav").style.display = "block";
+            const btnLoginNav = document.getElementById("tombol-login-nav");
+            if (btnLoginNav) btnLoginNav.style.display = "block";
             
-            if(navMenu) navMenu.classList.remove("active");
+            // Tutup menu hamburger jika sedang terbuka di HP
+            if (navMenu) navMenu.classList.remove("active");
             
             alert("Anda telah berhasil keluar dari sistem.");
             loadPage("beranda");
