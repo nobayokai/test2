@@ -496,7 +496,7 @@
 @media screen and (max-width: 768px) {
     /* Paksa menu guru membentang penuh 100% dan rata kiri */
     .dropdown-guru {
-        display: block !important; 
+        display: block ;
         width: 100%;
     }
     
