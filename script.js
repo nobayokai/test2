@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxe-xP1JszRMflP1_Z4h-trf9QQxfbY4-teadlmpY6uorNhOlxN6hCmiX9ShjcmnrEW/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxS6Eb5ozRYMX12-Ppdi6UlNAZ7Sga91ghTvqh_sZl6LVb-RvDDAoIGfmRFPrjUXMAX/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
@@ -86,10 +86,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (savedRole.toLowerCase() === "guru") {
             const menuGuru = document.getElementById("menu-guru-dropdown");
             if (menuGuru) menuGuru.style.display = "";
+            const menuGame = document.getElementById("menu-tebak-kata");
+            if (menuGame) menuGame.style.display = "block";
         }
         if (savedRole.toLowerCase() === "siswa") {
             const menuLatihan = document.getElementById("menu-latihan");
             if (menuLatihan) menuLatihan.style.display = "block";
+            const menuGame = document.getElementById("menu-tebak-kata");
+            if (menuGame) menuGame.style.display = "block";
         }
     }
     // -----------------------------------------------------
@@ -145,10 +149,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (result.role.toLowerCase() === "guru") {
                             const menuGuru = document.getElementById("menu-guru-dropdown");
                             if(menuGuru) menuGuru.style.display = "";
+                            const menuGame = document.getElementById("menu-tebak-kata");
+                            if (menuGame) menuGame.style.display = "block";
                         }
                         if (result.role.toLowerCase() === "siswa") {
                             const menuLatihan = document.getElementById("menu-latihan");
                             if(menuLatihan) menuLatihan.style.display = "block";
+                            const menuGame = document.getElementById("menu-tebak-kata");
+                            if (menuGame) menuGame.style.display = "block";
                         }
                     // Sembunyikan tombol login di navbar karena sudah masuk
                     document.getElementById("tombol-login-nav").style.display = "none";
@@ -277,6 +285,9 @@ document.addEventListener("DOMContentLoaded", () => {
             // --- KUNCI PERBAIKAN: Sembunyikan ID Dropdown Guru yang baru ---
             const menuGuru = document.getElementById("menu-guru-dropdown");
             if (menuGuru) menuGuru.style.display = "none";
+
+            const menuGame = document.getElementById("menu-tebak-kata");
+            if (menuGame) menuGame.style.display = "none";
             
             const menuLatihan = document.getElementById("menu-latihan");
             if (menuLatihan) menuLatihan.style.display = "none"; 
