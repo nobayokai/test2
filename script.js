@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuMfH3ALm3L1_SUeN3f-qG9O6PIIdolJ9zv-R2Mj5C6kqMME01INMMo5M3DtNlwMnA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFLXeHcFzfyuzzcVLeac9d6-TVz4pEVJ00KDlzXe8UjnmOAjs1T-C1yBECFqUV9E9L/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
@@ -816,6 +816,189 @@ document.addEventListener("DOMContentLoaded", () => {
             // Panggil fungsi saat halaman pertama dimuat
             fetchSemuaHasilUjian();
         }
+
+        // --- LOGIKA HALAMAN UPLOAD SOAL EXCEL ---
+        if (page === "upload-soal") {
+            let previewData = []; 
+
+            // 1. Buat & Unduh Template Otomatis
+            document.getElementById("btn-download-template").addEventListener("click", () => {
+                const ws_data = [
+                    ["Kode Soal", "Tipe Soal", "Pertanyaan", "Pilihan Jawaban", "Kunci Jawaban", "Poin"],
+                    ["TKA-01", "PG", "Ibukota Indonesia adalah...", "Jakarta|Bandung|Surabaya|Medan", "Jakarta", 10],
+                    ["TKA-01", "Benar_Salah", "Matahari terbit dari sebelah barat.", "Benar|Salah", "Salah", 10],
+                    ["TKA-01", "Isian", "Siapa nama presiden pertama RI?", "-", "Ir. Soekarno", 10]
+                ];
+                const ws = XLSX.utils.aoa_to_sheet(ws_data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Template_Soal");
+                XLSX.writeFile(wb, "Template_Upload_CBT.xlsx");
+            });
+
+            // 2. Membaca File Excel yang Diupload
+            document.getElementById("file-excel-soal").addEventListener("change", (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheet];
+                    
+                    // Ubah sheet jadi array
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1}); 
+                    
+                    previewData = [];
+                    // Mulai dari i=1 untuk melewati baris Judul (Header)
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (row.length === 0 || !row[0]) continue; // Lewati baris kosong
+                        
+                        previewData.push({
+                            id: Date.now() + i, // ID unik sementara
+                            kode: row[0] || "",
+                            tipe: row[1] || "",
+                            pertanyaan: row[2] || "",
+                            pilihan: row[3] || "-",
+                            kunci: row[4] || "-",
+                            poin: row[5] || 10,
+                            imgBase64: "", imgMime: "", imgName: ""
+                        });
+                    }
+                    renderPreviewTable();
+                };
+                reader.readAsArrayBuffer(file);
+            });
+
+            // 3. Render Tabel Preview yang Bisa Di-Edit
+            function renderPreviewTable() {
+                const tbody = document.getElementById("body-preview-soal");
+                const areaPreview = document.getElementById("area-preview-upload");
+                if (previewData.length === 0) {
+                    areaPreview.style.display = "none";
+                    return;
+                }
+                
+                areaPreview.style.display = "block";
+                let html = "";
+                
+                previewData.forEach((soal, index) => {
+                    html += `
+                        <tr id="row-prev-${soal.id}">
+                            <td style="text-align:center;">${index + 1}</td>
+                            <td><input type="text" value="${soal.kode}" class="prev-kode" style="width:100%; border:1px solid #ccc; padding:5px;"></td>
+                            <td><input type="text" value="${soal.tipe}" class="prev-tipe" style="width:100%; border:1px solid #ccc; padding:5px;"></td>
+                            <td>
+                                <textarea class="prev-tanya" style="width:100%; border:1px solid #ccc; padding:5px;" rows="3">${soal.pertanyaan}</textarea>
+                                <div style="margin-top:5px; background:#f8f9fa; padding:5px; border-radius:4px;">
+                                    <small style="color:#198754; font-weight:bold;">Sematkan Gambar (Opsional):</small>
+                                    <input type="file" class="prev-img" accept="image/*" data-id="${soal.id}" style="width:100%; font-size:12px;">
+                                    <div id="img-status-${soal.id}" style="font-size:11px; color:#0d6efd; margin-top:3px;"></div>
+                                </div>
+                            </td>
+                            <td><textarea class="prev-pil" style="width:100%; border:1px solid #ccc; padding:5px;" rows="3">${soal.pilihan}</textarea></td>
+                            <td><input type="text" value="${soal.kunci}" class="prev-kunci" style="width:100%; border:1px solid #ccc; padding:5px;"></td>
+                            <td><input type="number" value="${soal.poin}" class="prev-poin" style="width:100%; text-align:center; border:1px solid #ccc; padding:5px;"></td>
+                            <td style="text-align:center;"><button class="btn-hapus-soal" onclick="hapusBarisPreview(${soal.id})" style="padding:5px 10px;"><i class="fa-solid fa-trash"></i></button></td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+
+                // Event Listener Konversi Gambar ke Base64
+                document.querySelectorAll(".prev-img").forEach(input => {
+                    input.addEventListener("change", async function() {
+                        const file = this.files[0];
+                        const id = this.getAttribute("data-id");
+                        const statusText = document.getElementById(`img-status-${id}`);
+                        
+                        if (file) {
+                            if(file.size > 2000000) {
+                                alert("Ukuran gambar maksimal 2MB!");
+                                this.value = ""; return;
+                            }
+                            statusText.innerText = "⏳ Memproses gambar...";
+                            const base64 = await new Promise(r => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => r(reader.result.split(',')[1]);
+                                reader.readAsDataURL(file);
+                            });
+                            const item = previewData.find(x => x.id == id);
+                            if(item) {
+                                item.imgBase64 = base64; item.imgMime = file.type; item.imgName = file.name;
+                            }
+                            statusText.innerText = "✅ Gambar siap diupload";
+                        } else {
+                            // Reset jika batal pilih
+                            const item = previewData.find(x => x.id == id);
+                            if(item) { item.imgBase64 = ""; item.imgMime = ""; item.imgName = ""; }
+                            statusText.innerText = "";
+                        }
+                    });
+                });
+            }
+
+            window.hapusBarisPreview = function(id) {
+                previewData = previewData.filter(x => x.id !== id);
+                renderPreviewTable();
+            };
+
+            // 4. Kirim Data Massal ke Server
+            document.getElementById("btn-simpan-massal").addEventListener("click", async function() {
+                if(!confirm("Yakin ingin menyimpan semua soal ini ke Database?")) return;
+                
+                const btn = this;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mengunggah ke Database Server... (Mohon Tunggu)`;
+                btn.disabled = true;
+
+                // Tarik data terbaru dari input field HTML (bukan dari array lama, karena mungkin guru mengubahnya di layar)
+                const finalPayload = [];
+                previewData.forEach(soal => {
+                    const row = document.getElementById(`row-prev-${soal.id}`);
+                    if(row) {
+                        finalPayload.push({
+                            kode_soal: row.querySelector('.prev-kode').value,
+                            tipe_soal: row.querySelector('.prev-tipe').value,
+                            pertanyaan: row.querySelector('.prev-tanya').value,
+                            pilihan: row.querySelector('.prev-pil').value,
+                            kunci: row.querySelector('.prev-kunci').value,
+                            poin: row.querySelector('.prev-poin').value,
+                            image_base64: soal.imgBase64,
+                            image_mime: soal.imgMime,
+                            image_name: soal.imgName
+                        });
+                    }
+                });
+
+                try {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            action: "simpan_soal_massal",
+                            data_soal: finalPayload
+                        })
+                    });
+                    const result = await response.json();
+                    
+                    if(result.status === "sukses") {
+                        alert("✅ Sempurna! Semua soal berhasil diupload ke Database.");
+                        document.getElementById("file-excel-soal").value = "";
+                        previewData = [];
+                        renderPreviewTable();
+                    } else {
+                        alert("❌ Gagal: " + result.message);
+                    }
+                } catch (err) {
+                    alert("Terjadi kesalahan jaringan.");
+                } finally {
+                    btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Database Sekarang`;
+                    btn.disabled = false;
+                }
+            });
+        }
+        
 
         
     };
