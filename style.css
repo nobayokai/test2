@@ -441,4 +441,66 @@
     cursor: not-allowed;
 }
 
+/* --- STYLING DROPDOWN MENU GURU --- */
+.dropdown-guru {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-guru .dropbtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #ffffff;
+    min-width: 180px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.15);
+    z-index: 1000;
+    border-radius: 8px;
+    top: 100%;
+    left: 0;
+    overflow: hidden;
+    border: 1px solid #eaeaea;
+}
+
+.dropdown-content a {
+    color: #495057;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 14px;
+}
+
+.dropdown-content a:last-child {
+    border-bottom: none;
+}
+
+.dropdown-content a:hover {
+    background-color: #e8f5e9; /* Hijau muda yang elegan */
+    color: #198754;
+}
+
+/* Tampilkan dropdown saat di-hover (di Laptop/PC) */
+.dropdown-guru:hover .dropdown-content {
+    display: block;
+}
+
+/* Penyesuaian untuk layar HP / Mobile */
+@media screen and (max-width: 768px) {
+    .dropdown-content {
+        position: static;
+        box-shadow: none;
+        background-color: #f8f9fa;
+        border: none;
+        border-radius: 0;
+        padding-left: 20px;
+    }
+}
 
