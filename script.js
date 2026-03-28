@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8rxDYmZdmr5yOKo0oNd4JseC9_fPWI5rs4R7W9-M6wm0x0owsUnk5Re_239Nt3aW-/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyuMfH3ALm3L1_SUeN3f-qG9O6PIIdolJ9zv-R2Mj5C6kqMME01INMMo5M3DtNlwMnA/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
@@ -438,14 +438,18 @@ document.addEventListener("DOMContentLoaded", () => {
             let allSoalData = [];
             const filterSelect = document.getElementById("filter-kode-soal");
             const tbody = document.getElementById("body-tabel-soal");
+            
+            // Elemen Kontrol Poin
+            const kontrolEdit = document.getElementById("kontrol-edit-poin");
+            const btnEditPoin = document.getElementById("btn-mode-edit-poin");
+            const btnSimpanPoin = document.getElementById("btn-simpan-poin");
+            const btnBatalPoin = document.getElementById("btn-batal-poin");
 
-            // Fungsi mengambil semua soal dari Sheets
             async function fetchSemuaSoalUntukGuru() {
                 try {
                     const response = await fetch(SCRIPT_URL);
                     allSoalData = await response.json();
 
-                    // Cari kode soal apa saja yang tersedia (unik)
                     const uniqueCodes = [...new Set(allSoalData.map(item => item.kode))];
                     
                     filterSelect.innerHTML = `<option value="">-- Pilih Kode Soal --</option>`;
@@ -453,15 +457,20 @@ document.addEventListener("DOMContentLoaded", () => {
                         filterSelect.innerHTML += `<option value="${kode}">${kode}</option>`;
                     });
                 } catch (error) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Gagal memuat data dari server.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Gagal memuat data.</td></tr>`;
                 }
             }
 
-            // Fungsi merender isi tabel sesuai dropdown yang dipilih
             window.renderTabelSoal = function(kode) {
                 if (!kode) {
                     tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px; font-style: italic;">Silakan pilih kode soal di atas.</td></tr>`;
+                    if (kontrolEdit) kontrolEdit.style.display = "none";
                     return;
+                }
+
+                if (kontrolEdit) {
+                    kontrolEdit.style.display = "flex";
+                    resetModeEdit(); // Selalu reset jika ganti kode ujian
                 }
 
                 const filteredSoal = allSoalData.filter(soal => soal.kode === kode);
@@ -472,10 +481,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 let html = "";
+                let totalPoin = 0; // Penghitung Awal
+
                 filteredSoal.forEach((soal, index) => {
-                    // Sembunyikan URL panjang jika ada gambar agar tabel rapi
                     let previewPertanyaan = soal.pertanyaan.replace(/\[IMG:.*?\]/, "<br><span style='color:#198754; font-size:12px;'><i class='fa-solid fa-image'></i> [Dilengkapi Gambar]</span>");
                     let previewPilihan = soal.pilihan ? soal.pilihan.join(" | ") : "-";
+                    let poinAngka = Number(soal.poin) || 0;
+                    totalPoin += poinAngka;
 
                     html += `
                         <tr>
@@ -484,7 +496,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             <td>${previewPertanyaan}</td>
                             <td>${previewPilihan}</td>
                             <td style="font-weight:bold; color:#198754;">${soal.kunci || "-"}</td>
-                            <td style="text-align:center; font-weight:bold;">${soal.poin}</td>
+                            <td style="text-align:center;">
+                                <input type="number" class="input-poin-massal" data-pertanyaan="${soal.pertanyaan.replace(/"/g, '&quot;')}" value="${poinAngka}" disabled style="width: 60px; text-align: center; border: 1px solid transparent; background: transparent; font-weight: bold; font-size: 15px; color: #000; outline: none;">
+                            </td>
                             <td style="text-align:center;">
                                 <button class="btn-hapus-soal" id="btn-hapus-${soal.id}" onclick="hapusSoal('${soal.kode}', \`${soal.pertanyaan.replace(/`/g, "\\`")}\`, '${soal.id}')">
                                     <i class="fa-solid fa-trash-can"></i> Hapus
@@ -493,44 +507,142 @@ document.addEventListener("DOMContentLoaded", () => {
                         </tr>
                     `;
                 });
+
+                // Tambahkan Baris Total Poin di Paling Bawah Tabel
+                html += `
+                    <tr style="background-color: #e9ecef;">
+                        <td colspan="5" style="text-align: right; font-weight: bold; font-size: 15px;">TOTAL KESELURUHAN POIN :</td>
+                        <td style="text-align: center; font-weight: bold; font-size: 20px; color: #0d6efd;" id="total-poin-teks">${totalPoin}</td>
+                        <td></td>
+                    </tr>
+                `;
+
                 tbody.innerHTML = html;
             };
 
-            // Jalankan saat dropdown berubah
-            if(filterSelect) {
-                filterSelect.addEventListener("change", (e) => {
-                    renderTabelSoal(e.target.value);
+            if(filterSelect) filterSelect.addEventListener("change", (e) => renderTabelSoal(e.target.value));
+
+            // --- FUNGSI EDIT POIN MASSAL ---
+            function resetModeEdit() {
+                if(btnEditPoin) btnEditPoin.style.display = "inline-block";
+                if(btnSimpanPoin) btnSimpanPoin.style.display = "none";
+                if(btnBatalPoin) btnBatalPoin.style.display = "none";
+                document.querySelectorAll(".input-poin-massal").forEach(input => {
+                    input.disabled = true;
+                    input.style.border = "1px solid transparent";
+                    input.style.background = "transparent";
                 });
             }
 
-            // Fungsi Hapus Soal menembak ke API Google
-            window.hapusSoal = async function(kode, pertanyaan, rowId) {
-                const konfirmasi = confirm(`🚨 PERINGATAN!\n\nApakah Anda yakin ingin MENGHAPUS soal ini?\nData akan dihapus secara permanen dari Google Sheets.`);
-                
-                if (konfirmasi) {
-                    const btnHapus = document.getElementById(`btn-hapus-${rowId}`);
-                    btnHapus.innerHTML = "Menghapus...";
-                    btnHapus.disabled = true;
+            if (btnEditPoin) {
+                btnEditPoin.addEventListener("click", () => {
+                    btnEditPoin.style.display = "none";
+                    btnSimpanPoin.style.display = "inline-block";
+                    btnBatalPoin.style.display = "inline-block";
+                    
+                    // Buka gembok semua kolom poin
+                    document.querySelectorAll(".input-poin-massal").forEach(input => {
+                        input.disabled = false;
+                        input.style.border = "1px solid #ccc";
+                        input.style.background = "#fff";
+                        input.style.borderRadius = "4px";
+                    });
+                });
+            }
+
+            if (btnBatalPoin) {
+                btnBatalPoin.addEventListener("click", () => renderTabelSoal(filterSelect.value)); // Kembalikan ke asal
+            }
+
+            // MENDETEKSI PERUBAHAN ANGKA SECARA REALTIME
+            if (tbody) {
+                tbody.addEventListener("input", (e) => {
+                    if (e.target.classList.contains("input-poin-massal")) {
+                        let totalSkorBaru = 0;
+                        document.querySelectorAll(".input-poin-massal").forEach(input => {
+                            totalSkorBaru += (Number(input.value) || 0);
+                        });
+                        const teksTotal = document.getElementById("total-poin-teks");
+                        if (teksTotal) {
+                            teksTotal.innerText = totalSkorBaru;
+                            // Beri peringatan warna jika total bukan 100
+                            teksTotal.style.color = (totalSkorBaru === 100) ? "#198754" : "#dc3545"; 
+                        }
+                    }
+                });
+            }
+
+            // MENYIMPAN POIN KE DATABASE SERVER
+            if (btnSimpanPoin) {
+                btnSimpanPoin.addEventListener("click", async () => {
+                    const inputs = document.querySelectorAll(".input-poin-massal");
+                    let dataUpdate = [];
+                    let totalPengecekan = 0;
+                    
+                    inputs.forEach(input => {
+                        let angka = Number(input.value) || 0;
+                        totalPengecekan += angka;
+                        dataUpdate.push({
+                            pertanyaan: input.getAttribute("data-pertanyaan"),
+                            poin: angka
+                        });
+                    });
+
+                    // Peringatan jika poin tidak genap 100
+                    if (totalPengecekan !== 100) {
+                        const yakin = confirm(`Peringatan!\nTotal poin saat ini adalah ${totalPengecekan} (Standar biasanya 100).\n\nApakah Anda yakin ingin tetap menyimpannya?`);
+                        if(!yakin) return;
+                    }
+
+                    btnSimpanPoin.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+                    btnSimpanPoin.disabled = true;
 
                     try {
                         const payload = {
-                            action: "hapus_soal",
-                            kode_soal: kode,
-                            pertanyaan: pertanyaan
+                            action: "update_poin_massal",
+                            kode_soal: filterSelect.value,
+                            data_poin: dataUpdate
                         };
 
                         const response = await fetch(SCRIPT_URL, {
                             method: "POST",
                             body: JSON.stringify(payload)
                         });
-                        
                         const result = await response.json();
-                        
+
+                        if(result.status === "sukses") {
+                            alert("✅ Semua Poin berhasil diperbarui!");
+                            await fetchSemuaSoalUntukGuru(); // Sinkronkan dengan data terbaru
+                            renderTabelSoal(filterSelect.value); // Segarkan tampilan
+                        } else {
+                            alert("❌ Gagal menyimpan: " + result.message);
+                            resetModeEdit();
+                        }
+                    } catch (error) {
+                        alert("Terjadi kesalahan jaringan.");
+                        resetModeEdit();
+                    } finally {
+                        btnSimpanPoin.innerHTML = `<i class="fa-solid fa-save"></i> Simpan Perubahan`;
+                        btnSimpanPoin.disabled = false;
+                    }
+                });
+            }
+
+            // Fungsi Hapus Soal 
+            window.hapusSoal = async function(kode, pertanyaan, rowId) {
+                // ... (Kode hapus soal Anda sebelumnya tidak ada yang berubah, tetap sama!)
+                const konfirmasi = confirm(`🚨 PERINGATAN!\n\nApakah Anda yakin ingin MENGHAPUS soal ini?\nData akan dihapus secara permanen dari Google Sheets.`);
+                if (konfirmasi) {
+                    const btnHapus = document.getElementById(`btn-hapus-${rowId}`);
+                    btnHapus.innerHTML = "Menghapus...";
+                    btnHapus.disabled = true;
+                    try {
+                        const payload = { action: "hapus_soal", kode_soal: kode, pertanyaan: pertanyaan };
+                        const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+                        const result = await response.json();
                         if(result.status === "sukses") {
                             alert("✅ Soal berhasil dihapus dari Database!");
-                            // Segarkan ulang data dari Google Sheet
                             await fetchSemuaSoalUntukGuru(); 
-                            // Render ulang tabel dengan kode yang sama
                             renderTabelSoal(document.getElementById("filter-kode-soal").value);
                         } else {
                             alert("❌ Gagal menghapus soal: " + result.message);
@@ -545,7 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             };
 
-            // Panggil data pertama kali halaman dimuat
+            // Panggil data pertama kali
             fetchSemuaSoalUntukGuru();
         }
 
