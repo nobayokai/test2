@@ -65,7 +65,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- TAMBAHKAN KODE INI UNTUK CEK SESI SAAT REFRESH ---
     const savedRole = sessionStorage.getItem("userRole");
+    const savedName = sessionStorage.getItem("userName");
     if (savedRole) {
+        // --- MUNCULKAN SAPAAN NAMA ---
+        const greetingElem = document.getElementById("user-greeting");
+        const namaElem = document.getElementById("nama-pengguna-aktif");
+        if (greetingElem && namaElem && savedName) {
+            namaElem.innerText = savedName; // Isi teks dengan nama
+            greetingElem.style.display = "flex"; // Tampilkan wadahnya
+        }
+        // -----------------------------
         // Jika sudah login, sembunyikan tombol login di nav
         document.getElementById("tombol-login-nav").style.display = "none";
         document.getElementById("tombol-logout-nav").style.display = "block"; // Munculkan tombol logout
@@ -118,6 +127,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     // Simpan sesi login sederhana ke SessionStorage
                     sessionStorage.setItem("userRole", result.role);
                     sessionStorage.setItem("userName", result.nama);
+
+                    // --- MUNCULKAN SAPAAN NAMA ---
+                    const greetingElem = document.getElementById("user-greeting");
+                    const namaElem = document.getElementById("nama-pengguna-aktif");
+                    if (greetingElem && namaElem) {
+                        namaElem.innerText = result.nama; // Isi teks dengan nama dari database
+                        greetingElem.style.display = "flex"; // Tampilkan wadahnya
+                    }
 
                     // Sembunyikan menu Publik saat berhasil login
                         document.querySelector('[data-page="visi-misi"]').style.display = "none";
@@ -247,6 +264,14 @@ document.addEventListener("DOMContentLoaded", () => {
             sessionStorage.removeItem("userRole");
             sessionStorage.removeItem("userName");
             clearExamSession(); // Menghapus sesi ujian jika ada
+
+
+            // --- SEMBUNYIKAN SAPAAN NAMA ---
+            const greetingElem = document.getElementById("user-greeting");
+            if (greetingElem) {
+                greetingElem.style.display = "none";
+                document.getElementById("nama-pengguna-aktif").innerText = ""; // Kosongkan namanya
+            }
             
             // 2. Sembunyikan Menu Khusus Role
             // --- KUNCI PERBAIKAN: Sembunyikan ID Dropdown Guru yang baru ---
