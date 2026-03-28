@@ -202,7 +202,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Sulap textarea biasa menjadi Editor Canggih
                 if (window.CKEDITOR) {
                     CKEDITOR.replace('bs-pertanyaan', {
-                        height: 200, // Tinggi kotak
+                        height: 500, // Tinggi kotak
+                        // --- KUNCI PERBAIKAN: Matikan peringatan update ---
+                        versionCheck: false,
                         // Atur tombol apa saja yang muncul di atas kotak (Toolbar)
                         toolbar: [
                             ['Bold', 'Italic', 'Underline', 'Strike'],
