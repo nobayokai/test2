@@ -10,6 +10,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const navItems = document.querySelectorAll(".nav-item");
     const btnLogoutNav = document.getElementById("tombol-logout-nav");
 
+    const firebaseConfig = {
+        apiKey: "AIzaSyBySh9tWsx2BBbdyssFhnu5BAFIAznWAY4",
+        authDomain: "cbt-sekolah-game.firebaseapp.com",
+        databaseURL: "https://cbt-sekolah-game-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "cbt-sekolah-game",
+        storageBucket: "cbt-sekolah-game.firebasestorage.app",
+        messagingSenderId: "520964850395",
+        appId: "1:520964850395:web:0162e043a74eb613ecc2fe"
+    };
+
+    // Inisialisasi Firebase (Hanya jika belum jalan)
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const dbGame = firebase.database();
+    
+
     // --- FUNGSI KOMPRESI GAMBAR (CLIENT-SIDE) ---
     // Menyusutkan ukuran gambar menggunakan HTML5 Canvas sebelum diupload
     window.compressImage = function(file, maxWidth, maxHeight, quality) {
@@ -243,6 +260,119 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
             // ---------------------------------------------------------------------
+
+            // --- LOGIKA HALAMAN LOBBY GAME (TEBAK KATA) ---
+        if (page === "tebak-kata") {
+            const btnBuatRoom = document.getElementById("btn-buat-room");
+            const btnGabung = document.getElementById("btn-gabung-game");
+            const selectMateri = document.getElementById("select-materi-game");
+            const inputPin = document.getElementById("input-pin-game");
+            
+            // 1. Bedakan Tampilan Guru dan Siswa
+            const role = sessionStorage.getItem("userRole");
+            if (role && role.toLowerCase() === "guru") {
+                document.getElementById("area-buat-room-guru").style.display = "block";
+                muatMateriDariSheet();
+            }
+
+            // 2. Fungsi Guru: Mengambil Daftar Materi dari Google Sheets
+            async function muatMateriDariSheet() {
+                try {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: "POST",
+                        body: JSON.stringify({ action: "get_bank_kata" })
+                    });
+                    const result = await response.json();
+                    
+                    if (result.status === "sukses") {
+                        window.bankKataGame = result.data; // Simpan di memori sementara
+                        let html = `<option value="">-- Pilih Materi & Buat Room --</option>`;
+                        result.data.forEach(item => {
+                            html += `<option value="${item.kode}">${item.materi}</option>`;
+                        });
+                        selectMateri.innerHTML = html;
+                    } else {
+                        selectMateri.innerHTML = `<option value="">Gagal memuat materi</option>`;
+                    }
+                } catch (err) {
+                    selectMateri.innerHTML = `<option value="">Koneksi error</option>`;
+                }
+            }
+
+            // 3. Fungsi Guru: Membuat Room Baru di Firebase
+            if (btnBuatRoom) {
+                btnBuatRoom.addEventListener("click", () => {
+                    const kodeMateri = selectMateri.value;
+                    if (!kodeMateri) { alert("Pilih materi terlebih dahulu!"); return; }
+
+                    const materiDipilih = window.bankKataGame.find(x => x.kode === kodeMateri);
+                    const daftarKata = materiDipilih.kata.split(",").map(k => k.trim()); // Pecah kata jadi array
+
+                    // Buat PIN acak 5 angka
+                    const pinRoom = Math.floor(10000 + Math.random() * 90000).toString();
+                    
+                    btnBuatRoom.innerText = "Membuat Room...";
+                    
+                    // Rekam Room ke Firebase!
+                    dbGame.ref('rooms/' + pinRoom).set({
+                        host: sessionStorage.getItem("userName"),
+                        materi: materiDipilih.materi,
+                        daftar_kata: daftarKata,
+                        status: "lobby", // lobby | playing | finished
+                        pemain: {}, // Daftar nama pemain
+                        chat: {} // Riwayat jawaban
+                    }).then(() => {
+                        alert("Room Berhasil Dibuat! PIN Anda: " + pinRoom);
+                        // Arahkan guru masuk ke Room (Logika tahap 3)
+                        masukKeDalamRoom(pinRoom, true); 
+                    }).catch((error) => {
+                        alert("Gagal membuat room: " + error.message);
+                        btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`;
+                    });
+                });
+            }
+
+            // 4. Fungsi Siswa: Bergabung ke Room
+            if (btnGabung) {
+                btnGabung.addEventListener("click", () => {
+                    const pinMasuk = inputPin.value.trim();
+                    if (pinMasuk.length < 5) { alert("PIN Room tidak valid!"); return; }
+
+                    btnGabung.innerText = "Mencari Room...";
+                    
+                    // Cek di Firebase apakah room dengan PIN tersebut ada
+                    dbGame.ref('rooms/' + pinMasuk).once('value', (snapshot) => {
+                        if (snapshot.exists()) {
+                            // Masukkan nama siswa ke dalam daftar pemain di room tersebut
+                            const namaPemain = sessionStorage.getItem("userName");
+                            dbGame.ref(`rooms/${pinMasuk}/pemain/${namaPemain}`).set({
+                                skor: 0,
+                                status: "menunggu"
+                            }).then(() => {
+                                alert("Berhasil bergabung ke Room!");
+                                // Arahkan siswa masuk ke Room (Logika tahap 3)
+                                masukKeDalamRoom(pinMasuk, false);
+                            });
+                        } else {
+                            alert("Room tidak ditemukan! Periksa kembali PIN dari guru Anda.");
+                            btnGabung.innerHTML = `<i class="fa-solid fa-play"></i> MASUK ROOM`;
+                        }
+                    });
+                });
+            }
+
+            // Fungsi Jembatan menuju Tahap 3
+            window.masukKeDalamRoom = function(pin, isHost) {
+                // Simpan PIN di session agar tidak hilang saat refresh
+                sessionStorage.setItem("active_game_room", pin);
+                sessionStorage.setItem("is_game_host", isHost);
+                
+                // Pindah halaman ke UI Arena Bermain (Kita buat di Tahap 3)
+                loadPage("arena-bermain"); 
+            };
+        }
+        
+        //--------------------------------------------------------------------------------
             
         } catch (error) {
             contentArea.innerHTML = `<h3 style="text-align:center; padding:50px; color:red;">Error 404: ${error.message}</h3>`;
