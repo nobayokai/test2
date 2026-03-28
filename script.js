@@ -1001,14 +1001,11 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             // 4. Kirim Data Massal ke Server
+            // 4. Kirim Data Massal ke Server (DENGAN PROGRESS BAR)
             document.getElementById("btn-simpan-massal").addEventListener("click", async function() {
                 if(!confirm("Yakin ingin menyimpan semua soal ini ke Database?")) return;
-                
-                const btn = this;
-                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mengunggah ke Database Server... (Mohon Tunggu)`;
-                btn.disabled = true;
 
-                // Tarik data terbaru dari input field HTML (bukan dari array lama, karena mungkin guru mengubahnya di layar)
+                // 1. Tarik data terbaru dari input field HTML
                 const finalPayload = [];
                 previewData.forEach(soal => {
                     const row = document.getElementById(`row-prev-${soal.id}`);
@@ -1027,30 +1024,82 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 });
 
-                try {
-                    const response = await fetch(SCRIPT_URL, {
-                        method: "POST",
-                        body: JSON.stringify({
-                            action: "simpan_soal_massal",
-                            data_soal: finalPayload
-                        })
-                    });
-                    const result = await response.json();
+                if (finalPayload.length === 0) return;
+
+                // 2. --- BUAT LAYAR LOADING (OVERLAY) DI TENGAH LAYAR ---
+                const overlay = document.createElement("div");
+                overlay.id = "loading-overlay-massal";
+                overlay.style.position = "fixed";
+                overlay.style.top = "0";
+                overlay.style.left = "0";
+                overlay.style.width = "100vw";
+                overlay.style.height = "100vh";
+                overlay.style.backgroundColor = "rgba(0, 0, 0, 0.8)"; // Latar gelap transparan
+                overlay.style.zIndex = "999999";
+                overlay.style.display = "flex";
+                overlay.style.justifyContent = "center";
+                overlay.style.alignItems = "center";
+                
+                overlay.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        <i class="fa-solid fa-cloud-arrow-up fa-fade" style="font-size: 50px; color: #198754; margin-bottom: 20px;"></i>
+                        <h3 style="margin: 0 0 15px 0; color: #333;">Mengunggah Data...</h3>
+                        
+                        <div style="background: #e9ecef; border-radius: 8px; height: 25px; width: 100%; margin-bottom: 15px; overflow: hidden; border: 1px solid #ccc;">
+                            <div id="progress-bar-fill" style="background: #198754; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                        </div>
+                        
+                        <p id="progress-text" style="margin: 0; font-size: 16px; font-weight: bold; color: #555;">0 / ${finalPayload.length} Soal Tersimpan</p>
+                        <p style="margin: 10px 0 0 0; font-size: 12px; color: #dc3545; font-weight: bold;"><i class="fa-solid fa-triangle-exclamation"></i> Mohon jangan tutup halaman ini</p>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                let suksesCount = 0;
+                let gagalCount = 0;
+
+                // 3. --- MENGUNGGAH SATU PER SATU (Mencegah Timeout Server & Update Bar) ---
+                for (let i = 0; i < finalPayload.length; i++) {
+                    try {
+                        // Kita mengirim array yang hanya berisi 1 soal setiap putarannya
+                        const response = await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify({
+                                action: "simpan_soal_massal",
+                                data_soal: [ finalPayload[i] ] 
+                            })
+                        });
+                        const result = await response.json();
+                        
+                        if(result.status === "sukses") {
+                            suksesCount++;
+                        } else {
+                            gagalCount++;
+                        }
+                    } catch (err) {
+                        gagalCount++;
+                    }
+
+                    // Update UI Progress Bar bergerak ke kanan
+                    const persen = Math.round(((i + 1) / finalPayload.length) * 100);
+                    document.getElementById("progress-bar-fill").style.width = persen + "%";
+                    document.getElementById("progress-text").innerText = `${i + 1} / ${finalPayload.length} Soal Tersimpan`;
+                }
+
+                // 4. --- PROSES SELESAI ---
+                setTimeout(() => {
+                    document.body.removeChild(overlay); // Hapus layar loading
                     
-                    if(result.status === "sukses") {
-                        alert("✅ Sempurna! Semua soal berhasil diupload ke Database.");
+                    if (gagalCount === 0) {
+                        alert("✅ Sempurna! Semua " + suksesCount + " soal berhasil diupload ke Database.");
+                        // Kosongkan form dan tabel preview setelah sukses
                         document.getElementById("file-excel-soal").value = "";
                         previewData = [];
                         renderPreviewTable();
                     } else {
-                        alert("❌ Gagal: " + result.message);
+                        alert("Selesai. " + suksesCount + " soal berhasil, dan " + gagalCount + " gagal diunggah. Silakan cek koneksi Anda.");
                     }
-                } catch (err) {
-                    alert("Terjadi kesalahan jaringan.");
-                } finally {
-                    btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Database Sekarang`;
-                    btn.disabled = false;
-                }
+                }, 600); // Jeda sedikit agar guru bisa puas melihat progress mencapai 100%
             });
         }
         
