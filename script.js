@@ -192,6 +192,31 @@ document.addEventListener("DOMContentLoaded", () => {
             
             const html = await response.text();
             contentArea.innerHTML = html;
+
+            // --- KUNCI PERBAIKAN: INISIALISASI CKEDITOR KHUSUS MENU BUAT SOAL ---
+            if (page === "buat-soal") {
+                // Hapus instance lama jika guru bolak-balik menu agar tidak error
+                if (window.CKEDITOR && CKEDITOR.instances['bs-pertanyaan']) {
+                    CKEDITOR.instances['bs-pertanyaan'].destroy(true);
+                }
+                // Sulap textarea biasa menjadi Editor Canggih
+                if (window.CKEDITOR) {
+                    CKEDITOR.replace('bs-pertanyaan', {
+                        height: 200, // Tinggi kotak
+                        // Atur tombol apa saja yang muncul di atas kotak (Toolbar)
+                        toolbar: [
+                            ['Bold', 'Italic', 'Underline', 'Strike'],
+                            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
+                            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+                            ['Subscript', 'Superscript'],
+                            ['Styles', 'Format', 'Font', 'FontSize'],
+                            ['TextColor', 'BGColor']
+                        ]
+                    });
+                }
+            }
+            // ---------------------------------------------------------------------
+            
         } catch (error) {
             contentArea.innerHTML = `<h3 style="text-align:center; padding:50px; color:red;">Error 404: ${error.message}</h3>`;
         }
@@ -1130,8 +1155,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const urlGambar = teksPertanyaan.match(/\[IMG:(.*?)\]/)[1];
             teksPertanyaan = teksPertanyaan.replace(/\[IMG:.*?\]/, `<br><img src="${urlGambar}" style="max-width:100%; margin-top:10px; border-radius:5px;"><br>`);
         }
-        
-        htmlSoal += `<p class="pertanyaan">${teksPertanyaan} <span class="poin-soal">(${soal.poin} Poin)</span></p><hr style="margin: 15px 0; border-top: 1px solid #eee;">`;
+        // Kita ubah <p> menjadi <div> agar tag HTML dari CKEditor tidak rusak saat dimunculkan
+        htmlSoal += `<div class="pertanyaan" style="margin-bottom: 10px; line-height: 1.6;">${teksPertanyaan} <div style="display:inline-block; margin-left: 10px; font-weight: bold; color: #198754; font-size: 14px;" class="poin-soal">(${soal.poin} Poin)</div></div><hr style="margin: 15px 0; border-top: 1px solid #eee;">`;
         
         // Render Tipe Soal (Logikanya sama seperti sebelumnya)
         if (soal.tipe === "PG" || soal.tipe === "Benar_Salah") {
@@ -1498,7 +1523,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     action: "simpan_soal",
                     kode_soal: document.getElementById("bs-kode").value,
                     tipe_soal: document.getElementById("bs-tipe").value,
-                    pertanyaan: document.getElementById("bs-pertanyaan").value,
+
+                    // --- AMBIL TEKS DARI CKEDITOR ---
+                    pertanyaan: window.CKEDITOR && CKEDITOR.instances['bs-pertanyaan'] ? CKEDITOR.instances['bs-pertanyaan'].getData() : document.getElementById("bs-pertanyaan").value,
+                    
                     pilihan: document.getElementById("bs-pilihan").value || "-",
                     kunci: document.getElementById("bs-kunci").value || "-",
                     poin: document.getElementById("bs-poin").value,
@@ -1520,6 +1548,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         alertInfo.innerText = "Soal berhasil ditambahkan ke Database!";
                         alertInfo.style.display = "block";
                         e.target.reset(); // Kosongkan form
+
+                        // --- KOSONGKAN CKEDITOR JUGA ---
+                        if (window.CKEDITOR && CKEDITOR.instances['bs-pertanyaan']) {
+                            CKEDITOR.instances['bs-pertanyaan'].setData('');
+                        }
                     }
                 } catch (error) {
                     alertInfo.style.backgroundColor = "#f8d7da";
