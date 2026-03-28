@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxgtrfY00BiZDGMtvdrvwoVi7A44R-OKYQA9lsd8m3N8Za_BKTwepNqwLEjPVx89yQD/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx1W6C0p6zAV80zk8QYgejroTrXIxf0W_4dy1KdJGj8gSeQ6Tr1nOD0cbwTWHXvdYIb/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
@@ -326,22 +326,48 @@ document.addEventListener("DOMContentLoaded", () => {
                 // -------------------------------
             }
 
-            // ALUR 1: Cek Kode
+            // ALUR 1: Cek Kode (Dengan Pengecekan Status Ujian)
             if (btnLanjut && !savedSession) {
                 btnLanjut.addEventListener("click", async () => {
                     const kodeDiminta = inputKode.value.trim().toUpperCase();
                     if(!kodeDiminta) return;
                     
-                    btnLanjut.innerText = "Memeriksa...";
+                    btnLanjut.innerText = "Memeriksa Kelayakan...";
                     btnLanjut.disabled = true;
+                    const errorElemen = document.getElementById("error-kode");
+                    errorElemen.style.display = "none"; // Sembunyikan error sebelumnya
 
                     try {
+                        // 1. CEK KE SERVER APAKAH SISWA SUDAH MENGERJAKAN?
+                        const checkPayload = {
+                            action: "cek_status_ujian",
+                            nama_siswa: sessionStorage.getItem("userName"),
+                            kode_soal: kodeDiminta
+                        };
+
+                        const checkResponse = await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify(checkPayload)
+                        });
+                        const checkResult = await checkResponse.json();
+
+                        // Jika balasan server mengatakan "sudah"
+                        if (checkResult.status === "sudah") {
+                            errorElemen.innerText = "⛔ Maaf, Anda sudah pernah menyelesaikan ujian ini!";
+                            errorElemen.style.display = "block";
+                            btnLanjut.innerText = "Lanjut";
+                            btnLanjut.disabled = false;
+                            return; // Hentikan eksekusi di sini!
+                        }
+
+                        // 2. JIKA BELUM MENGERJAKAN, TARIK SOALNYA
                         const response = await fetch(SCRIPT_URL);
                         const semuaSoal = await response.json();
                         let soalSesuaiKode = semuaSoal.filter(soal => soal.kode.toUpperCase() === kodeDiminta);
 
                         if (soalSesuaiKode.length === 0) {
-                            document.getElementById("error-kode").style.display = "block";
+                            errorElemen.innerText = "Kode Ujian tidak ditemukan!";
+                            errorElemen.style.display = "block";
                         } else {
                             currentExamCode = kodeDiminta; 
                             document.getElementById("label-kode-ujian").innerText = kodeDiminta; 
@@ -350,7 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             loadedQuestions = acakUrutan(soalSesuaiKode); 
                         }
                     } catch (error) {
-                        alert("Gagal terhubung ke server.");
+                        alert("Gagal terhubung ke server. Pastikan internet Anda stabil.");
                     } finally {
                         btnLanjut.innerText = "Lanjut";
                         btnLanjut.disabled = false;
