@@ -1351,19 +1351,44 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.currentRoomStatus = roomData.status; // Sinkronkan status saat ini
                 document.getElementById("arena-materi").innerText = "Materi: " + roomData.materi;
 
-                // --- Update Daftar Pemain & Skor ---
+                
+                // --- Update Daftar Pemain & Skor (Sistem Antrean) ---
                 let htmlPemain = "";
                 let players = roomData.pemain || {};
-                let playerNames = Object.keys(players);
+                let rawNames = Object.keys(players);
+                
+                // Gunakan antrean dari Firebase. Jika belum ada, gunakan susunan awal.
+                let urutanPemain = roomData.urutan_pemain || rawNames;
+                
+                // Pastikan UI hanya menampilkan pemain yang benar-benar ada di room
+                let playerNames = urutanPemain.filter(p => rawNames.includes(p));
+                rawNames.forEach(p => { if (!playerNames.includes(p)) playerNames.push(p); });
                 
                 playerNames.forEach(nama => {
                     let ikon = (nama === roomData.host) ? '<i class="fa-solid fa-crown" style="color: gold;"></i>' : '<i class="fa-solid fa-user"></i>';
+                    
+                    // --- KUNCI PERBAIKAN: Label Giliran ---
+                    let badgeGiliran = "";
+                    let styleBaris = "display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 5px 0;";
+                    
+                    if (roomData.status === "playing" && roomData.giliran_siapa === nama) {
+                        // Beri highlight pada baris anak yang sedang main
+                        styleBaris += " background: #f8f9fa; border-left: 4px solid #0d6efd; padding-left: 10px;";
+                        
+                        // Teks badge: merah jika itu layar kita sendiri, biru jika melihat layar orang lain
+                        let teksBadge = (nama === myName) ? "Giliran Kamu" : "Pemberi Petunjuk";
+                        let warnaBadge = (nama === myName) ? "#dc3545" : "#0d6efd"; 
+                        badgeGiliran = `<span style="background:${warnaBadge}; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; font-weight:bold;">${teksBadge}</span>`;
+                    }
+                    // --------------------------------------
+
                     let tombolKick = "";
                     if (isHost && nama !== roomData.host) {
                         tombolKick = `<button onclick="kickSiswa('${nama}')" style="background:#dc3545; color:white; border:none; padding:3px 8px; border-radius:4px; font-size:11px; cursor:pointer;"><i class="fa-solid fa-ban"></i> Kick</button>`;
                     }
-                    htmlPemain += `<li style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 5px 0;">
-                        <div>${ikon} <b>${nama}</b> : <span style="color:#198754; font-weight:bold;">${players[nama].skor || 0} Poin</span></div>
+                    
+                    htmlPemain += `<li style="${styleBaris}">
+                        <div>${ikon} <b>${nama}</b> ${badgeGiliran} : <span style="color:#198754; font-weight:bold;">${players[nama].skor || 0} Poin</span></div>
                         ${tombolKick}
                     </li>`;
                 });
@@ -1584,21 +1609,40 @@ document.addEventListener("DOMContentLoaded", () => {
                         return; 
                     }
 
-                    // --- Kalkulasi Waktu Habis & Anti NaN ---
+                    // --- KUNCI PERBAIKAN: SISTEM ANTREAN MEMUTAR ---
+                    let urutanPemain = roomData.urutan_pemain || [];
+                    
+                    // 1. Bersihkan pemain yang sudah keluar/kick dari antrean
+                    urutanPemain = urutanPemain.filter(p => players.includes(p));
+                    
+                    // 2. Tambahkan pemain yang baru bergabung ke urutan paling bawah
+                    players.forEach(p => {
+                        if (!urutanPemain.includes(p)) urutanPemain.push(p);
+                    });
+
+                    // 3. Rotasi Antrean: Jika giliran sebelumnya adalah orang di urutan teratas, 
+                    // pindahkan dia ke urutan paling bawah!
+                    if (roomData.giliran_siapa && urutanPemain[0] === roomData.giliran_siapa) {
+                        urutanPemain.push(urutanPemain.shift()); 
+                    }
+
+                    // Pemain yang beruntung adalah yang berada di puncak antrean sekarang
+                    let yangDapatGiliran = urutanPemain[0]; 
+                    // ------------------------------------------------
+
                     let inputWaktu = document.getElementById("input-waktu-game");
                     let durasiDetik = inputWaktu ? parseInt(inputWaktu.value) : 60;
-                    if (isNaN(durasiDetik) || durasiDetik < 10) durasiDetik = 60; // Default jika error
+                    if (isNaN(durasiDetik) || durasiDetik < 10) durasiDetik = 60; 
                     
                     let waktuBerakhir = Date.now() + (durasiDetik * 1000);
-                    let yangDapatGiliran = players[Math.floor(Math.random() * players.length)];
 
-                    // Hapus daftar pemenang ronde sebelumnya, lalu mulai ronde baru
                     dbGame.ref(`rooms/${pinRoom}/tebakan_benar`).remove().then(() => {
                         dbGame.ref('rooms/' + pinRoom).update({
                             status: "playing",
                             kata_sekarang: kataBaru,
                             giliran_siapa: yangDapatGiliran,
-                            waktu_berakhir: waktuBerakhir
+                            waktu_berakhir: waktuBerakhir,
+                            urutan_pemain: urutanPemain // Simpan susunan antrean terbaru ke Firebase
                         });
                     });
 
