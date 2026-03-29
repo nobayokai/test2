@@ -1334,6 +1334,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("btn-host-mulai").style.display = "block";
             }
 
+            
+            // --- VARIABEL REM DARURAT TIMER ---
+            window.currentRoomStatus = "lobby";
+            let lastTargetWaktu = 0;
+
             // 1. MENDENGARKAN PERUBAHAN DATABASE SECARA REAL-TIME
             roomRef.on('value', (snapshot) => {
                 roomData = snapshot.val();
@@ -1343,16 +1348,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
 
-                // --- TAMBAHKAN DETEKSI KICK DI SINI ---
-                // Jika kita siswa, dan nama kita tiba-tiba hilang dari database (dihapus guru)
-                if (!isHost && roomData.pemain && !roomData.pemain[myName]) {
-                    alert("⛔ Anda telah dikeluarkan dari Room oleh Guru.");
-                    sessionStorage.removeItem("active_game_room");
-                    sessionStorage.removeItem("is_game_host");
-                    loadPage("tebak-kata"); // Lempar kembali ke lobby
-                    return;
-                }
-
+                window.currentRoomStatus = roomData.status; // Sinkronkan status saat ini
                 document.getElementById("arena-materi").innerText = "Materi: " + roomData.materi;
 
                 // --- Update Daftar Pemain & Skor ---
@@ -1362,49 +1358,51 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 playerNames.forEach(nama => {
                     let ikon = (nama === roomData.host) ? '<i class="fa-solid fa-crown" style="color: gold;"></i>' : '<i class="fa-solid fa-user"></i>';
-                    
-                    // --- KUNCI: Munculkan Tombol Kick Khusus Untuk Guru ---
                     let tombolKick = "";
                     if (isHost && nama !== roomData.host) {
                         tombolKick = `<button onclick="kickSiswa('${nama}')" style="background:#dc3545; color:white; border:none; padding:3px 8px; border-radius:4px; font-size:11px; cursor:pointer;"><i class="fa-solid fa-ban"></i> Kick</button>`;
                     }
-
                     htmlPemain += `<li style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 5px 0;">
                         <div>${ikon} <b>${nama}</b> : <span style="color:#198754; font-weight:bold;">${players[nama].skor || 0} Poin</span></div>
                         ${tombolKick}
                     </li>`;
                 });
-                
                 document.getElementById("daftar-pemain").innerHTML = htmlPemain;
 
-                // --- Update Layar Status Permainan ---
+                // --- DETEKSI KICK (Siswa dibuang) ---
+                if (!isHost && roomData.pemain && !roomData.pemain[myName]) {
+                    alert("⛔ Anda telah dikeluarkan dari Room oleh Guru.");
+                    sessionStorage.removeItem("active_game_room");
+                    sessionStorage.removeItem("is_game_host");
+                    loadPage("tebak-kata"); 
+                    return;
+                }
+
+                // --- Update Layar Status Permainan & TIMER ---
                 const teksGiliran = document.getElementById("teks-status-giliran");
                 const teksKata = document.getElementById("teks-kata-rahasia");
                 const inputChat = document.getElementById("input-chat");
 
-                // --- KUNCI: Reset & Jalankan Timer ---
-                if (window.gameTimerInterval) clearInterval(window.gameTimerInterval);
-
                 if (roomData.status === "lobby") {
+                    if (window.gameTimerInterval) clearInterval(window.gameTimerInterval);
+                    lastTargetWaktu = 0; // Reset waktu
                     document.getElementById("arena-waktu").innerText = "00:00";
+                    document.getElementById("arena-waktu").style.color = "white";
+                    
                     teksGiliran.innerText = "Menunggu Guru memulai permainan...";
                     teksKata.innerText = "???";
                     inputChat.disabled = false;
                     inputChat.placeholder = "Ngobrol santai sambil menunggu...";
                     
-                    if (isHost) {
-                        document.getElementById("pengaturan-waktu-host").style.display = "block";
-                    }
+                    if (isHost) document.getElementById("pengaturan-waktu-host").style.display = "block";
                 } 
                 else if (roomData.status === "playing") {
                     let kataAktif = roomData.kata_sekarang || "";
                     let orangYangMenebak = roomData.giliran_siapa || "";
-                    
-                    // Cek apakah siswa ini sudah berhasil menebak di ronde ini?
                     let sudahTebak = roomData.tebakan_benar && roomData.tebakan_benar[myName];
 
                     if (myName === orangYangMenebak) {
-                        teksGiliran.innerText = "🔥 GILIRAN ANDA! Beri petunjuk ke teman-teman tanpa menyebut kata ini:";
+                        teksGiliran.innerText = "🔥 GILIRAN ANDA! Beri petunjuk tanpa menyebut kata ini:";
                         teksGiliran.style.color = "#dc3545";
                         teksKata.innerText = kataAktif.toUpperCase();
                         inputChat.disabled = true; 
@@ -1412,7 +1410,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     } else if (sudahTebak) {
                         teksGiliran.innerText = "🎉 Anda berhasil menebak! Menunggu waktu habis...";
                         teksGiliran.style.color = "#198754";
-                        teksKata.innerText = kataAktif.toUpperCase(); // Buka jawaban untuk yang sudah benar
+                        teksKata.innerText = kataAktif.toUpperCase(); 
                         inputChat.disabled = true;
                         inputChat.placeholder = "Ssstt... Jangan beri tahu yang lain!";
                     } else {
@@ -1423,38 +1421,45 @@ document.addEventListener("DOMContentLoaded", () => {
                         inputChat.placeholder = "Ketik tebakan Anda di sini...";
                     }
 
-                    if (isHost) {
-                        document.getElementById("pengaturan-waktu-host").style.display = "none";
-                    }
+                    if (isHost) document.getElementById("pengaturan-waktu-host").style.display = "none";
 
+                    // --- JALANKAN COUNTDOWN TIMER (ANTI-BOCOR) ---
+                    let targetWaktu = roomData.waktu_berakhir || 0;
                     
-                    // --- JALANKAN COUNTDOWN TIMER REAL-TIME (SUDAH DIPERBAIKI) ---
-                    // Pastikan waktu target berupa angka, bukan undefined/NaN
-                    let targetWaktu = roomData.waktu_berakhir || (Date.now() + 60000); 
+                    // Hanya buat jam baru jika durasi target berubah (mencegah memory leak jam bertumpuk)
+                    if (targetWaktu !== lastTargetWaktu) {
+                        lastTargetWaktu = targetWaktu;
+                        if (window.gameTimerInterval) clearInterval(window.gameTimerInterval);
 
-                    window.gameTimerInterval = setInterval(() => {
-                        let sisaWaktu = Math.floor((targetWaktu - Date.now()) / 1000);
-                        
-                        // Mencegah error tampilan jika perhitungan meleset
-                        if (isNaN(sisaWaktu)) sisaWaktu = 0; 
-
-                        if (sisaWaktu <= 0) {
-                            clearInterval(window.gameTimerInterval);
-                            document.getElementById("arena-waktu").innerText = "00:00";
-                            
-                            if (isHost && roomData.status === "playing") {
-                                chatRef.push({ isSystem: true, teks: `⏱️ WAKTU HABIS! Kata rahasianya adalah: ${kataAktif.toUpperCase()}` });
-                                dbGame.ref(`rooms/${pinRoom}/status`).set("lobby");
-                                document.getElementById("btn-host-lanjut").style.display = "block";
-                                document.getElementById("btn-host-skip").style.display = "none";
+                        window.gameTimerInterval = setInterval(() => {
+                            // SENSOR MATI MENDADAK: Jika game tiba-tiba berhenti, bunuh timer detik ini juga!
+                            if (window.currentRoomStatus !== "playing") {
+                                clearInterval(window.gameTimerInterval);
+                                document.getElementById("arena-waktu").innerText = "00:00";
+                                return;
                             }
-                        } else {
-                            let m = Math.floor(sisaWaktu / 60).toString().padStart(2, '0');
-                            let s = (sisaWaktu % 60).toString().padStart(2, '0');
-                            document.getElementById("arena-waktu").innerText = `${m}:${s}`;
-                            document.getElementById("arena-waktu").style.color = (sisaWaktu <= 10) ? "#dc3545" : "white";
-                        }
-                    }, 1000);
+
+                            let sisaWaktu = Math.floor((targetWaktu - Date.now()) / 1000);
+                            if (isNaN(sisaWaktu)) sisaWaktu = 0;
+
+                            if (sisaWaktu <= 0) {
+                                clearInterval(window.gameTimerInterval);
+                                document.getElementById("arena-waktu").innerText = "00:00";
+                                
+                                if (isHost && window.currentRoomStatus === "playing") {
+                                    chatRef.push({ isSystem: true, teks: `⏱️ WAKTU HABIS! Kata rahasianya adalah: ${kataAktif.toUpperCase()}` });
+                                    dbGame.ref(`rooms/${pinRoom}/status`).set("lobby");
+                                    document.getElementById("btn-host-lanjut").style.display = "block";
+                                    document.getElementById("btn-host-skip").style.display = "none";
+                                }
+                            } else {
+                                let m = Math.floor(sisaWaktu / 60).toString().padStart(2, '0');
+                                let s = (sisaWaktu % 60).toString().padStart(2, '0');
+                                document.getElementById("arena-waktu").innerText = `${m}:${s}`;
+                                document.getElementById("arena-waktu").style.color = (sisaWaktu <= 10) ? "#dc3545" : "white";
+                            }
+                        }, 1000);
+                    }
                 }
             });
 
@@ -1533,8 +1538,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                     chatRef.push({ isSystem: true, teks: `🌟 HEBAT! SEMUA PEMAIN BERHASIL MENEBAK! 🌟` });
                                     chatRef.push({ isSystem: true, teks: `Kata rahasianya adalah: ${kataKunci.toUpperCase()}` });
                                     
-                                    // HENTIKAN WAKTU & RONDE SEKARANG JUGA
+                                    // --- KUNCI: TARIK REM DARURAT SEKARANG JUGA ---
+                                    window.currentRoomStatus = "lobby"; 
                                     dbGame.ref(`rooms/${pinRoom}/status`).set("lobby");
+                                    // -----------------------------------------------
+
                                     document.getElementById("btn-host-lanjut").style.display = "block";
                                     document.getElementById("btn-host-skip").style.display = "none";
                                 }
@@ -1604,15 +1612,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("btn-host-mulai").addEventListener("click", window.jalankanRonde);
                 document.getElementById("btn-host-lanjut").addEventListener("click", window.jalankanRonde);
                 
+                
                 // --- Logika Tombol Skip Giliran ---
                 const btnSkip = document.getElementById("btn-host-skip");
                 if (btnSkip) {
-                    btnSkip.addEventListener("click", () => {
-                        if (confirm("Siswa ini AFK/Diam saja? Lewati giliran anak ini?")) {
-                            chatRef.push({ isSystem: true, teks: `Giliran dilewati oleh Guru!` });
-                            window.jalankanRonde();
+                    btnSkip.onclick = () => { // Gunakan onclick agar bersih dari tumpukan memori
+                        if (confirm("Hentikan giliran anak ini dan kembali istirahat ke Lobby?")) {
+                            chatRef.push({ isSystem: true, teks: `Giliran dihentikan oleh Guru!` });
+                            
+                            // Tarik rem darurat & lemparkan ke mode santai
+                            window.currentRoomStatus = "lobby";
+                            dbGame.ref(`rooms/${pinRoom}/status`).set("lobby");
+                            
+                            document.getElementById("btn-host-lanjut").style.display = "block";
+                            document.getElementById("btn-host-skip").style.display = "none";
                         }
-                    });
+                    };
                 }
             }
 
