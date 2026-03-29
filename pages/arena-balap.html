@@ -1,0 +1,26 @@
+<div class="cbt-layout" style="max-width: 1000px; margin: auto;">
+    <div class="cbt-main" style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+        
+        <div style="background: #333; color: white; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #ff5722;">
+            <div>
+                <h3 style="margin: 0; color: #ff5722;"><i class="fa-solid fa-flag-checkered"></i> PIN SIRKUIT: <span id="balap-pin" style="letter-spacing: 2px; color: white;">-----</span></h3>
+                <p id="balap-materi" style="margin: 5px 0 0 0; font-size: 14px; color: #ccc;">Materi: Memuat...</p>
+            </div>
+            <button onclick="keluarBalap()" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;"><i class="fa-solid fa-door-open"></i> Keluar</button>
+        </div>
+
+        <div id="track-balap" style="background: #222; padding: 20px 0; border-radius: 10px; display: flex; flex-direction: column; gap: 15px; border: 5px solid #444; position: relative; overflow: hidden; min-height: 200px;">
+            <div style="text-align:center; color:#888; margin-top: 50px;">Menunggu pemain masuk...</div>
+        </div>
+
+        <div id="kontrol-guru-balap" style="text-align: center; display: none;">
+            <button id="btn-host-mulai-balap" class="btn-cbt" style="background: #198754; color: white; font-size: 18px; padding: 12px 30px;"><i class="fa-solid fa-traffic-light"></i> MULAI BALAPAN!</button>
+        </div>
+
+        <div style="background: white; padding: 30px; border-radius: 10px; text-align: center; border: 2px solid #0d6efd; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+            <h2 id="teks-kalimat-target" style="font-family: 'Courier New', Courier, monospace; font-size: 26px; color: #333; margin-bottom: 20px; user-select: none;">Menunggu Guru memulai...</h2>
+            <input type="text" id="input-balap-ketik" autocomplete="off" spellcheck="false" placeholder="Ketik kalimat di atas ke sini..." style="width: 100%; max-width: 700px; padding: 15px; font-size: 24px; text-align: center; border: 3px solid #ccc; border-radius: 10px; font-family: 'Courier New', Courier, monospace; outline: none; transition: background 0.2s;" disabled>
+        </div>
+
+    </div>
+</div>
