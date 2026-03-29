@@ -1,0 +1,25 @@
+<div class="cbt-layout" style="max-width: 900px; margin: auto; text-align: center;">
+    <div class="cbt-main" style="padding: 40px 20px; border-top: 5px solid #ff5722;">
+        <i class="fa-solid fa-flag-checkered fa-fade" style="font-size: 60px; color: #ff5722; margin-bottom: 15px;"></i>
+        <h1 style="color: #333; margin-bottom: 10px;">TypeRush Edu: Balap Ketik!</h1>
+        <p style="color: #666; margin-bottom: 40px; font-size: 16px;">Adu kecepatan dan ketelitian mengetikmu di sirkuit kelas!</p>
+
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 30px;">
+            <div style="background: white; border: 2px solid #ff5722; border-radius: 12px; padding: 30px; width: 350px; box-shadow: 0 10px 20px rgba(255, 87, 34, 0.15);">
+                <h3 style="color: #ff5722; margin-top: 0;"><i class="fa-solid fa-car"></i> Gabung Balapan</h3>
+                <p style="color: #555; font-size: 14px; margin-bottom: 20px;">Masukkan PIN Sirkuit dari Guru Anda.</p>
+                <input type="text" id="input-pin-balap" placeholder="Contoh: 12345" style="width: 100%; padding: 15px; font-size: 24px; text-align: center; font-weight: bold; border: 2px dashed #ccc; border-radius: 8px; margin-bottom: 15px; letter-spacing: 3px;">
+                <button id="btn-gabung-balap" class="btn-cbt" style="background: #ff5722; color: white; width: 100%; font-size: 18px; padding: 12px;"><i class="fa-solid fa-play"></i> MASUK SIRKUIT</button>
+            </div>
+
+            <div id="area-buat-room-balap" style="background: #f8f9fa; border: 2px solid #333; border-radius: 12px; padding: 30px; width: 350px; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); display: none;">
+                <h3 style="color: #333; margin-top: 0;"><i class="fa-solid fa-traffic-light"></i> Buat Sirkuit Baru</h3>
+                <p style="color: #555; font-size: 14px; margin-bottom: 20px;">Pilih materi kalimat untuk dilombakan.</p>
+                <select id="select-materi-balap" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 15px; font-weight: bold;">
+                    <option value="">-- Memuat Materi... --</option>
+                </select>
+                <button id="btn-buat-balapan" class="btn-cbt" style="background: #333; color: white; width: 100%; font-size: 18px; padding: 12px;"><i class="fa-solid fa-flag-checkered"></i> BUAT SIRKUIT</button>
+            </div>
+        </div>
+    </div>
+</div>
