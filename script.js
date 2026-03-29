@@ -295,6 +295,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
 
+            // =========================================================
+            // 1. DEKLARASIKAN SEMUA FUNGSI DATABASE TERLEBIH DAHULU
+            // =========================================================
+            
             // --- FUNGSI GURU: LOAD TABEL DATABASE ---
             window.muatDatabaseGameTabel = async function() {
                 const tbody = document.getElementById("tbody-database-game");
@@ -329,11 +333,63 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             };
 
-            // --- FUNGSI GURU: SIMPAN / UPDATE DATABASE ---
+            // --- FUNGSI GURU: PERSIAPAN EDIT ---
+            window.editDatabaseGame = function(kode, materi, kata) {
+                document.querySelector('.tab-guru-btn[data-target="tab-buat-db"]').click();
+                document.getElementById("db-kode").value = kode;
+                document.getElementById("db-kode").disabled = true; 
+                document.getElementById("db-nama").value = materi;
+                document.getElementById("db-kata").value = kata;
+                document.getElementById("db-mode").value = "edit";
+                document.getElementById("judul-form-db").innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Edit Materi: ${kode}`;
+                document.getElementById("btn-batal-edit-db").style.display = "inline-block";
+            };
+
+            // --- FUNGSI GURU: HAPUS DATABASE ---
+            window.hapusDatabaseGame = async function(kode) {
+                if(!confirm(`Yakin ingin MENGHAPUS materi dengan kode ${kode} secara permanen?`)) return;
+                try {
+                    const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "hapus_bank_kata", kode: kode }) });
+                    const result = await response.json();
+                    if (result.status === "sukses") {
+                        alert("✅ Materi berhasil dihapus!");
+                        muatMateriDariSheet();
+                        window.muatDatabaseGameTabel();
+                    } else { alert("❌ Gagal menghapus: " + result.message); }
+                } catch (err) { alert("Terjadi kesalahan jaringan."); }
+            };
+
+
+            // =========================================================
+            // 2. SETELAH FUNGSI DIBUAT, BARU KITA PANGGIL DI SINI
+            // =========================================================
+            if (role && role.toLowerCase() === "guru") {
+                document.getElementById("area-manajemen-guru").style.display = "block";
+                muatMateriDariSheet(); 
+                
+                // PANGGILAN INI SEKARANG AMAN KARENA FUNGSINYA SUDAH ADA DI ATAS
+                window.muatDatabaseGameTabel(); 
+                
+                // Logika Pindah Tab
+                document.querySelectorAll(".tab-guru-btn").forEach(btn => {
+                    btn.addEventListener("click", function() {
+                        document.querySelectorAll(".tab-guru-btn").forEach(b => {
+                            b.style.background = "#e9ecef"; b.style.color = "#333";
+                        });
+                        this.style.background = "#198754"; this.style.color = "white";
+                        
+                        document.querySelectorAll(".tab-guru-konten").forEach(k => k.style.display = "none");
+                        document.getElementById(this.getAttribute("data-target")).style.display = "block";
+                    });
+                });
+            }
+
+            // --- EVENT LISTENER TOMBOL (BISA DITARUH DI BAWAH) ---
             const btnSimpanDB = document.getElementById("btn-simpan-db");
             if (btnSimpanDB) {
+                // (Isi fungsi simpanDB persis seperti sebelumnya, tidak ada yang diubah)
                 btnSimpanDB.addEventListener("click", async () => {
-                    const mode = document.getElementById("db-mode").value; // "baru" atau "edit"
+                    const mode = document.getElementById("db-mode").value;
                     const kode = document.getElementById("db-kode").value.trim();
                     const nama = document.getElementById("db-nama").value.trim();
                     const kata = document.getElementById("db-kata").value.trim();
@@ -344,60 +400,32 @@ document.addEventListener("DOMContentLoaded", () => {
                     btnSimpanDB.disabled = true;
 
                     try {
-                        const payload = {
-                            action: mode === "baru" ? "tambah_bank_kata" : "update_bank_kata",
-                            kode: kode, materi: nama, kata: kata
-                        };
+                        const payload = { action: mode === "baru" ? "tambah_bank_kata" : "update_bank_kata", kode: kode, materi: nama, kata: kata };
                         const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
                         const result = await response.json();
 
                         if (result.status === "sukses") {
                             alert("✅ Database berhasil disimpan!");
-                            // Reset form & kembali ke mode baru
                             document.getElementById("db-kode").value = "";
                             document.getElementById("db-nama").value = "";
                             document.getElementById("db-kata").value = "";
-                            document.getElementById("db-kode").disabled = false; // Buka kunci input kode
+                            document.getElementById("db-kode").disabled = false; 
                             document.getElementById("db-mode").value = "baru";
                             document.getElementById("judul-form-db").innerHTML = `<i class="fa-solid fa-file-circle-plus"></i> Tambah Materi Baru`;
                             document.getElementById("btn-batal-edit-db").style.display = "none";
                             
-                            // Segarkan data
                             muatMateriDariSheet(); 
-                            muatDatabaseGameTabel();
-                            
-                            // Pindah ke Tab Lihat DB otomatis
+                            window.muatDatabaseGameTabel();
                             document.querySelector('.tab-guru-btn[data-target="tab-lihat-db"]').click();
-                        } else {
-                            alert("❌ Gagal menyimpan: " + result.message);
-                        }
-                    } catch (err) {
-                        alert("Terjadi kesalahan jaringan.");
-                    } finally {
+                        } else { alert("❌ Gagal menyimpan: " + result.message); }
+                    } catch (err) { alert("Terjadi kesalahan jaringan."); } 
+                    finally {
                         btnSimpanDB.innerHTML = `<i class="fa-solid fa-save"></i> Simpan ke Database`;
                         btnSimpanDB.disabled = false;
                     }
                 });
             }
 
-            // --- FUNGSI GURU: PERSIAPAN EDIT ---
-            window.editDatabaseGame = function(kode, materi, kata) {
-                // Pindah ke Tab Tambah/Edit
-                document.querySelector('.tab-guru-btn[data-target="tab-buat-db"]').click();
-                
-                // Isi form dengan data lama
-                document.getElementById("db-kode").value = kode;
-                document.getElementById("db-kode").disabled = true; // Kode tidak boleh diganti saat edit
-                document.getElementById("db-nama").value = materi;
-                document.getElementById("db-kata").value = kata;
-                
-                // Ubah status form menjadi Edit
-                document.getElementById("db-mode").value = "edit";
-                document.getElementById("judul-form-db").innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Edit Materi: ${kode}`;
-                document.getElementById("btn-batal-edit-db").style.display = "inline-block";
-            };
-
-            // Tombol Batal Edit
             const btnBatalEdit = document.getElementById("btn-batal-edit-db");
             if(btnBatalEdit) {
                 btnBatalEdit.addEventListener("click", () => {
