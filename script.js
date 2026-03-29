@@ -272,28 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const role = sessionStorage.getItem("userRole");
             
 
-            // --- LOGIKA TAMPILAN GURU (TABS & DATABASE) ---
-            if (role && role.toLowerCase() === "guru") {
-                document.getElementById("area-manajemen-guru").style.display = "block";
-                muatMateriDariSheet(); // Untuk Dropdown
-                window.muatDatabaseGameTabel(); // Untuk Tabel
-                
-                // Logika Pindah Tab
-                document.querySelectorAll(".tab-guru-btn").forEach(btn => {
-                    btn.addEventListener("click", function() {
-                        // Reset warna semua tombol
-                        document.querySelectorAll(".tab-guru-btn").forEach(b => {
-                            b.style.background = "#e9ecef"; b.style.color = "#333";
-                        });
-                        // Warnai tombol yang aktif
-                        this.style.background = "#198754"; this.style.color = "white";
-                        
-                        // Sembunyikan semua konten, tampilkan yang dituju
-                        document.querySelectorAll(".tab-guru-konten").forEach(k => k.style.display = "none");
-                        document.getElementById(this.getAttribute("data-target")).style.display = "block";
-                    });
-                });
-            }
+            
 
             // =========================================================
             // 1. DEKLARASIKAN SEMUA FUNGSI DATABASE TERLEBIH DAHULU
