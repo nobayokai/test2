@@ -105,12 +105,16 @@ document.addEventListener("DOMContentLoaded", () => {
             if (menuGuru) menuGuru.style.display = "";
             const menuGame = document.getElementById("menu-tebak-kata");
             if (menuGame) menuGame.style.display = "block";
+            const menuBalap = document.getElementById("menu-balap-ketik");
+            if (menuBalap) menuBalap.style.display = "block";
         }
         if (savedRole.toLowerCase() === "siswa") {
             const menuLatihan = document.getElementById("menu-latihan");
             if (menuLatihan) menuLatihan.style.display = "block";
             const menuGame = document.getElementById("menu-tebak-kata");
             if (menuGame) menuGame.style.display = "block";
+            const menuBalap = document.getElementById("menu-balap-ketik");
+            if (menuBalap) menuBalap.style.display = "block";
         }
     }
     // -----------------------------------------------------
@@ -168,12 +172,16 @@ document.addEventListener("DOMContentLoaded", () => {
                             if(menuGuru) menuGuru.style.display = "";
                             const menuGame = document.getElementById("menu-tebak-kata");
                             if (menuGame) menuGame.style.display = "block";
+                            const menuBalap = document.getElementById("menu-balap-ketik");
+                            if (menuBalap) menuBalap.style.display = "block";
                         }
                         if (result.role.toLowerCase() === "siswa") {
                             const menuLatihan = document.getElementById("menu-latihan");
                             if(menuLatihan) menuLatihan.style.display = "block";
                             const menuGame = document.getElementById("menu-tebak-kata");
                             if (menuGame) menuGame.style.display = "block";
+                            const menuBalap = document.getElementById("menu-balap-ketik");
+                            if (menuBalap) menuBalap.style.display = "block";
                         }
                     // Sembunyikan tombol login di navbar karena sudah masuk
                     document.getElementById("tombol-login-nav").style.display = "none";
@@ -588,6 +596,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const menuGame = document.getElementById("menu-tebak-kata");
             if (menuGame) menuGame.style.display = "none";
+
+            const menuBalap = document.getElementById("menu-balap-ketik");
+            if (menuBalap) menuBalap.style.display = "none";
             
             const menuLatihan = document.getElementById("menu-latihan");
             if (menuLatihan) menuLatihan.style.display = "none"; 
@@ -1912,6 +1923,244 @@ document.addEventListener("DOMContentLoaded", () => {
                 loadPage("tebak-kata");
             };
         }
+
+        // ==========================================
+        // --- LOGIKA GAME KE-2: BALAP KETIK ---
+        // ==========================================
+
+        if (page === "balap-ketik") {
+            const role = sessionStorage.getItem("userRole");
+            if (role && role.toLowerCase() === "guru") {
+                document.getElementById("area-buat-room-balap").style.display = "block";
+                
+                // Pinjam fungsi ambil materi dari Tebak Kata (Sangat efisien!)
+                fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "get_bank_kata" }) })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === "sukses") {
+                        window.bankKataGame = result.data; 
+                        let html = `<option value="">-- Pilih Materi Balapan --</option>`;
+                        result.data.forEach(item => { html += `<option value="${item.kode}">${item.materi}</option>`; });
+                        document.getElementById("select-materi-balap").innerHTML = html;
+                    }
+                });
+            }
+
+            // GURU BUAT SIRKUIT
+            const btnBuat = document.getElementById("btn-buat-balapan");
+            if (btnBuat) {
+                btnBuat.addEventListener("click", () => {
+                    const kodeMateri = document.getElementById("select-materi-balap").value;
+                    if (!kodeMateri) { alert("Pilih materi!"); return; }
+
+                    const materiDipilih = window.bankKataGame.find(x => x.kode === kodeMateri);
+                    let daftarKalimat = materiDipilih.kata.split(",").map(k => k.trim()); 
+                    
+                    const pinRoom = Math.floor(10000 + Math.random() * 90000).toString();
+                    btnBuat.innerText = "Membangun Sirkuit...";
+                    
+                    dbGame.ref('balap_rooms/' + pinRoom).set({
+                        host: sessionStorage.getItem("userName"),
+                        materi: materiDipilih.materi,
+                        daftar_kalimat: daftarKalimat,
+                        status: "lobby",
+                        pemain: {},
+                        pemenang: ""
+                    }).then(() => {
+                        sessionStorage.setItem("active_balap_room", pinRoom);
+                        sessionStorage.setItem("is_balap_host", "true");
+                        loadPage("arena-balap"); 
+                    });
+                });
+            }
+
+            // SISWA GABUNG SIRKUIT
+            const btnGabung = document.getElementById("btn-gabung-balap");
+            if (btnGabung) {
+                btnGabung.addEventListener("click", () => {
+                    const pinMasuk = document.getElementById("input-pin-balap").value.trim();
+                    if (pinMasuk.length < 5) return;
+                    
+                    btnGabung.innerText = "Mencari...";
+                    dbGame.ref('balap_rooms/' + pinMasuk).once('value', (snap) => {
+                        if (snap.exists()) {
+                            const myName = sessionStorage.getItem("userName");
+                            dbGame.ref(`balap_rooms/${pinMasuk}/pemain/${myName}`).set({
+                                progress: 0, nitro: false
+                            }).then(() => {
+                                sessionStorage.setItem("active_balap_room", pinMasuk);
+                                sessionStorage.setItem("is_balap_host", "false");
+                                loadPage("arena-balap");
+                            });
+                        } else {
+                            alert("PIN Sirkuit tidak ditemukan!");
+                            btnGabung.innerHTML = `<i class="fa-solid fa-play"></i> MASUK SIRKUIT`;
+                        }
+                    });
+                });
+            }
+        }
+
+        // ==========================================
+        // --- LOGIKA ARENA BALAP KETIK ---
+        // ==========================================
+        if (page === "arena-balap") {
+            const pinRoom = sessionStorage.getItem("active_balap_room");
+            const isHost = sessionStorage.getItem("is_balap_host") === "true";
+            const myName = sessionStorage.getItem("userName");
+            
+            if (!pinRoom) { loadPage("balap-ketik"); return; }
+            document.getElementById("balap-pin").innerText = pinRoom;
+
+            if (isHost) document.getElementById("kontrol-guru-balap").style.display = "block";
+
+            const inputKetik = document.getElementById("input-balap-ketik");
+            const teksTarget = document.getElementById("teks-kalimat-target");
+            const trackBalap = document.getElementById("track-balap");
+            let roomData = null;
+
+            // 1. RENDER REAL-TIME TRACK & MOBIL
+            dbGame.ref('balap_rooms/' + pinRoom).on('value', (snapshot) => {
+                roomData = snapshot.val();
+                if (!roomData) { alert("Sirkuit ditutup Guru."); keluarBalap(); return; }
+
+                document.getElementById("balap-materi").innerText = "Materi: " + roomData.materi;
+
+                let htmlTrack = "";
+                let players = roomData.pemain || {};
+                let totalKalimat = roomData.daftar_kalimat ? roomData.daftar_kalimat.length : 1;
+                const colors = ["#dc3545", "#0d6efd", "#ffc107", "#198754", "#e83e8c", "#0dcaf0"];
+
+                Object.keys(players).forEach((nama, idx) => {
+                    let prog = players[nama].progress || 0;
+                    let persen = Math.min((prog / totalKalimat) * 100, 100);
+                    let warnaMobil = colors[idx % colors.length];
+                    
+                    // Efek Nitro Api (Muncul 1 detik saat progres nambah)
+                    let apiNitro = players[nama].nitro ? `<i class="fa-solid fa-fire-flame-curved fa-fade" style="color:#ff9800; font-size:25px; transform: rotate(-90deg) translateX(5px);"></i>` : "";
+
+                    htmlTrack += `
+                        <div style="position: relative; height: 50px; border-bottom: 2px dashed #555; display: flex; align-items: center; background: rgba(255,255,255,0.05);">
+                            <div style="position: absolute; right: 0; height: 100%; border-right: 8px Make solid white; z-index: 1;"></div> 
+                            <div style="position: absolute; right: 0; height: 100%; border-right: 8px dashed black; z-index: 2;"></div> 
+                            
+                            <span style="position: absolute; left: 10px; color: white; font-size: 14px; font-weight: bold; z-index: 3; text-shadow: 1px 1px 2px black;">${nama}</span>
+                            
+                            <div style="position: absolute; left: ${persen}%; transform: translateX(-${persen}%); transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); font-size: 35px; color: ${warnaMobil}; display: flex; align-items: center; z-index: 4;">
+                                ${apiNitro} <i class="fa-solid fa-car-side"></i>
+                            </div>
+                        </div>
+                    `;
+                });
+                trackBalap.innerHTML = htmlTrack;
+
+                // 2. KONTROL STATUS BALAPAN
+                const btnMulai = document.getElementById("btn-host-mulai-balap");
+                
+                if (roomData.status === "lobby") {
+                    teksTarget.innerText = "Menunggu Guru memulai balapan...";
+                    inputKetik.disabled = true;
+                    if (isHost) { btnMulai.style.display = "inline-block"; btnMulai.innerText = "MULAI BALAPAN!"; }
+                } 
+                else if (roomData.status === "playing") {
+                    if (isHost) btnMulai.style.display = "none";
+                    
+                    if (!isHost) {
+                        let myProg = players[myName]?.progress || 0;
+                        if (myProg < totalKalimat) {
+                            let kalimatSekarang = roomData.daftar_kalimat[myProg];
+                            
+                            // Buka gembok input jika baru mulai
+                            if (inputKetik.disabled) {
+                                inputKetik.disabled = false;
+                                inputKetik.focus();
+                            }
+                            
+                            // Tampilkan kalimat baru
+                            if (!window.currentBalapTarget || window.currentBalapTarget !== kalimatSekarang) {
+                                window.currentBalapTarget = kalimatSekarang;
+                                teksTarget.innerHTML = kalimatSekarang;
+                                inputKetik.value = "";
+                                inputKetik.style.backgroundColor = "white";
+                            }
+                        } else {
+                            // Selesai semua kalimat!
+                            teksTarget.innerHTML = "🏁 <span style='color:#198754'>ANDA SAMPAI DI FINISH!</span> 🏁";
+                            inputKetik.disabled = true;
+                        }
+                    }
+                } 
+                else if (roomData.status === "finished") {
+                    teksTarget.innerHTML = `🏆 BALAPAN SELESAI! 🏆<br><span style="color:#0d6efd; font-size:32px;">Pemenangnya: ${roomData.pemenang}</span>`;
+                    inputKetik.disabled = true;
+                    if (isHost) { btnMulai.style.display = "inline-block"; btnMulai.innerText = "Ulangi Balapan Baru"; }
+                }
+            });
+
+            // 3. SENSOR PENGETIKAN OTOMATIS (Tanpa perlu klik Enter)
+            inputKetik.addEventListener("input", () => {
+                if (!window.currentBalapTarget || inputKetik.disabled) return;
+                
+                let ketikan = inputKetik.value; // Sensitif huruf besar/kecil!
+                let target = window.currentBalapTarget;
+
+                // Jika ketikan sejauh ini sama dengan target
+                if (target.startsWith(ketikan)) {
+                    inputKetik.style.backgroundColor = "#d1e7dd"; // Hijau muda
+                    teksTarget.innerHTML = `<span style="color:#198754; font-weight:bold; background:#e8f5e9;">${ketikan}</span><span style="color:#888;">${target.substring(ketikan.length)}</span>`;
+
+                    // JIKA KALIMAT SELESAI SEMPURNA
+                    if (ketikan === target) {
+                        inputKetik.value = "";
+                        let myProg = (roomData.pemain[myName]?.progress || 0) + 1;
+                        let totalKalimat = roomData.daftar_kalimat.length;
+
+                        // Tambah Progres & Nyalakan API NITRO!
+                        dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({
+                            progress: myProg, nitro: true 
+                        });
+
+                        // Matikan Api Nitro setelah 1 detik
+                        setTimeout(() => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}/nitro`).set(false); }, 1000);
+
+                        // CEK KEMENANGAN
+                        if (myProg >= totalKalimat) {
+                            if (roomData.status !== "finished") {
+                                dbGame.ref(`balap_rooms/${pinRoom}`).update({
+                                    status: "finished", pemenang: myName
+                                });
+                            }
+                        }
+                    }
+                } else {
+                    // Jika Typo (Salah ketik)
+                    inputKetik.style.backgroundColor = "#f8d7da"; // Merah muda
+                }
+            });
+
+            // 4. GURU MEMULAI BALAPAN
+            if (isHost) {
+                document.getElementById("btn-host-mulai-balap").addEventListener("click", () => {
+                    let updates = {};
+                    Object.keys(roomData.pemain || {}).forEach(p => {
+                        updates[p] = { progress: 0, nitro: false }; // Reset semua mobil ke garis start
+                    });
+                    dbGame.ref(`balap_rooms/${pinRoom}/pemain`).set(updates);
+                    dbGame.ref(`balap_rooms/${pinRoom}`).update({
+                        status: "playing", pemenang: ""
+                    });
+                });
+            }
+
+            // 5. KELUAR SIRKUIT
+            window.keluarBalap = function() {
+                if (isHost) dbGame.ref('balap_rooms/' + pinRoom).remove();
+                else dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).remove();
+                sessionStorage.removeItem("active_balap_room");
+                loadPage("balap-ketik");
+            };
+        }
+        
         
     }; // ----- AKHIR dari loadPage = async function--------
     
