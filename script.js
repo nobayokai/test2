@@ -406,14 +406,20 @@ document.addEventListener("DOMContentLoaded", () => {
                             loadPage("arena-bermain"); // Ke Arena Tebak Kata
                         });
                     } else if (jenisGame === "balap_ketik") {
-                        // Tidak diacak untuk Balap Ketik agar semua siswa dapat kalimat yang urutannya sama
+                        // Gabungkan semua kata menjadi satu teks panjang dengan spasi
+                        let teksBalapanUtuh = arrayKataLengkap.join(" "); 
+                        
                         dbGame.ref('balap_rooms/' + pinRoom).set({
-                            host: sessionStorage.getItem("userName"), materi: materiDipilih.materi,
-                            daftar_kalimat: arrayKataLengkap, status: "lobby", pemain: {}, pemenang: ""
+                            host: sessionStorage.getItem("userName"), 
+                            materi: materiDipilih.materi,
+                            teks_balapan: teksBalapanUtuh, // <-- Perubahan: Pakai teks utuh
+                            status: "lobby", 
+                            pemain: {}, 
+                            pemenang: ""
                         }).then(() => {
                             sessionStorage.setItem("active_balap_room", pinRoom);
                             sessionStorage.setItem("is_balap_host", "true");
-                            loadPage("arena-balap"); // Ke Arena Balap Ketik
+                            loadPage("arena-balap"); 
                         });
                     }
                 });
@@ -1828,7 +1834,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         // ==========================================
-        // --- LOGIKA ARENA BALAP KETIK (GAYA BARU) ---
+        // --- LOGIKA ARENA BALAP KETIK (TYPERUSH MODE) ---
         // ==========================================
         if (page === "arena-balap") {
             const pinRoom = sessionStorage.getItem("active_balap_room");
@@ -1842,13 +1848,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if (isHost) {
                 const btnMulai = document.getElementById("btn-host-mulai-balap");
                 if (btnMulai) {
-                    btnMulai.style.display = "inline-block"; // Munculkan tombol untuk Host
+                    btnMulai.style.display = "inline-block"; 
                     btnMulai.addEventListener("click", () => {
                         dbGame.ref('balap_rooms/' + pinRoom).once('value', (snap) => {
                             let current = snap.val();
                             let updates = {};
                             Object.keys(current.pemain || {}).forEach(p => {
-                                // Reset skor ronde dan nitro, skor kumulatif tetap
+                                // Progress sekarang berdasarkan jumlah HURUF
                                 updates[p] = { progress: 0, nitro: false, skor: current.pemain[p].skor || 0 }; 
                             });
                             dbGame.ref(`balap_rooms/${pinRoom}/pemain`).set(updates);
@@ -1859,155 +1865,155 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const inputKetik = document.getElementById("input-balap-ketik");
-            const teksTarget = document.getElementById("teks-kalimat-target");
+            const areaMengetik = document.getElementById("area-mengetik-balap");
             const tbodyTrack = document.getElementById("daftar-pemain-track");
             const statusTeks = document.getElementById("balap-status-teks");
-            const areaMengetik = document.getElementById("area-mengetik-balap");
             
             let roomData = null;
+            let targetTeksUtuh = "";
+            let startTime = null;
+            let lastSyncTime = 0;
 
-            // 1. RENDER REAL-TIME TRACK & MOBIL (Struktur Baru)
+            // Klik area manapun untuk fokus ngetik (Penting untuk HP)
+            areaMengetik.addEventListener("click", () => { if(!inputKetik.disabled) inputKetik.focus(); });
+
+            // 1. RENDER REAL-TIME TRACK & MOBIL
             dbGame.ref('balap_rooms/' + pinRoom).on('value', (snapshot) => {
                 roomData = snapshot.val();
                 if (!roomData) { keluarBalap(); return; }
 
                 document.getElementById("balap-materi").innerText = "Materi: " + roomData.materi;
+                targetTeksUtuh = roomData.teks_balapan || "";
+                let totalKarakter = targetTeksUtuh.length || 1;
 
-                // Update Status Panel & Visibilitas Area Ketik
+                // Kontrol UI Status
                 if (roomData.status === "lobby") {
-                    statusTeks.innerText = "MENUNGGU ABA-ABA MULAI DARI GURU...";
+                    statusTeks.innerText = "MENUNGGU GURU MEMULAI BALAPAN...";
                     statusTeks.style.color = "#333";
-                    teksTarget.innerText = "Siap-siap mengetik...";
-                    inputKetik.disabled = true;
-                    areaMengetik.style.display = "block"; // Munculkan untuk standby
+                    updateTeksBerjalan("", "", "", "Siap-siap mengetik...");
+                    inputKetik.disabled = true; inputKetik.value = "";
+                    startTime = null; // Reset waktu
+                    document.getElementById("wpm-display").innerText = "0 WPM";
                 } 
                 else if (roomData.status === "playing") {
                     statusTeks.innerText = "BALAPAN DIMULAI! AYO KETIK CEPAT!";
-                    statusTeks.style.color = "#198754"; // Hijau
+                    statusTeks.style.color = "#198754";
+                    if (inputKetik.disabled && !isHost) {
+                        inputKetik.disabled = false;
+                        inputKetik.focus();
+                        startTime = Date.now(); // Mulai hitung WPM
+                        updateTeksBerjalan("", "", targetTeksUtuh[0], targetTeksUtuh.substring(1));
+                    }
                 } 
                 else if (roomData.status === "finished") {
                     statusTeks.innerText = `BALAPAN SELESAI! Pemenang: ${roomData.pemenang}`;
-                    statusTeks.style.color = "#0d6efd"; // Biru
-                    teksTarget.innerHTML = `🏁 Sirkuit ditutup. Pemenang: <b style="color:#0d6efd">${roomData.pemenang}</b> 🏁`;
+                    statusTeks.style.color = "#0d6efd";
+                    updateTeksBerjalan("", "", "", `🏁 Balapan Selesai! Pemenang: ${roomData.pemenang}`);
                     inputKetik.disabled = true;
                 }
 
+                // Render Sirkuit Mobil
                 if (!tbodyTrack) return;
                 let htmlTrack = "";
                 let players = roomData.pemain || {};
-                let totalKalimat = roomData.daftar_kalimat ? roomData.daftar_kalimat.length : 1;
-                
-                // Array warna mobil (Merah, Biru, Kuning, Hijau, Pink, Cyan)
                 const colors = ["#dc3545", "#0d6efd", "#ffc107", "#198754", "#e83e8c", "#0dcaf0"];
 
                 Object.keys(players).forEach((nama, idx) => {
                     let prog = players[nama].progress || 0;
-                    let persen = Math.min((prog / totalKalimat) * 100, 100);
+                    let persen = Math.min((prog / totalKarakter) * 100, 100);
                     let warnaMobil = colors[idx % colors.length];
-                    
-                    // Ikon: Mahkota untuk Host, User untuk siswa
                     let ikonNama = (nama === roomData.host) ? '<i class="fa-solid fa-crown" style="color: gold;"></i>' : '<i class="fa-solid fa-car"></i>';
                     
-                    // Api Nitro (Muncul 1 detik saat progres nambah)
+                    // Jika WPM tinggi (Nitro true dari Firebase), munculkan api
                     let apiNitro = players[nama].nitro ? `<i class="fa-solid fa-fire-flame-curved fa-fade" style="color:#ff9800; font-size:30px; transform: rotate(-90deg) translateX(5px);"></i>` : "";
                     
-                    // Struktur Jalur Pemain Baru (Aspal & Profil Melengkung)
                     htmlTrack += `
                         <div style="position: relative; height: 65px; border-bottom: 2px dashed #555; display: flex; align-items: center; background: rgba(255,255,255,0.05); margin-bottom: -2px;">
-                            
                             <div style="position: absolute; left: 10px; background: #f8f9fa; color: #333; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; z-index: 3; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px;">
-                                ${ikonNama} ${nama} : <span style="color:#198754;">${players[nama].skor || 0} Poin</span>
+                                ${ikonNama} ${nama} 
                             </div>
-                            
-                            <div style="position: absolute; left: ${persen}%; transform: translateX(-${persen}%); transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); font-size: 40px; color: ${warnaMobil}; display: flex; align-items: center; z-index: 4; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">
+                            <div style="position: absolute; left: ${persen}%; transform: translateX(-${persen}%); transition: left 0.8s linear; font-size: 40px; color: ${warnaMobil}; display: flex; align-items: center; z-index: 4; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">
                                 ${apiNitro} <i class="fa-solid fa-car-side"></i>
                             </div>
                         </div>
                     `;
                 });
                 tbodyTrack.innerHTML = htmlTrack === "" ? `<div style="text-align:center; color:#888; margin-top: 50px;">Menunggu pemain...</div>` : htmlTrack;
-
-                // 2. KONTROL INPUT KETIK SISWA (Anti Numpuk)
-                if (!isHost && roomData.status === "playing") {
-                    let myProg = players[myName]?.progress || 0;
-                    if (myProg < totalKalimat) {
-                        let kalimatSekarang = roomData.daftar_kalimat[myProg];
-                        
-                        // Buka gembok input jika baru mulai
-                        if (inputKetik.disabled) {
-                            inputKetik.disabled = false;
-                            inputKetik.focus();
-                        }
-                        
-                        // Tampilkan kalimat baru
-                        if (!window.currentBalapTarget || window.currentBalapTarget !== kalimatSekarang) {
-                            window.currentBalapTarget = kalimatSekarang;
-                            teksTarget.innerHTML = kalimatSekarang;
-                            inputKetik.value = "";
-                            inputKetik.style.backgroundColor = "white";
-                        }
-                    } else {
-                        // Selesai semua kalimat!
-                        teksTarget.innerHTML = "🏁 <span style='color:#198754'>ANDA SAMPAI DI FINISH! Menunggu yang lain...</span> 🏁";
-                        inputKetik.disabled = true;
-                        inputKetik.value = "";
-                    }
-                }
             });
 
-            // 3. SENSOR PENGETIKAN OTOMATIS (Mekanisme Boost)
-            inputKetik.addEventListener("input", () => {
-                if (!window.currentBalapTarget || inputKetik.disabled) return;
+            // Fungsi Mengatur Posisi Teks Berjalan
+            function updateTeksBerjalan(benar, salah, aktif, sisa) {
+                document.getElementById("teks-selesai").innerText = benar;
+                document.getElementById("teks-salah").innerText = salah;
+                document.getElementById("teks-aktif").innerText = aktif || "";
+                document.getElementById("teks-sisa").innerText = sisa || "";
                 
-                let ketikan = inputKetik.value; // Sensitif huruf besar/kecil!
-                let target = window.currentBalapTarget;
+                // Geser ke kiri (Asumsi 1 huruf = ~19px lebar)
+                let shiftAmount = benar.length * 19.2; 
+                document.getElementById("wadah-teks-berjalan").style.transform = `translateX(calc(50% - ${shiftAmount}px))`;
+            }
 
-                // Jika ketikan sejauh ini sama dengan target
-                if (target.startsWith(ketikan)) {
-                    inputKetik.style.backgroundColor = "#d1e7dd"; // Hijau muda
-                    teksTarget.innerHTML = `<span style="color:#198754; font-weight:bold; background:#e8f5e9;">${ketikan}</span><span style="color:#888;">${target.substring(ketikan.length)}</span>`;
+            // 2. SENSOR KETIK & KECEPATAN (WPM)
+            inputKetik.addEventListener("input", () => {
+                if (!targetTeksUtuh || inputKetik.disabled) return;
+                
+                let ketikan = inputKetik.value; 
+                let charProgress = 0;
+                let hasError = false;
 
-                    // JIKA KALIMAT SELESAI SEMPURNA
-                    if (ketikan === target) {
-                        inputKetik.value = "";
-                        
-                        // Ambil data terbaru dari memori lokal Firebase agar skor kumulatif tidak hilang
-                        let currentProgress = roomData.pemain[myName]?.progress || 0;
-                        let myTotalSkor = roomData.pemain[myName]?.skor || 0;
-                        
-                        let myNewProg = currentProgress + 1;
-                        let myNewTotalSkor = myTotalSkor + 10; // Tambah 10 skor kumulatif setiap kalimat
-                        let totalKalimat = roomData.daftar_kalimat.length;
+                // Cek mana yang benar dan mana yang Typo
+                let teksBenar = "";
+                let teksSalah = "";
 
-                        // Tambah Progres, Skor, & Nyalakan API NITRO!
-                        dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({
-                            progress: myNewProg, 
-                            nitro: true,
-                            skor: myNewTotalSkor
-                        });
-
-                        // Matikan Api Nitro setelah 1 detik
-                        setTimeout(() => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}/nitro`).set(false); }, 1000);
-
-                        // CEK KEMENANGAN
-                        if (myNewProg >= totalKalimat) {
-                            if (roomData.status !== "finished") {
-                                // Kirim pemenang ke server
-                                dbGame.ref(`balap_rooms/${pinRoom}`).update({
-                                    status: "finished", pemenang: myName
-                                });
-                                chatRef.push({ isSystem: true, teks: `🏆 ${myName} MENANG BALAPAN! 🏆` });
-                            }
-                        }
+                for (let i = 0; i < ketikan.length; i++) {
+                    if (ketikan[i] === targetTeksUtuh[i] && !hasError) {
+                        teksBenar += ketikan[i];
+                    } else {
+                        hasError = true;
+                        teksSalah += ketikan[i];
                     }
-                } else {
-                    inputKetik.style.backgroundColor = "#f8d7da"; // Merah muda Typo
+                }
+
+                charProgress = teksBenar.length;
+                let sisaTeks = targetTeksUtuh.substring(charProgress + teksSalah.length);
+                let hurufAktif = sisaTeks.length > 0 ? sisaTeks[0] : "";
+                let hurufSisaLanjutan = sisaTeks.length > 1 ? sisaTeks.substring(1) : "";
+
+                // Update UI Teks Berjalan
+                updateTeksBerjalan(teksBenar, teksSalah, hurufAktif, hurufSisaLanjutan);
+                
+                if (hasError) areaMengetik.style.borderColor = "#dc3545"; // Merah
+                else areaMengetik.style.borderColor = "#0d6efd"; // Biru normal
+
+                // Hitung WPM (Kecepatan Ketik)
+                let timeElapsedMin = (Date.now() - startTime) / 60000;
+                let wpm = timeElapsedMin > 0 ? Math.round((charProgress / 5) / timeElapsedMin) : 0;
+                document.getElementById("wpm-display").innerText = `${wpm} WPM`;
+
+                // Sync ke Firebase (Dibatasi tiap 800ms agar server tidak down, tapi animasi tetap mulus)
+                let now = Date.now();
+                if (now - lastSyncTime > 800 || charProgress === targetTeksUtuh.length) {
+                    let isNitro = wpm > 30 && !hasError; // Mobil mengeluarkan api jika WPM > 30 dan tidak typo
+                    
+                    dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({
+                        progress: charProgress, nitro: isNitro
+                    });
+                    lastSyncTime = now;
+                }
+
+                // JIKA MENCAPAI FINISH
+                if (charProgress === targetTeksUtuh.length && !hasError) {
+                    inputKetik.disabled = true;
+                    if (roomData.status !== "finished") {
+                        dbGame.ref(`balap_rooms/${pinRoom}`).update({
+                            status: "finished", pemenang: myName
+                        });
+                    }
                 }
             });
 
-            // 4. KELUAR SIRKUIT
+            // 3. KELUAR SIRKUIT
             window.keluarBalap = function() {
-                // ... (Logika keluar tetap sama seperti sebelumnya) ...
                 if (isHost) dbGame.ref('balap_rooms/' + pinRoom).remove();
                 else dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).remove();
                 sessionStorage.removeItem("active_balap_room");
