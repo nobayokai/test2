@@ -1,14 +1,14 @@
 <div class="cbt-layout" style="max-width: 900px; margin: auto; text-align: center;">
     <div class="cbt-main" style="padding: 40px 20px;">
-        <i class="fa-solid fa-gamepad fa-bounce" style="font-size: 60px; color: #0d6efd; margin-bottom: 15px;"></i>
-        <h1 style="color: #333; margin-bottom: 10px;">Edu-Game: Tebak Kata Live!</h1>
-        <p style="color: #666; margin-bottom: 40px; font-size: 16px;">Uji pemahaman materi Anda dengan cara yang menyenangkan bersama teman sekelas.</p>
+        <i class="fa-solid fa-layer-group fa-bounce" style="font-size: 60px; color: #6610f2; margin-bottom: 15px;"></i>
+        <h1 style="color: #333; margin-bottom: 10px;">Edu-Game Hub</h1>
+        <p style="color: #666; margin-bottom: 40px; font-size: 16px;">Pusat permainan edukasi interaktif kelas Anda.</p>
 
         <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 30px;">
             
             <div style="background: white; border: 2px solid #0d6efd; border-radius: 12px; padding: 30px; width: 350px; box-shadow: 0 10px 20px rgba(13, 110, 253, 0.15);">
                 <h3 style="color: #0d6efd; margin-top: 0;"><i class="fa-solid fa-right-to-bracket"></i> Gabung Permainan</h3>
-                <p style="color: #555; font-size: 14px; margin-bottom: 20px;">Masukkan PIN Room yang diberikan oleh Guru Anda di layar depan.</p>
+                <p style="color: #555; font-size: 14px; margin-bottom: 20px;">Sistem akan otomatis mendeteksi jenis permainan dari PIN yang Anda masukkan.</p>
                 <input type="text" id="input-pin-game" placeholder="Contoh: 88492" style="width: 100%; padding: 15px; font-size: 24px; text-align: center; font-weight: bold; border: 2px dashed #ccc; border-radius: 8px; margin-bottom: 15px; letter-spacing: 3px;">
                 <button id="btn-gabung-game" class="btn-cbt" style="background: #0d6efd; color: white; width: 100%; font-size: 18px; padding: 12px;"><i class="fa-solid fa-play"></i> MASUK ROOM</button>
             </div>
@@ -23,50 +23,44 @@
 
                 <div id="tab-buat-room" class="tab-guru-konten">
                     <h3 style="color: #198754; margin-top: 0;"><i class="fa-solid fa-plus-circle"></i> Buat Room Baru</h3>
-                    <p style="color: #555; font-size: 14px; margin-bottom: 20px;">Pilih materi dari database untuk memulai permainan baru bersama siswa.</p>
-                    <select id="select-materi-game" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 15px; font-weight: bold;">
+                    
+                    <label style="font-weight: bold; font-size: 13px;">1. Pilih Jenis Permainan:</label>
+                    <select id="select-jenis-game" style="width: 100%; padding: 10px; border: 2px solid #0d6efd; border-radius: 8px; margin-bottom: 15px; font-weight: bold; color: #0d6efd; outline: none;">
+                        <option value="tebak_kata">🎯 Mode: Tebak Kata Live</option>
+                        <option value="balap_ketik">🏎️ Mode: Balap Ketik (TypeRush)</option>
+                    </select>
+
+                    <label style="font-weight: bold; font-size: 13px;">2. Pilih Materi Database:</label>
+                    <select id="select-materi-game" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 15px;">
                         <option value="">-- Memuat Materi... --</option>
                     </select>
+                    
                     <button id="btn-buat-room" class="btn-cbt" style="background: #198754; color: white; width: 100%; font-size: 18px; padding: 12px;"><i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG</button>
                 </div>
 
                 <div id="tab-buat-db" class="tab-guru-konten" style="display: none;">
                     <h3 style="color: #0d6efd; margin-top: 0;" id="judul-form-db"><i class="fa-solid fa-file-circle-plus"></i> Tambah Materi Baru</h3>
-                    <input type="hidden" id="db-mode" value="baru"> <label style="font-weight: bold; font-size: 13px;">Kode Materi (Tanpa Spasi):</label>
-                    <input type="text" id="db-kode" placeholder="Contoh: IPA-01" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;">
-                    
-                    <label style="font-weight: bold; font-size: 13px;">Nama Materi Lengkap:</label>
-                    <input type="text" id="db-nama" placeholder="Contoh: Nama-Nama Hewan Mamalia" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;">
-                    
-                    <label style="font-weight: bold; font-size: 13px;">Daftar Kata (Pisahkan dengan Koma):</label>
-                    <textarea id="db-kata" rows="4" placeholder="Contoh: Sapi, Kambing, Paus, Kucing, Lumba-lumba" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 15px; resize: vertical;"></textarea>
-                    
+                    <input type="hidden" id="db-mode" value="baru">
+                    <input type="text" id="db-kode" placeholder="Kode Materi (Cth: IPA-01)" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;">
+                    <input type="text" id="db-nama" placeholder="Nama Materi (Cth: Hewan Mamalia)" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;">
+                    <textarea id="db-kata" rows="4" placeholder="Ketik kata/kalimat (Pisahkan dengan koma)" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 15px;"></textarea>
                     <div style="display: flex; gap: 10px;">
-                        <button id="btn-simpan-db" class="btn-cbt" style="background: #0d6efd; color: white; flex: 2; padding: 10px;"><i class="fa-solid fa-save"></i> Simpan ke Database</button>
+                        <button id="btn-simpan-db" class="btn-cbt" style="background: #0d6efd; color: white; flex: 2; padding: 10px;">Simpan Database</button>
                         <button id="btn-batal-edit-db" class="btn-cbt" style="background: #6c757d; color: white; flex: 1; padding: 10px; display: none;">Batal</button>
                     </div>
                 </div>
 
                 <div id="tab-lihat-db" class="tab-guru-konten" style="display: none;">
                     <h3 style="color: #6610f2; margin-top: 0;"><i class="fa-solid fa-database"></i> Database Materi</h3>
-                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
+                    <div style="max-height: 250px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
                         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-                            <thead style="background: #f8f9fa; position: sticky; top: 0;">
-                                <tr>
-                                    <th style="padding: 10px; border-bottom: 2px solid #ddd;">Kode & Materi</th>
-                                    <th style="padding: 10px; border-bottom: 2px solid #ddd; text-align: center; width: 80px;">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-database-game">
-                                <tr><td colspan="2" style="text-align:center; padding: 15px;">Memuat data...</td></tr>
-                            </tbody>
+                            <tbody id="tbody-database-game"><tr><td style="text-align:center; padding:15px;">Memuat...</td></tr></tbody>
                         </table>
                     </div>
                     <button onclick="muatDatabaseGameTabel()" style="width: 100%; margin-top: 10px; padding: 8px; background: #e9ecef; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;"><i class="fa-solid fa-rotate"></i> Segarkan Tabel</button>
                 </div>
 
             </div>
-
         </div>
     </div>
 </div>
