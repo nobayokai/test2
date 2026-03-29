@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxS6Eb5ozRYMX12-Ppdi6UlNAZ7Sga91ghTvqh_sZl6LVb-RvDDAoIGfmRFPrjUXMAX/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvNfbScSh3zNR595mzZ2Nd7uPl781rz8kmXbpXwe29orF0NvFOtB1Pny6-QnRiHsVh/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
@@ -270,10 +270,165 @@ document.addEventListener("DOMContentLoaded", () => {
             
             // 1. Bedakan Tampilan Guru dan Siswa
             const role = sessionStorage.getItem("userRole");
+            
+
+            // --- LOGIKA TAMPILAN GURU (TABS & DATABASE) ---
             if (role && role.toLowerCase() === "guru") {
-                document.getElementById("area-buat-room-guru").style.display = "block";
-                muatMateriDariSheet();
+                document.getElementById("area-manajemen-guru").style.display = "block";
+                muatMateriDariSheet(); // Untuk Dropdown
+                window.muatDatabaseGameTabel(); // Untuk Tabel
+                
+                // Logika Pindah Tab
+                document.querySelectorAll(".tab-guru-btn").forEach(btn => {
+                    btn.addEventListener("click", function() {
+                        // Reset warna semua tombol
+                        document.querySelectorAll(".tab-guru-btn").forEach(b => {
+                            b.style.background = "#e9ecef"; b.style.color = "#333";
+                        });
+                        // Warnai tombol yang aktif
+                        this.style.background = "#198754"; this.style.color = "white";
+                        
+                        // Sembunyikan semua konten, tampilkan yang dituju
+                        document.querySelectorAll(".tab-guru-konten").forEach(k => k.style.display = "none");
+                        document.getElementById(this.getAttribute("data-target")).style.display = "block";
+                    });
+                });
             }
+
+            // --- FUNGSI GURU: LOAD TABEL DATABASE ---
+            window.muatDatabaseGameTabel = async function() {
+                const tbody = document.getElementById("tbody-database-game");
+                if(!tbody) return;
+                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:15px;">Mencari data...</td></tr>`;
+                
+                try {
+                    const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "get_bank_kata" }) });
+                    const result = await response.json();
+                    
+                    if (result.status === "sukses") {
+                        let html = "";
+                        result.data.forEach(item => {
+                            let cuplikanKata = item.kata.length > 30 ? item.kata.substring(0, 30) + "..." : item.kata;
+                            html += `
+                                <tr style="border-bottom: 1px solid #eee;">
+                                    <td style="padding: 10px;">
+                                        <b style="color: #0d6efd;">${item.kode}</b> - ${item.materi}<br>
+                                        <small style="color:#666;">Kata: ${cuplikanKata}</small>
+                                    </td>
+                                    <td style="padding: 10px; text-align: center;">
+                                        <button onclick="editDatabaseGame('${item.kode}', '${item.materi}', '${item.kata}')" style="background:#ffc107; border:none; padding:5px; border-radius:3px; cursor:pointer; margin-bottom:5px; width: 30px;"><i class="fa-solid fa-pen"></i></button>
+                                        <button onclick="hapusDatabaseGame('${item.kode}')" style="background:#dc3545; color:white; border:none; padding:5px; border-radius:3px; cursor:pointer; width: 30px;"><i class="fa-solid fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        tbody.innerHTML = html === "" ? `<tr><td colspan="2" style="text-align:center;">Belum ada materi.</td></tr>` : html;
+                    }
+                } catch (err) {
+                    tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:red;">Gagal memuat tabel.</td></tr>`;
+                }
+            };
+
+            // --- FUNGSI GURU: SIMPAN / UPDATE DATABASE ---
+            const btnSimpanDB = document.getElementById("btn-simpan-db");
+            if (btnSimpanDB) {
+                btnSimpanDB.addEventListener("click", async () => {
+                    const mode = document.getElementById("db-mode").value; // "baru" atau "edit"
+                    const kode = document.getElementById("db-kode").value.trim();
+                    const nama = document.getElementById("db-nama").value.trim();
+                    const kata = document.getElementById("db-kata").value.trim();
+
+                    if (!kode || !nama || !kata) { alert("Harap isi semua kolom!"); return; }
+
+                    btnSimpanDB.innerText = "Menyimpan...";
+                    btnSimpanDB.disabled = true;
+
+                    try {
+                        const payload = {
+                            action: mode === "baru" ? "tambah_bank_kata" : "update_bank_kata",
+                            kode: kode, materi: nama, kata: kata
+                        };
+                        const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+                        const result = await response.json();
+
+                        if (result.status === "sukses") {
+                            alert("✅ Database berhasil disimpan!");
+                            // Reset form & kembali ke mode baru
+                            document.getElementById("db-kode").value = "";
+                            document.getElementById("db-nama").value = "";
+                            document.getElementById("db-kata").value = "";
+                            document.getElementById("db-kode").disabled = false; // Buka kunci input kode
+                            document.getElementById("db-mode").value = "baru";
+                            document.getElementById("judul-form-db").innerHTML = `<i class="fa-solid fa-file-circle-plus"></i> Tambah Materi Baru`;
+                            document.getElementById("btn-batal-edit-db").style.display = "none";
+                            
+                            // Segarkan data
+                            muatMateriDariSheet(); 
+                            muatDatabaseGameTabel();
+                            
+                            // Pindah ke Tab Lihat DB otomatis
+                            document.querySelector('.tab-guru-btn[data-target="tab-lihat-db"]').click();
+                        } else {
+                            alert("❌ Gagal menyimpan: " + result.message);
+                        }
+                    } catch (err) {
+                        alert("Terjadi kesalahan jaringan.");
+                    } finally {
+                        btnSimpanDB.innerHTML = `<i class="fa-solid fa-save"></i> Simpan ke Database`;
+                        btnSimpanDB.disabled = false;
+                    }
+                });
+            }
+
+            // --- FUNGSI GURU: PERSIAPAN EDIT ---
+            window.editDatabaseGame = function(kode, materi, kata) {
+                // Pindah ke Tab Tambah/Edit
+                document.querySelector('.tab-guru-btn[data-target="tab-buat-db"]').click();
+                
+                // Isi form dengan data lama
+                document.getElementById("db-kode").value = kode;
+                document.getElementById("db-kode").disabled = true; // Kode tidak boleh diganti saat edit
+                document.getElementById("db-nama").value = materi;
+                document.getElementById("db-kata").value = kata;
+                
+                // Ubah status form menjadi Edit
+                document.getElementById("db-mode").value = "edit";
+                document.getElementById("judul-form-db").innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Edit Materi: ${kode}`;
+                document.getElementById("btn-batal-edit-db").style.display = "inline-block";
+            };
+
+            // Tombol Batal Edit
+            const btnBatalEdit = document.getElementById("btn-batal-edit-db");
+            if(btnBatalEdit) {
+                btnBatalEdit.addEventListener("click", () => {
+                    document.getElementById("db-kode").value = "";
+                    document.getElementById("db-nama").value = "";
+                    document.getElementById("db-kata").value = "";
+                    document.getElementById("db-kode").disabled = false;
+                    document.getElementById("db-mode").value = "baru";
+                    document.getElementById("judul-form-db").innerHTML = `<i class="fa-solid fa-file-circle-plus"></i> Tambah Materi Baru`;
+                    btnBatalEdit.style.display = "none";
+                });
+            }
+
+            // --- FUNGSI GURU: HAPUS DATABASE ---
+            window.hapusDatabaseGame = async function(kode) {
+                if(!confirm(`Yakin ingin MENGHAPUS materi dengan kode ${kode} secara permanen?`)) return;
+                
+                try {
+                    const response = await fetch(SCRIPT_URL, { 
+                        method: "POST", 
+                        body: JSON.stringify({ action: "hapus_bank_kata", kode: kode }) 
+                    });
+                    const result = await response.json();
+                    
+                    if (result.status === "sukses") {
+                        alert("✅ Materi berhasil dihapus!");
+                        muatMateriDariSheet();
+                        muatDatabaseGameTabel();
+                    } else { alert("❌ Gagal menghapus: " + result.message); }
+                } catch (err) { alert("Terjadi kesalahan jaringan."); }
+            };
 
             // 2. Fungsi Guru: Mengambil Daftar Materi dari Google Sheets
             async function muatMateriDariSheet() {
