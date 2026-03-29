@@ -1942,6 +1942,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     if (inputKetik.disabled && !isHost && !(roomData.pemain[myName]?.selesai)) {
                         inputKetik.disabled = false;
+
+                        // --- KUNCI PERBAIKAN 1: Hapus sisa ketikan balapan sebelumnya ---
+                        inputKetik.value = ""; 
+                        // ---------------------------------------------------------------
+                        
                         inputKetik.focus();
                         startTime = Date.now(); 
                         updateTeksBerjalan("", "", targetTeksUtuh[0], targetTeksUtuh.substring(1));
@@ -1982,6 +1987,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     statusTeks.style.color = "#0d6efd";
                     updateTeksBerjalan("", "", "", `🏁 Balapan Selesai! Semua mobil masuk finish. 🏁`);
                     inputKetik.disabled = true;
+
+                    // --- KUNCI PERBAIKAN 2: Kunci rapat dan kosongkan saat finish ---
+                    inputKetik.value = ""; 
+                    // ----------------------------------------------------------------
+                    
                     if (window.balapTimerInterval) clearInterval(window.balapTimerInterval);
 
                     if (isHost) {
