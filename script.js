@@ -1427,15 +1427,21 @@ document.addEventListener("DOMContentLoaded", () => {
                         document.getElementById("pengaturan-waktu-host").style.display = "none";
                     }
 
-                    // --- JALANKAN COUNTDOWN TIMER REAL-TIME ---
+                    
+                    // --- JALANKAN COUNTDOWN TIMER REAL-TIME (SUDAH DIPERBAIKI) ---
+                    // Pastikan waktu target berupa angka, bukan undefined/NaN
+                    let targetWaktu = roomData.waktu_berakhir || (Date.now() + 60000); 
+
                     window.gameTimerInterval = setInterval(() => {
-                        let sisaWaktu = Math.round((roomData.waktu_berakhir - Date.now()) / 1000);
+                        let sisaWaktu = Math.floor((targetWaktu - Date.now()) / 1000);
                         
+                        // Mencegah error tampilan jika perhitungan meleset
+                        if (isNaN(sisaWaktu)) sisaWaktu = 0; 
+
                         if (sisaWaktu <= 0) {
                             clearInterval(window.gameTimerInterval);
                             document.getElementById("arena-waktu").innerText = "00:00";
                             
-                            // GURU yang bertugas mengakhiri ronde saat waktu habis
                             if (isHost && roomData.status === "playing") {
                                 chatRef.push({ isSystem: true, teks: `⏱️ WAKTU HABIS! Kata rahasianya adalah: ${kataAktif.toUpperCase()}` });
                                 dbGame.ref(`rooms/${pinRoom}/status`).set("lobby");
@@ -1446,7 +1452,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             let m = Math.floor(sisaWaktu / 60).toString().padStart(2, '0');
                             let s = (sisaWaktu % 60).toString().padStart(2, '0');
                             document.getElementById("arena-waktu").innerText = `${m}:${s}`;
-                            // Ubah warna timer jadi merah jika sisa 10 detik
                             document.getElementById("arena-waktu").style.color = (sisaWaktu <= 10) ? "#dc3545" : "white";
                         }
                     }, 1000);
@@ -1497,28 +1502,45 @@ document.addEventListener("DOMContentLoaded", () => {
                 areaChat.innerHTML += chatBubble;
                 areaChat.scrollTop = areaChat.scrollHeight;
 
-                // --- GURU SEBAGAI JURI (TanPA Menghentikan Waktu) ---
+                
+                // --- GURU SEBAGAI JURI & SENSOR AUTO-STOP ---
                 if (isHost && roomData && roomData.status === "playing" && isTebakanBenar) {
-                    // Cek apakah anak ini belum menebak dengan benar sebelumnya
                     let sudahTebak = roomData.tebakan_benar && roomData.tebakan_benar[pesan.pengirim];
                     let bukanPemberiPetunjuk = pesan.pengirim !== roomData.giliran_siapa;
 
                     if (!sudahTebak && bukanPemberiPetunjuk) {
-                        // 1. Poin Penebak (+10)
+                        // 1. Catat poin Penebak & Pemberi Petunjuk
                         let skorPenebak = (roomData.pemain[pesan.pengirim]?.skor || 0) + 10;
-                        dbGame.ref(`rooms/${pinRoom}/pemain/${pesan.pengirim}/skor`).set(skorPenebak);
-                        
-                        // 2. Poin Pemberi Petunjuk (+5 untuk setiap anak yang berhasil menebak)
                         let skorPetunjuk = (roomData.pemain[roomData.giliran_siapa]?.skor || 0) + 5;
+                        
+                        dbGame.ref(`rooms/${pinRoom}/pemain/${pesan.pengirim}/skor`).set(skorPenebak);
                         dbGame.ref(`rooms/${pinRoom}/pemain/${roomData.giliran_siapa}/skor`).set(skorPetunjuk);
 
-                        // 3. Masukkan ke daftar siswa yang sudah benar di ronde ini
-                        dbGame.ref(`rooms/${pinRoom}/tebakan_benar/${pesan.pengirim}`).set(true);
-
-                        // 4. Umumkan di Chat
+                        // 2. Kirim pesan sukses ke chat
                         chatRef.push({ isSystem: true, teks: `🎉 ${pesan.pengirim} berhasil menebak kata! 🎉` });
-                        
-                        // CATATAN: Waktu terus berjalan, siswa lain masih bisa menebak!
+
+                        // 3. Masukkan anak ini ke daftar yang sudah benar, lalu...
+                        dbGame.ref(`rooms/${pinRoom}/tebakan_benar/${pesan.pengirim}`).set(true).then(() => {
+                            
+                            // 4. CEK APAKAH SEMUA PEMAIN SUDAH BERHASIL MENEBAK?
+                            dbGame.ref(`rooms/${pinRoom}`).once('value', (snap) => {
+                                let currentData = snap.val();
+                                let totalPemain = Object.keys(currentData.pemain || {}).length;
+                                let totalBenar = Object.keys(currentData.tebakan_benar || {}).length;
+
+                                // (totalPemain - 1) karena si pemberi petunjuk tidak ikut menebak
+                                if (totalBenar >= (totalPemain - 1)) {
+                                    chatRef.push({ isSystem: true, teks: `🌟 HEBAT! SEMUA PEMAIN BERHASIL MENEBAK! 🌟` });
+                                    chatRef.push({ isSystem: true, teks: `Kata rahasianya adalah: ${kataKunci.toUpperCase()}` });
+                                    
+                                    // HENTIKAN WAKTU & RONDE SEKARANG JUGA
+                                    dbGame.ref(`rooms/${pinRoom}/status`).set("lobby");
+                                    document.getElementById("btn-host-lanjut").style.display = "block";
+                                    document.getElementById("btn-host-skip").style.display = "none";
+                                }
+                            });
+
+                        });
                     }
                 }
             });
@@ -1542,34 +1564,56 @@ document.addEventListener("DOMContentLoaded", () => {
             if (isHost) {
                 let indeksKata = 0;
                 
-                function jalankanRonde() {
+                window.jalankanRonde = function() {
                     let players = Object.keys(roomData.pemain || {});
                     if (players.length < 2) { alert("Butuh minimal 2 pemain untuk mulai!"); return; }
                     
                     let kataBaru = roomData.daftar_kata[indeksKata];
                     if (!kataBaru) { 
                         alert("Semua kata sudah habis dimainkan!"); 
-                        dbGame.ref('rooms/' + pinRoom).remove(); // Hapus room
+                        dbGame.ref('rooms/' + pinRoom).remove(); 
                         keluarRoomGame();
                         return; 
                     }
 
-                    // Acak siapa yang dapat giliran memberi petunjuk
+                    // --- Kalkulasi Waktu Habis & Anti NaN ---
+                    let inputWaktu = document.getElementById("input-waktu-game");
+                    let durasiDetik = inputWaktu ? parseInt(inputWaktu.value) : 60;
+                    if (isNaN(durasiDetik) || durasiDetik < 10) durasiDetik = 60; // Default jika error
+                    
+                    let waktuBerakhir = Date.now() + (durasiDetik * 1000);
                     let yangDapatGiliran = players[Math.floor(Math.random() * players.length)];
 
-                    dbGame.ref('rooms/' + pinRoom).update({
-                        status: "playing",
-                        kata_sekarang: kataBaru,
-                        giliran_siapa: yangDapatGiliran
+                    // Hapus daftar pemenang ronde sebelumnya, lalu mulai ronde baru
+                    dbGame.ref(`rooms/${pinRoom}/tebakan_benar`).remove().then(() => {
+                        dbGame.ref('rooms/' + pinRoom).update({
+                            status: "playing",
+                            kata_sekarang: kataBaru,
+                            giliran_siapa: yangDapatGiliran,
+                            waktu_berakhir: waktuBerakhir
+                        });
                     });
 
                     document.getElementById("btn-host-mulai").style.display = "none";
                     document.getElementById("btn-host-lanjut").style.display = "none";
+                    document.getElementById("btn-host-skip").style.display = "block";
                     indeksKata++;
-                }
+                };
 
-                document.getElementById("btn-host-mulai").addEventListener("click", jalankanRonde);
-                document.getElementById("btn-host-lanjut").addEventListener("click", jalankanRonde);
+                // Sambungkan tombol ke fungsi
+                document.getElementById("btn-host-mulai").addEventListener("click", window.jalankanRonde);
+                document.getElementById("btn-host-lanjut").addEventListener("click", window.jalankanRonde);
+                
+                // --- Logika Tombol Skip Giliran ---
+                const btnSkip = document.getElementById("btn-host-skip");
+                if (btnSkip) {
+                    btnSkip.addEventListener("click", () => {
+                        if (confirm("Siswa ini AFK/Diam saja? Lewati giliran anak ini?")) {
+                            chatRef.push({ isSystem: true, teks: `Giliran dilewati oleh Guru!` });
+                            window.jalankanRonde();
+                        }
+                    });
+                }
             }
 
             // --- FUNGSI GURU: KICK SISWA ---
