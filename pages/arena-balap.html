@@ -7,21 +7,18 @@
                 <p id="balap-materi" style="margin: 0; font-size: 14px; color: #ccc;">Materi: Memuat...</p>
             </div>
             <div style="display: flex; gap: 20px; align-items: center;">
-                <h3 style="margin: 0; color: white; font-size: 18px;"><i class="fa-solid fa-flag" style="color:#ff5722;"></i> TARGET: 🏁 FINISH LINE</h3>
+                <h2 id="balap-waktu" style="margin: 0; font-size: 32px; color: white; font-family: 'Courier New', monospace;">00:00</h2>
                 <button onclick="keluarBalap()" class="btn-cbt" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight:bold;"><i class="fa-solid fa-door-open"></i> Keluar</button>
             </div>
         </div>
 
         <div id="track-balap-wadah" style="background: #222; padding: 20px 0; border-radius: 10px; display: flex; flex-direction: column; border: 5px solid #444; position: relative; overflow: hidden; min-height: 250px; box-shadow: inset 0 0 30px rgba(0,0,0,0.8);">
-            
             <div id="garis-finish" style="position: absolute; right: 0; top: 0; bottom: 0; width: 40px; background-color: #222; border-left: 2px dashed #ff5722; display: flex; flex-direction: column; z-index: 1;">
                 <div style="flex:1; background-image: repeating-conic-gradient(white 0% 25%, black 25% 50%, white 50% 75%, black 75% 100%); background-size: 10px 10px;"></div>
             </div>
-
             <div id="daftar-pemain-track" style="display: flex; flex-direction: column; gap: 0px; z-index: 2; position: relative;">
                 <div style="text-align:center; color:#888; margin-top: 50px;">Menunggu pemain masuk...</div>
             </div>
-            
         </div>
 
         <div id="balap-status-panel" style="background: #f8f9fa; border: 2px solid #ccc; border-radius: 10px; padding: 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
@@ -29,7 +26,15 @@
                 <i class="fa-solid fa-traffic-light" style="font-size: 24px; color: #198754;"></i>
                 <h4 id="balap-status-teks" style="margin: 0; color: #333;">MENUNGGU ABA-ABA MULAI DARI GURU...</h4>
             </div>
-            <button id="btn-host-mulai-balap" class="btn-cbt" style="background: #198754; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; display: none; margin-left: auto; font-weight: bold;"><i class="fa-solid fa-flag-checkered"></i> MULAI BALAPAN!</button>
+            
+            <div id="kontrol-guru-balap" style="display: none; margin-left: auto; align-items: center; gap: 10px;">
+                <div id="pengaturan-waktu-balap" style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-size: 13px; font-weight: bold; color: #555;">Waktu (Detik):</label>
+                    <input type="number" id="input-waktu-balap" value="120" style="width: 70px; padding: 5px; text-align: center; font-weight: bold; border-radius: 5px; border: 1px solid #ccc;">
+                </div>
+                <button id="btn-host-mulai-balap" class="btn-cbt" style="background: #198754; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;"><i class="fa-solid fa-flag-checkered"></i> MULAI</button>
+                <button id="btn-host-stop-balap" class="btn-cbt" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; display: none;"><i class="fa-solid fa-stop"></i> STOP</button>
+            </div>
         </div>
 
         <div id="area-mengetik-balap" style="background: white; padding: 30px; border-radius: 10px; text-align: center; border: 3px solid #0d6efd; box-shadow: inset 0 0 20px rgba(0,0,0,0.05); overflow: hidden; position: relative; cursor: text;">
