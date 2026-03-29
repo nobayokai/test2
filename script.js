@@ -103,18 +103,15 @@ document.addEventListener("DOMContentLoaded", () => {
         if (savedRole.toLowerCase() === "guru") {
             const menuGuru = document.getElementById("menu-guru-dropdown");
             if (menuGuru) menuGuru.style.display = "";
-            const menuGame = document.getElementById("menu-tebak-kata");
+           // Ganti pemunculan menu game menjadi ini:
+            const menuGame = document.getElementById("menu-edu-game");
             if (menuGame) menuGame.style.display = "block";
-            const menuBalap = document.getElementById("menu-balap-ketik");
-            if (menuBalap) menuBalap.style.display = "block";
         }
         if (savedRole.toLowerCase() === "siswa") {
             const menuLatihan = document.getElementById("menu-latihan");
             if (menuLatihan) menuLatihan.style.display = "block";
-            const menuGame = document.getElementById("menu-tebak-kata");
+            const menuGame = document.getElementById("menu-edu-game");
             if (menuGame) menuGame.style.display = "block";
-            const menuBalap = document.getElementById("menu-balap-ketik");
-            if (menuBalap) menuBalap.style.display = "block";
         }
     }
     // -----------------------------------------------------
@@ -170,18 +167,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (result.role.toLowerCase() === "guru") {
                             const menuGuru = document.getElementById("menu-guru-dropdown");
                             if(menuGuru) menuGuru.style.display = "";
-                            const menuGame = document.getElementById("menu-tebak-kata");
+                            const menuGame = document.getElementById("menu-edu-game");
                             if (menuGame) menuGame.style.display = "block";
-                            const menuBalap = document.getElementById("menu-balap-ketik");
-                            if (menuBalap) menuBalap.style.display = "block";
                         }
                         if (result.role.toLowerCase() === "siswa") {
                             const menuLatihan = document.getElementById("menu-latihan");
                             if(menuLatihan) menuLatihan.style.display = "block";
-                            const menuGame = document.getElementById("menu-tebak-kata");
+                            const menuGame = document.getElementById("menu-edu-game");
                             if (menuGame) menuGame.style.display = "block";
-                            const menuBalap = document.getElementById("menu-balap-ketik");
-                            if (menuBalap) menuBalap.style.display = "block";
                         }
                     // Sembunyikan tombol login di navbar karena sudah masuk
                     document.getElementById("tombol-login-nav").style.display = "none";
@@ -270,32 +263,20 @@ document.addEventListener("DOMContentLoaded", () => {
             // ---------------------------------------------------------------------
 
             // --- LOGIKA HALAMAN LOBBY GAME (TEBAK KATA) ---
-        if (page === "tebak-kata") {
-            const btnBuatRoom = document.getElementById("btn-buat-room");
-            const btnGabung = document.getElementById("btn-gabung-game");
-            const selectMateri = document.getElementById("select-materi-game");
-            const inputPin = document.getElementById("input-pin-game");
-            
-            // 1. Bedakan Tampilan Guru dan Siswa
+       // =========================================================
+        // --- LOGIKA EDU-GAME HUB (PUSAT PERMAINAN) ---
+        // =========================================================
+        if (page === "edu-game") {
             const role = sessionStorage.getItem("userRole");
             
-
-            
-
-            // =========================================================
-            // 1. DEKLARASIKAN SEMUA FUNGSI DATABASE TERLEBIH DAHULU
-            // =========================================================
-            
-            // --- FUNGSI GURU: LOAD TABEL DATABASE ---
+            // 1. DEKLARASI FUNGSI DATABASE GURU (Anti Hoisting Error)
             window.muatDatabaseGameTabel = async function() {
                 const tbody = document.getElementById("tbody-database-game");
                 if(!tbody) return;
                 tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:15px;">Mencari data...</td></tr>`;
-                
                 try {
                     const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "get_bank_kata" }) });
                     const result = await response.json();
-                    
                     if (result.status === "sukses") {
                         let html = "";
                         result.data.forEach(item => {
@@ -304,23 +285,19 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <tr style="border-bottom: 1px solid #eee;">
                                     <td style="padding: 10px;">
                                         <b style="color: #0d6efd;">${item.kode}</b> - ${item.materi}<br>
-                                        <small style="color:#666;">Kata: ${cuplikanKata}</small>
+                                        <small style="color:#666;">Isi: ${cuplikanKata}</small>
                                     </td>
                                     <td style="padding: 10px; text-align: center;">
                                         <button onclick="editDatabaseGame('${item.kode}', '${item.materi}', '${item.kata}')" style="background:#ffc107; border:none; padding:5px; border-radius:3px; cursor:pointer; margin-bottom:5px; width: 30px;"><i class="fa-solid fa-pen"></i></button>
                                         <button onclick="hapusDatabaseGame('${item.kode}')" style="background:#dc3545; color:white; border:none; padding:5px; border-radius:3px; cursor:pointer; width: 30px;"><i class="fa-solid fa-trash"></i></button>
                                     </td>
-                                </tr>
-                            `;
+                                </tr>`;
                         });
                         tbody.innerHTML = html === "" ? `<tr><td colspan="2" style="text-align:center;">Belum ada materi.</td></tr>` : html;
                     }
-                } catch (err) {
-                    tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:red;">Gagal memuat tabel.</td></tr>`;
-                }
+                } catch (err) { tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:red;">Gagal memuat tabel.</td></tr>`; }
             };
 
-            // --- FUNGSI GURU: PERSIAPAN EDIT ---
             window.editDatabaseGame = function(kode, materi, kata) {
                 document.querySelector('.tab-guru-btn[data-target="tab-buat-db"]').click();
                 document.getElementById("db-kode").value = kode;
@@ -332,225 +309,157 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("btn-batal-edit-db").style.display = "inline-block";
             };
 
-            // --- FUNGSI GURU: HAPUS DATABASE ---
             window.hapusDatabaseGame = async function(kode) {
-                if(!confirm(`Yakin ingin MENGHAPUS materi dengan kode ${kode} secara permanen?`)) return;
+                if(!confirm(`Yakin MENGHAPUS materi kode ${kode}?`)) return;
                 try {
                     const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "hapus_bank_kata", kode: kode }) });
                     const result = await response.json();
                     if (result.status === "sukses") {
                         alert("✅ Materi berhasil dihapus!");
-                        muatMateriDariSheet();
-                        window.muatDatabaseGameTabel();
-                    } else { alert("❌ Gagal menghapus: " + result.message); }
-                } catch (err) { alert("Terjadi kesalahan jaringan."); }
+                        muatMateriDariSheet(); window.muatDatabaseGameTabel();
+                    } else alert("❌ Gagal: " + result.message);
+                } catch (err) { alert("Kesalahan jaringan."); }
             };
 
+            async function muatMateriDariSheet() {
+                try {
+                    const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "get_bank_kata" }) });
+                    const result = await response.json();
+                    if (result.status === "sukses") {
+                        window.bankKataGame = result.data; 
+                        let html = `<option value="">-- Pilih Materi Database --</option>`;
+                        result.data.forEach(item => { html += `<option value="${item.kode}">${item.materi}</option>`; });
+                        document.getElementById("select-materi-game").innerHTML = html;
+                    }
+                } catch (err) { }
+            }
 
-            // =========================================================
-            // 2. SETELAH FUNGSI DIBUAT, BARU KITA PANGGIL DI SINI
-            // =========================================================
+            // 2. LOGIKA TAMPILAN GURU
             if (role && role.toLowerCase() === "guru") {
                 document.getElementById("area-manajemen-guru").style.display = "block";
                 muatMateriDariSheet(); 
-                
-                // PANGGILAN INI SEKARANG AMAN KARENA FUNGSINYA SUDAH ADA DI ATAS
                 window.muatDatabaseGameTabel(); 
                 
-                // Logika Pindah Tab
                 document.querySelectorAll(".tab-guru-btn").forEach(btn => {
                     btn.addEventListener("click", function() {
                         document.querySelectorAll(".tab-guru-btn").forEach(b => {
                             b.style.background = "#e9ecef"; b.style.color = "#333";
                         });
                         this.style.background = "#198754"; this.style.color = "white";
-                        
                         document.querySelectorAll(".tab-guru-konten").forEach(k => k.style.display = "none");
                         document.getElementById(this.getAttribute("data-target")).style.display = "block";
                     });
                 });
             }
 
-            // --- EVENT LISTENER TOMBOL (BISA DITARUH DI BAWAH) ---
+            // SIMPAN DATABASE TABS
             const btnSimpanDB = document.getElementById("btn-simpan-db");
             if (btnSimpanDB) {
-                // (Isi fungsi simpanDB persis seperti sebelumnya, tidak ada yang diubah)
                 btnSimpanDB.addEventListener("click", async () => {
                     const mode = document.getElementById("db-mode").value;
                     const kode = document.getElementById("db-kode").value.trim();
                     const nama = document.getElementById("db-nama").value.trim();
                     const kata = document.getElementById("db-kata").value.trim();
-
                     if (!kode || !nama || !kata) { alert("Harap isi semua kolom!"); return; }
 
-                    btnSimpanDB.innerText = "Menyimpan...";
-                    btnSimpanDB.disabled = true;
-
+                    btnSimpanDB.innerText = "Menyimpan..."; btnSimpanDB.disabled = true;
                     try {
-                        const payload = { action: mode === "baru" ? "tambah_bank_kata" : "update_bank_kata", kode: kode, materi: nama, kata: kata };
-                        const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+                        const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: mode === "baru" ? "tambah_bank_kata" : "update_bank_kata", kode: kode, materi: nama, kata: kata }) });
                         const result = await response.json();
-
                         if (result.status === "sukses") {
-                            alert("✅ Database berhasil disimpan!");
-                            document.getElementById("db-kode").value = "";
-                            document.getElementById("db-nama").value = "";
-                            document.getElementById("db-kata").value = "";
-                            document.getElementById("db-kode").disabled = false; 
-                            document.getElementById("db-mode").value = "baru";
-                            document.getElementById("judul-form-db").innerHTML = `<i class="fa-solid fa-file-circle-plus"></i> Tambah Materi Baru`;
-                            document.getElementById("btn-batal-edit-db").style.display = "none";
-                            
-                            muatMateriDariSheet(); 
-                            window.muatDatabaseGameTabel();
+                            alert("✅ Database tersimpan!");
+                            document.getElementById("btn-batal-edit-db").click();
+                            muatMateriDariSheet(); window.muatDatabaseGameTabel();
                             document.querySelector('.tab-guru-btn[data-target="tab-lihat-db"]').click();
-                        } else { alert("❌ Gagal menyimpan: " + result.message); }
-                    } catch (err) { alert("Terjadi kesalahan jaringan."); } 
-                    finally {
-                        btnSimpanDB.innerHTML = `<i class="fa-solid fa-save"></i> Simpan ke Database`;
-                        btnSimpanDB.disabled = false;
-                    }
+                        } else alert("❌ Gagal: " + result.message);
+                    } catch (err) { alert("Error koneksi."); } finally { btnSimpanDB.innerText = "Simpan Database"; btnSimpanDB.disabled = false; }
                 });
             }
+            document.getElementById("btn-batal-edit-db")?.addEventListener("click", (e) => {
+                document.getElementById("db-kode").value = ""; document.getElementById("db-nama").value = ""; document.getElementById("db-kata").value = "";
+                document.getElementById("db-kode").disabled = false; document.getElementById("db-mode").value = "baru";
+                document.getElementById("judul-form-db").innerHTML = `<i class="fa-solid fa-file-circle-plus"></i> Tambah Materi Baru`; e.target.style.display = "none";
+            });
 
-            const btnBatalEdit = document.getElementById("btn-batal-edit-db");
-            if(btnBatalEdit) {
-                btnBatalEdit.addEventListener("click", () => {
-                    document.getElementById("db-kode").value = "";
-                    document.getElementById("db-nama").value = "";
-                    document.getElementById("db-kata").value = "";
-                    document.getElementById("db-kode").disabled = false;
-                    document.getElementById("db-mode").value = "baru";
-                    document.getElementById("judul-form-db").innerHTML = `<i class="fa-solid fa-file-circle-plus"></i> Tambah Materi Baru`;
-                    btnBatalEdit.style.display = "none";
-                });
-            }
-
-            // --- FUNGSI GURU: HAPUS DATABASE ---
-            window.hapusDatabaseGame = async function(kode) {
-                if(!confirm(`Yakin ingin MENGHAPUS materi dengan kode ${kode} secara permanen?`)) return;
-                
-                try {
-                    const response = await fetch(SCRIPT_URL, { 
-                        method: "POST", 
-                        body: JSON.stringify({ action: "hapus_bank_kata", kode: kode }) 
-                    });
-                    const result = await response.json();
-                    
-                    if (result.status === "sukses") {
-                        alert("✅ Materi berhasil dihapus!");
-                        muatMateriDariSheet();
-                        muatDatabaseGameTabel();
-                    } else { alert("❌ Gagal menghapus: " + result.message); }
-                } catch (err) { alert("Terjadi kesalahan jaringan."); }
-            };
-
-            // 2. Fungsi Guru: Mengambil Daftar Materi dari Google Sheets
-            async function muatMateriDariSheet() {
-                try {
-                    const response = await fetch(SCRIPT_URL, {
-                        method: "POST",
-                        body: JSON.stringify({ action: "get_bank_kata" })
-                    });
-                    const result = await response.json();
-                    
-                    if (result.status === "sukses") {
-                        window.bankKataGame = result.data; // Simpan di memori sementara
-                        let html = `<option value="">-- Pilih Materi & Buat Room --</option>`;
-                        result.data.forEach(item => {
-                            html += `<option value="${item.kode}">${item.materi}</option>`;
-                        });
-                        selectMateri.innerHTML = html;
-                    } else {
-                        selectMateri.innerHTML = `<option value="">Gagal memuat materi</option>`;
-                    }
-                } catch (err) {
-                    selectMateri.innerHTML = `<option value="">Koneksi error</option>`;
-                }
-            }
-
-            // 3. Fungsi Guru: Membuat Room Baru di Firebase
+            // 3. FUNGSI GURU BUAT ROOM CERDAS (TEBAK KATA / BALAP KETIK)
+            const btnBuatRoom = document.getElementById("btn-buat-room");
             if (btnBuatRoom) {
                 btnBuatRoom.addEventListener("click", () => {
-                    const kodeMateri = selectMateri.value;
+                    const jenisGame = document.getElementById("select-jenis-game").value;
+                    const kodeMateri = document.getElementById("select-materi-game").value;
                     if (!kodeMateri) { alert("Pilih materi terlebih dahulu!"); return; }
 
                     const materiDipilih = window.bankKataGame.find(x => x.kode === kodeMateri);
-                    
-                   // 1. Pecah kata dari Google Sheets menjadi Array
-                    let daftarKata = materiDipilih.kata.split(",").map(k => k.trim()); 
-                    
-                    // 2. --- KUNCI PERBAIKAN: Acak urutan kata ---
-                    // Menggunakan fungsi Fisher-Yates (acakUrutan) yang sudah ada di file ini
-                    daftarKata = acakUrutan(daftarKata);
-                    // --------------------------------------------
-                    
-
-                    // Buat PIN acak 5 angka
+                    let arrayKataLengkap = materiDipilih.kata.split(",").map(k => k.trim()); 
                     const pinRoom = Math.floor(10000 + Math.random() * 90000).toString();
                     
-                    btnBuatRoom.innerText = "Membuat Room...";
+                    btnBuatRoom.innerText = "Membangun Room...";
                     
-                    // Rekam Room ke Firebase!
-                    dbGame.ref('rooms/' + pinRoom).set({
-                        host: sessionStorage.getItem("userName"),
-                        materi: materiDipilih.materi,
-                        daftar_kata: daftarKata,
-                        status: "lobby", // lobby | playing | finished
-                        pemain: {}, // Daftar nama pemain
-                        chat: {} // Riwayat jawaban
-                    }).then(() => {
-                        alert("Room Berhasil Dibuat! PIN Anda: " + pinRoom);
-                        // Arahkan guru masuk ke Room (Logika tahap 3)
-                        masukKeDalamRoom(pinRoom, true); 
-                    }).catch((error) => {
-                        alert("Gagal membuat room: " + error.message);
-                        btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`;
-                    });
+                    if (jenisGame === "tebak_kata") {
+                        arrayKataLengkap = acakUrutan(arrayKataLengkap); // Acak untuk Tebak Kata
+                        dbGame.ref('rooms/' + pinRoom).set({
+                            host: sessionStorage.getItem("userName"), materi: materiDipilih.materi,
+                            daftar_kata: arrayKataLengkap, status: "lobby", pemain: {}, chat: {}
+                        }).then(() => {
+                            sessionStorage.setItem("active_game_room", pinRoom);
+                            sessionStorage.setItem("is_game_host", "true");
+                            loadPage("arena-bermain"); // Ke Arena Tebak Kata
+                        });
+                    } else if (jenisGame === "balap_ketik") {
+                        // Tidak diacak untuk Balap Ketik agar semua siswa dapat kalimat yang urutannya sama
+                        dbGame.ref('balap_rooms/' + pinRoom).set({
+                            host: sessionStorage.getItem("userName"), materi: materiDipilih.materi,
+                            daftar_kalimat: arrayKataLengkap, status: "lobby", pemain: {}, pemenang: ""
+                        }).then(() => {
+                            sessionStorage.setItem("active_balap_room", pinRoom);
+                            sessionStorage.setItem("is_balap_host", "true");
+                            loadPage("arena-balap"); // Ke Arena Balap Ketik
+                        });
+                    }
                 });
             }
 
-            // 4. Fungsi Siswa: Bergabung ke Room
+            // 4. FUNGSI SISWA GABUNG CERDAS (SMART JOIN)
+            const btnGabung = document.getElementById("btn-gabung-game");
             if (btnGabung) {
                 btnGabung.addEventListener("click", () => {
-                    const pinMasuk = inputPin.value.trim();
-                    if (pinMasuk.length < 5) { alert("PIN Room tidak valid!"); return; }
+                    const pinMasuk = document.getElementById("input-pin-game").value.trim();
+                    if (pinMasuk.length < 5) { alert("PIN tidak valid!"); return; }
 
-                    btnGabung.innerText = "Mencari Room...";
-                    
-                    // Cek di Firebase apakah room dengan PIN tersebut ada
-                    dbGame.ref('rooms/' + pinMasuk).once('value', (snapshot) => {
-                        if (snapshot.exists()) {
-                            // Masukkan nama siswa ke dalam daftar pemain di room tersebut
-                            const namaPemain = sessionStorage.getItem("userName");
-                            dbGame.ref(`rooms/${pinMasuk}/pemain/${namaPemain}`).set({
-                                skor: 0,
-                                status: "menunggu"
-                            }).then(() => {
-                                alert("Berhasil bergabung ke Room!");
-                                // Arahkan siswa masuk ke Room (Logika tahap 3)
-                                masukKeDalamRoom(pinMasuk, false);
+                    btnGabung.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mendeteksi...`;
+                    const myName = sessionStorage.getItem("userName");
+
+                    // Cek di jalur Tebak Kata dulu
+                    dbGame.ref('rooms/' + pinMasuk).once('value', (snapTK) => {
+                        if (snapTK.exists()) {
+                            // PIN ditemukan di Tebak Kata!
+                            dbGame.ref(`rooms/${pinMasuk}/pemain/${myName}`).set({ skor: 0, status: "menunggu" }).then(() => {
+                                sessionStorage.setItem("active_game_room", pinMasuk);
+                                sessionStorage.setItem("is_game_host", "false");
+                                loadPage("arena-bermain");
                             });
                         } else {
-                            alert("Room tidak ditemukan! Periksa kembali PIN dari guru Anda.");
-                            btnGabung.innerHTML = `<i class="fa-solid fa-play"></i> MASUK ROOM`;
+                            // Jika tidak ada, cek di jalur Balap Ketik
+                            dbGame.ref('balap_rooms/' + pinMasuk).once('value', (snapBK) => {
+                                if (snapBK.exists()) {
+                                    // PIN ditemukan di Balap Ketik!
+                                    dbGame.ref(`balap_rooms/${pinMasuk}/pemain/${myName}`).set({ progress: 0, nitro: false }).then(() => {
+                                        sessionStorage.setItem("active_balap_room", pinMasuk);
+                                        sessionStorage.setItem("is_balap_host", "false");
+                                        loadPage("arena-balap");
+                                    });
+                                } else {
+                                    alert("PIN Room tidak ditemukan di permainan apapun!");
+                                    btnGabung.innerHTML = `<i class="fa-solid fa-play"></i> MASUK ROOM`;
+                                }
+                            });
                         }
                     });
                 });
             }
-
-            // Fungsi Jembatan menuju Tahap 3
-            window.masukKeDalamRoom = function(pin, isHost) {
-                // Simpan PIN di session agar tidak hilang saat refresh
-                sessionStorage.setItem("active_game_room", pin);
-                sessionStorage.setItem("is_game_host", isHost);
-                
-                // Pindah halaman ke UI Arena Bermain (Kita buat di Tahap 3)
-                loadPage("arena-bermain"); 
-            };
         }
         
-        //--------------------------------------------------------------------------------
+        //--------------------------hapus sampai sini------------------------------------------------------
             
         } catch (error) {
             contentArea.innerHTML = `<h3 style="text-align:center; padding:50px; color:red;">Error 404: ${error.message}</h3>`;
@@ -594,11 +503,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const menuGuru = document.getElementById("menu-guru-dropdown");
             if (menuGuru) menuGuru.style.display = "none";
 
-            const menuGame = document.getElementById("menu-tebak-kata");
+            const menuGame = document.getElementById("menu-edu-game");
             if (menuGame) menuGame.style.display = "none";
-
-            const menuBalap = document.getElementById("menu-balap-ketik");
-            if (menuBalap) menuBalap.style.display = "none";
             
             const menuLatihan = document.getElementById("menu-latihan");
             if (menuLatihan) menuLatihan.style.display = "none"; 
@@ -1911,95 +1817,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // 5. KELUAR ROOM
             window.keluarRoomGame = function() {
-                // Jika Guru keluar, hapus room dari Firebase
-                if (isHost) {
-                    dbGame.ref('rooms/' + pinRoom).remove();
-                } else {
-                    // Jika siswa keluar, hapus namanya saja
-                    dbGame.ref(`rooms/${pinRoom}/pemain/${myName}`).remove();
-                }
+                if (isHost) dbGame.ref('rooms/' + pinRoom).remove();
+                else dbGame.ref(`rooms/${pinRoom}/pemain/${myName}`).remove();
                 sessionStorage.removeItem("active_game_room");
                 sessionStorage.removeItem("is_game_host");
-                loadPage("tebak-kata");
+                loadPage("edu-game"); // <--- Ubah ke edu-game
             };
         }
 
-        // ==========================================
-        // --- LOGIKA GAME KE-2: BALAP KETIK ---
-        // ==========================================
 
-        if (page === "balap-ketik") {
-            const role = sessionStorage.getItem("userRole");
-            if (role && role.toLowerCase() === "guru") {
-                document.getElementById("area-buat-room-balap").style.display = "block";
-                
-                // Pinjam fungsi ambil materi dari Tebak Kata (Sangat efisien!)
-                fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "get_bank_kata" }) })
-                .then(res => res.json())
-                .then(result => {
-                    if (result.status === "sukses") {
-                        window.bankKataGame = result.data; 
-                        let html = `<option value="">-- Pilih Materi Balapan --</option>`;
-                        result.data.forEach(item => { html += `<option value="${item.kode}">${item.materi}</option>`; });
-                        document.getElementById("select-materi-balap").innerHTML = html;
-                    }
-                });
-            }
-
-            // GURU BUAT SIRKUIT
-            const btnBuat = document.getElementById("btn-buat-balapan");
-            if (btnBuat) {
-                btnBuat.addEventListener("click", () => {
-                    const kodeMateri = document.getElementById("select-materi-balap").value;
-                    if (!kodeMateri) { alert("Pilih materi!"); return; }
-
-                    const materiDipilih = window.bankKataGame.find(x => x.kode === kodeMateri);
-                    let daftarKalimat = materiDipilih.kata.split(",").map(k => k.trim()); 
-                    
-                    const pinRoom = Math.floor(10000 + Math.random() * 90000).toString();
-                    btnBuat.innerText = "Membangun Sirkuit...";
-                    
-                    dbGame.ref('balap_rooms/' + pinRoom).set({
-                        host: sessionStorage.getItem("userName"),
-                        materi: materiDipilih.materi,
-                        daftar_kalimat: daftarKalimat,
-                        status: "lobby",
-                        pemain: {},
-                        pemenang: ""
-                    }).then(() => {
-                        sessionStorage.setItem("active_balap_room", pinRoom);
-                        sessionStorage.setItem("is_balap_host", "true");
-                        loadPage("arena-balap"); 
-                    });
-                });
-            }
-
-            // SISWA GABUNG SIRKUIT
-            const btnGabung = document.getElementById("btn-gabung-balap");
-            if (btnGabung) {
-                btnGabung.addEventListener("click", () => {
-                    const pinMasuk = document.getElementById("input-pin-balap").value.trim();
-                    if (pinMasuk.length < 5) return;
-                    
-                    btnGabung.innerText = "Mencari...";
-                    dbGame.ref('balap_rooms/' + pinMasuk).once('value', (snap) => {
-                        if (snap.exists()) {
-                            const myName = sessionStorage.getItem("userName");
-                            dbGame.ref(`balap_rooms/${pinMasuk}/pemain/${myName}`).set({
-                                progress: 0, nitro: false
-                            }).then(() => {
-                                sessionStorage.setItem("active_balap_room", pinMasuk);
-                                sessionStorage.setItem("is_balap_host", "false");
-                                loadPage("arena-balap");
-                            });
-                        } else {
-                            alert("PIN Sirkuit tidak ditemukan!");
-                            btnGabung.innerHTML = `<i class="fa-solid fa-play"></i> MASUK SIRKUIT`;
-                        }
-                    });
-                });
-            }
-        }
 
         // ==========================================
         // --- LOGIKA ARENA BALAP KETIK ---
@@ -2157,7 +1983,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (isHost) dbGame.ref('balap_rooms/' + pinRoom).remove();
                 else dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).remove();
                 sessionStorage.removeItem("active_balap_room");
-                loadPage("balap-ketik");
+                sessionStorage.removeItem("is_balap_host");
+                loadPage("edu-game"); // <--- Ubah ke edu-game
             };
         }
         
