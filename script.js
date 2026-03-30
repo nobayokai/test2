@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSs6Scol6SQMF7z4MJDp8lbDZlw7W6d5pKgRvuwJ0Xr3Yz5lxzOVGzz8UeusX2BAk4/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSa3hxyG0sWSd7YuMIVbGA9ITPYiIqhY4iLRJu7ssMZjnFE0AUCOx57oYc1J_Frb5t/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
@@ -343,13 +343,17 @@ document.addEventListener("DOMContentLoaded", () => {
                         window.dataSiswaKartu = result.data;
                         let html = "";
                         result.data.forEach(s => {
-                            let statusFoto = s.foto ? `<span style="color:#198754; font-weight:bold;"><i class="fa-solid fa-check"></i> Ada</span>` : `<span style="color:#dc3545;">Tidak ada</span>`;
+                            let statusFoto = s.foto ? `<span style="color:#198754; font-weight:bold;"><i class="fa-solid fa-image"></i> Ada</span>` : `<span style="color:#dc3545;">Kosong</span>`;
                             html += `
                                 <tr style="border-bottom: 1px solid #eee;">
                                     <td style="padding: 10px; font-family: monospace; font-weight: bold;">${s.noPeserta}</td>
                                     <td style="padding: 10px;">${s.nama}</td>
                                     <td style="padding: 10px;">Kls: ${s.kelas} | Rng: ${s.ruang}</td>
                                     <td style="padding: 10px; text-align: center;">${statusFoto}</td>
+                                    <td style="padding: 10px; text-align: center;">
+                                        <button onclick="bukaModalEditSiswa('${s.noPeserta}')" style="background:#ffc107; color:black; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; margin-right:4px;" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                        <button onclick="hapusDataSiswa('${s.noPeserta}')" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                    </td>
                                 </tr>`;
                         });
                         tbody.innerHTML = html === "" ? `<tr><td colspan="4" style="text-align:center;">Data kosong di Google Sheets</td></tr>` : html;
@@ -361,17 +365,90 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             };
 
+
             // Panggil otomatis saat menu dibuka
             tarikDataSiswaKartu();
 
-            // --- FUNGSI PENGUBAH LINK G-DRIVE MENJADI LINK GAMBAR NATIVE ---
+            // --- FUNGSI MEMBUKA MODAL EDIT ---
+            window.bukaModalEditSiswa = function(noPeserta) {
+                const siswa = window.dataSiswaKartu.find(s => s.noPeserta === noPeserta);
+                if(!siswa) return;
+                
+                document.getElementById("edit-s-nopes").value = siswa.noPeserta;
+                document.getElementById("edit-s-nopes-asli").value = siswa.noPeserta;
+                document.getElementById("edit-s-nama").value = siswa.nama;
+                document.getElementById("edit-s-jk").value = siswa.gender;
+                document.getElementById("edit-s-kls").value = siswa.kelas;
+                document.getElementById("edit-s-rng").value = siswa.ruang;
+                document.getElementById("edit-s-foto").value = siswa.foto || "";
+                
+                document.getElementById("modal-edit-siswa").style.display = "flex";
+            };
+
+            // --- FUNGSI MENYIMPAN EDIT SISWA ---
+            document.getElementById("btn-simpan-edit-siswa")?.addEventListener("click", async () => {
+                const btn = document.getElementById("btn-simpan-edit-siswa");
+                const noPeserta = document.getElementById("edit-s-nopes-asli").value;
+                
+                const payload = {
+                    action: "update_siswa_kartu",
+                    no_peserta: noPeserta,
+                    nama: document.getElementById("edit-s-nama").value.trim().toUpperCase(),
+                    gender: document.getElementById("edit-s-jk").value.trim().toUpperCase(),
+                    kelas: document.getElementById("edit-s-kls").value.trim(),
+                    ruang: document.getElementById("edit-s-rng").value.trim(),
+                    foto: document.getElementById("edit-s-foto").value.trim()
+                };
+
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+                    const result = await response.json();
+                    if(result.status === "sukses") {
+                        alert("✅ Data peserta berhasil diperbarui!");
+                        document.getElementById("modal-edit-siswa").style.display = "none";
+                        tarikDataSiswaKartu(); // Refresh tabel
+                    } else { alert("❌ Gagal memperbarui data."); }
+                } catch(e) { alert("Terjadi kesalahan jaringan."); }
+                finally { btn.innerHTML = `<i class="fa-solid fa-save"></i> Simpan`; btn.disabled = false; }
+            });
+
+            // --- FUNGSI MENGHAPUS SISWA ---
+            window.hapusDataSiswa = async function(noPeserta) {
+                if(!confirm(`Yakin ingin MENGHAPUS data siswa dengan No Peserta ${noPeserta} secara permanen?`)) return;
+                
+                try {
+                    const response = await fetch(SCRIPT_URL, { 
+                        method: "POST", 
+                        body: JSON.stringify({ action: "hapus_siswa_kartu", no_peserta: noPeserta }) 
+                    });
+                    const result = await response.json();
+                    if(result.status === "sukses") {
+                        alert("✅ Data peserta berhasil dihapus!");
+                        tarikDataSiswaKartu(); // Refresh tabel
+                    } else { alert("❌ Gagal menghapus data."); }
+                } catch(e) { alert("Terjadi kesalahan jaringan."); }
+            };
+
+           // --- FUNGSI PENGUBAH LINK G-DRIVE MENJADI LINK GAMBAR NATIVE ---
             function formatDriveImage(url) {
                 if (!url) return "";
+                // Jika format bawaan export=view lama
+                if (url.includes("drive.google.com/uc?export=view&id=")) {
+                    const id = url.split("id=")[1];
+                    return `https://drive.google.com/thumbnail?id=${id}`;
+                }
+                // Jika format drive.google.com/file/d/
                 if (url.includes("drive.google.com/file/d/")) {
                     const id = url.split("/d/")[1].split("/")[0];
-                    return `https://drive.google.com/uc?export=view&id=${id}`;
+                    return `https://drive.google.com/thumbnail?id=${id}`;
                 }
-                return url; // Jika pakai link format lain
+                // Jika sudah thumbnail (biarkan)
+                if (url.includes("thumbnail?id=")) return url;
+                
+                return url; 
             }
 
             // ==========================================
