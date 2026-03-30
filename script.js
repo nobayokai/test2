@@ -347,7 +347,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         const filterRuang = document.getElementById("filter-ruang-kartu");
                         if (filterRuang) {
                             // Ambil nama ruang yang tidak duplikat, lalu urutkan
-                            const uniqueRuang = [...new Set(window.dataSiswaKartu.map(item => item.ruang))].filter(Boolean).sort();
+                            // Ubah jadi String dan urutkan dengan benar agar Ruang 1, 2, 10 urut (bukan 1, 10, 2)
+                            const uniqueRuang = [...new Set(window.dataSiswaKartu.map(item => String(item.ruang).trim()))].filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
                             let optHtml = `<option value="">-- Semua Ruang --</option>`;
                             uniqueRuang.forEach(r => { optHtml += `<option value="${r}">Ruang ${r}</option>`; });
                             filterRuang.innerHTML = optHtml;
@@ -370,7 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 let filteredData = window.dataSiswaKartu;
                 if (ruangFilter !== "") {
-                    filteredData = window.dataSiswaKartu.filter(s => s.ruang === ruangFilter);
+                    filteredData = window.dataSiswaKartu.filter(s => String(s.ruang).trim() === String(ruangFilter).trim());
                 }
 
                 let html = "";
@@ -497,7 +498,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 // Jika Guru memilih ruang tertentu, saring datanya!
                 if (ruangFilter !== "") {
-                    dataCetak = window.dataSiswaKartu.filter(s => s.ruang === ruangFilter);
+                    dataCetak = window.dataSiswaKartu.filter(s => String(s.ruang).trim() === String(ruangFilter).trim());
                 }
 
                 // Cek jika ruang kosong
