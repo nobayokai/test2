@@ -331,9 +331,10 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             // --- FUNGSI MENGAMBIL DATA DARI GOOGLE SHEETS ---
+            // --- FUNGSI MENGAMBIL DATA DARI GOOGLE SHEETS & FILTERING ---
             window.tarikDataSiswaKartu = async function() {
                 const tbody = document.getElementById("ku-tbody-siswa");
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Menarik data dari server...</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Menarik data dari server...</td></tr>`;
                 
                 try {
                     const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "get_siswa_kartu" }) });
@@ -341,30 +342,60 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     if (result.status === "sukses") {
                         window.dataSiswaKartu = result.data;
-                        let html = "";
-                        result.data.forEach(s => {
-                            let statusFoto = s.foto ? `<span style="color:#198754; font-weight:bold;"><i class="fa-solid fa-image"></i> Ada</span>` : `<span style="color:#dc3545;">Kosong</span>`;
-                            html += `
-                                <tr style="border-bottom: 1px solid #eee;">
-                                    <td style="padding: 10px; font-family: monospace; font-weight: bold;">${s.noPeserta}</td>
-                                    <td style="padding: 10px;">${s.nama}</td>
-                                    <td style="padding: 10px;">Kls: ${s.kelas} | Rng: ${s.ruang}</td>
-                                    <td style="padding: 10px; text-align: center;">${statusFoto}</td>
-                                    <td style="padding: 10px; text-align: center;">
-                                        <button onclick="bukaModalEditSiswa('${s.noPeserta}')" style="background:#ffc107; color:black; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; margin-right:4px;" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                                        <button onclick="hapusDataSiswa('${s.noPeserta}')" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;" title="Hapus"><i class="fa-solid fa-trash"></i></button>
-                                    </td>
-                                </tr>`;
-                        });
-                        tbody.innerHTML = html === "" ? `<tr><td colspan="4" style="text-align:center;">Data kosong di Google Sheets</td></tr>` : html;
+                        
+                        // 1. Ekstrak daftar ruang unik untuk Dropdown Filter
+                        const filterRuang = document.getElementById("filter-ruang-kartu");
+                        if (filterRuang) {
+                            // Ambil nama ruang yang tidak duplikat, lalu urutkan
+                            const uniqueRuang = [...new Set(window.dataSiswaKartu.map(item => item.ruang))].filter(Boolean).sort();
+                            let optHtml = `<option value="">-- Semua Ruang --</option>`;
+                            uniqueRuang.forEach(r => { optHtml += `<option value="${r}">Ruang ${r}</option>`; });
+                            filterRuang.innerHTML = optHtml;
+                        }
+
+                        // 2. Render Tabel Secara Default (Tampilkan Semua)
+                        window.renderTabelSiswaKartu(""); 
                     } else {
-                        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Gagal: ${result.message}</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Gagal: ${result.message}</td></tr>`;
                     }
                 } catch (err) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Terjadi kesalahan jaringan.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Terjadi kesalahan jaringan.</td></tr>`;
                 }
             };
 
+            // FUNGSI RENDER TABEL BERDASARKAN FILTER
+            window.renderTabelSiswaKartu = function(ruangFilter) {
+                const tbody = document.getElementById("ku-tbody-siswa");
+                if(!tbody) return;
+
+                let filteredData = window.dataSiswaKartu;
+                if (ruangFilter !== "") {
+                    filteredData = window.dataSiswaKartu.filter(s => s.ruang === ruangFilter);
+                }
+
+                let html = "";
+                filteredData.forEach(s => {
+                    let statusFoto = s.foto ? `<span style="color:#198754; font-weight:bold;"><i class="fa-solid fa-image"></i> Ada</span>` : `<span style="color:#dc3545;">Kosong</span>`;
+                    html += `
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px; font-family: monospace; font-weight: bold;">${s.noPeserta}</td>
+                            <td style="padding: 10px; text-transform: uppercase;">${s.nama}</td>
+                            <td style="padding: 10px;">${s.kelas}</td>
+                            <td style="padding: 10px; font-weight: bold; color: #0d6efd;">${s.ruang}</td>
+                            <td style="padding: 10px; text-align: center;">${statusFoto}</td>
+                            <td style="padding: 10px; text-align: center;">
+                                <button onclick="bukaModalEditSiswa('${s.noPeserta}')" style="background:#ffc107; color:black; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; margin-right:4px;" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="hapusDataSiswa('${s.noPeserta}')" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>`;
+                });
+                tbody.innerHTML = html === "" ? `<tr><td colspan="6" style="text-align:center;">Data kosong di Google Sheets atau ruang tidak ditemukan.</td></tr>` : html;
+            };
+
+            // Pasang Event Listener ke Dropdown Filter agar tabel berubah saat dipilih
+            document.getElementById("filter-ruang-kartu")?.addEventListener("change", (e) => {
+                window.renderTabelSiswaKartu(e.target.value);
+            });
 
             // Panggil otomatis saat menu dibuka
             tarikDataSiswaKartu();
@@ -454,17 +485,164 @@ document.addEventListener("DOMContentLoaded", () => {
             // ==========================================
             // --- LOGIKA RENDER CETAK ---
             // ==========================================
+            // ==========================================
+            // --- LOGIKA RENDER CETAK (DENGAN FILTER) ---
+            // ==========================================
             window.bukaModePrint = function(jenis) {
                 if (window.dataSiswaKartu.length === 0) { alert("Harap tarik data siswa terlebih dahulu!"); return; }
+                
+                // Ambil nilai dari filter ruang saat ini
+                const ruangFilter = document.getElementById("filter-ruang-kartu").value;
+                let dataCetak = window.dataSiswaKartu;
+                
+                // Jika Guru memilih ruang tertentu, saring datanya!
+                if (ruangFilter !== "") {
+                    dataCetak = window.dataSiswaKartu.filter(s => s.ruang === ruangFilter);
+                }
+
+                // Cek jika ruang kosong
+                if (dataCetak.length === 0) {
+                    alert(`Tidak ada siswa di Ruang ${ruangFilter}!`);
+                    return;
+                }
                 
                 document.getElementById("dashboard-kartu").style.display = "none";
                 document.getElementById("print-view").style.display = "block";
                 const container = document.getElementById("print-container");
                 container.innerHTML = "";
 
-                if (jenis === 'kartu') renderKartuPeserta(container);
-                else if (jenis === 'denah') renderDenahRuangan(container);
+                // Lempar data yang SUDAH DIFILTER (dataCetak) ke dalam fungsi pembuat kartu/denah
+                if (jenis === 'kartu') renderKartuPeserta(container, dataCetak);
+                else if (jenis === 'denah') renderDenahRuangan(container, dataCetak);
             };
+
+            window.tutupModePrint = function() {
+                document.getElementById("print-view").style.display = "none";
+                document.getElementById("dashboard-kartu").style.display = "block";
+            };
+
+            // 1. RENDER KARTU PESERTA (Menerima parameter dataSiswa)
+            function renderKartuPeserta(container, dataSiswa) {
+                const chunkSize = 8;
+                for (let i = 0; i < dataSiswa.length; i += chunkSize) {
+                    const chunk = dataSiswa.slice(i, i + chunkSize); // Gunakan dataSiswa (yang sudah difilter)
+                    
+                    const page = document.createElement("div");
+                    page.className = "page-sheet";
+                    page.style.cssText = "background: white; width: 215mm; height: 330mm; padding: 10mm; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, 1fr); gap: 10px;";
+
+                    chunk.forEach(s => {
+                        const linkFoto = formatDriveImage(s.foto);
+                        const elemenFoto = linkFoto ? `<img src="${linkFoto}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="width:100%; height:100%; background:#eee; display:flex; align-items:center; justify-content:center; color:#999; font-size:10px;">Foto 3x4</div>`;
+                        const elemenLogo = configKartu.logoUrl ? `<img src="${configKartu.logoUrl}" style="height:35px; width:35px; object-fit:contain;">` : `<div style="height:35px; width:35px; background:#ddd; font-size:8px; display:flex; align-items:center; justify-content:center;">LOGO</div>`;
+                        const elemenTtd = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="height:40px; object-fit:contain; margin-top:5px;">` : `<div style="height:40px;"></div>`;
+
+                        // ... (ISI HTML KARTU SAMA PERSIS SEPERTI SEBELUMNYA) ...
+                        page.innerHTML += `
+                            <div style="border: 2px solid black; padding: 6px; display: flex; flex-direction: column; font-family: Arial, sans-serif; font-size: 10px; line-height: 1.2; overflow: hidden; position: relative;">
+                                <div style="display: flex; gap: 8px; border-bottom: 2px solid black; padding-bottom: 5px; margin-bottom: 5px;">
+                                    ${elemenLogo}
+                                    <div style="flex: 1; text-align: center;">
+                                        <div style="font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${configKartu.judul}</div>
+                                        <div style="font-size: 13px; font-weight: bold;">${configKartu.sekolah}</div>
+                                        <div style="font-size: 7px;">${configKartu.alamat}</div>
+                                    </div>
+                                    <div style="background: #f0f0f0; border: 1px solid #ccc; font-size: 18px; font-weight: bold; padding: 5px 10px; display: flex; align-items: center; justify-content: center;">
+                                        ${s.ruang}
+                                    </div>
+                                </div>
+                                <div style="text-align: center; background: #eee; font-weight: bold; padding: 3px; border: 1px solid #ccc; margin-bottom: 8px; font-size: 11px;">
+                                    KARTU PESERTA UJIAN ${configKartu.tahun}
+                                </div>
+                                <table style="width: 100%; font-size: 11px; margin-bottom: 10px;">
+                                    <tr><td style="width: 70px; font-weight: bold;">No. Peserta</td><td>: <span style="font-family: monospace; font-weight: bold;">${s.noPeserta}</span></td></tr>
+                                    <tr><td style="font-weight: bold;">Nama</td><td>: <span style="text-transform: uppercase; font-weight: bold;">${s.nama}</span></td></tr>
+                                    <tr><td style="font-weight: bold;">Jns. Kelamin</td><td>: ${s.gender}</td></tr>
+                                </table>
+                                <div style="display: flex; gap: 10px; flex: 1;">
+                                    <div style="width: 65px; height: 85px; border: 2px solid #555; overflow: hidden; flex-shrink: 0;">
+                                        ${elemenFoto}
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="border: 1px solid #ccc; text-align: center;">
+                                            <div style="background: #eee; font-size: 9px; font-weight: bold; padding: 3px; border-bottom: 1px solid #ccc;">Jadwal Sesi Ujian</div>
+                                            <div style="font-size: 8px; font-weight: bold; padding: 2px;">Sesi 1 : 08.00 - 09.00</div>
+                                            <div style="font-size: 8px; font-weight: bold; padding: 2px; background: #f9f9f9;">Sesi 2 : 10.00 - 11.00</div>
+                                            <div style="font-size: 8px; font-weight: bold; padding: 2px;">Sesi 3 : 12.30 - 13.30</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="position: absolute; bottom: 5px; right: 10px; text-align: center; font-size: 9px;">
+                                    <div>${configKartu.kota}, ${configKartu.tanggal}</div>
+                                    <div style="font-weight: bold; margin-top: 2px;">${configKartu.jabatan}</div>
+                                    ${elemenTtd}
+                                    <div style="font-weight: bold; text-decoration: underline; margin-top: 2px;">${configKartu.namaTtd}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.appendChild(page);
+                }
+            }
+
+            // 2. RENDER DENAH TEMPAT DUDUK (Menerima parameter dataSiswa)
+            function renderDenahRuangan(container, dataSiswa) {
+                // Kelompokkan siswa yang SUDAH DIFILTER berdasarkan Ruang
+                const siswaPerRuang = {};
+                dataSiswa.forEach(s => {
+                    if (!siswaPerRuang[s.ruang]) siswaPerRuang[s.ruang] = [];
+                    siswaPerRuang[s.ruang].push(s);
+                });
+
+                Object.keys(siswaPerRuang).forEach(ruang => {
+                    const siswaDiRuang = siswaPerRuang[ruang].slice(0, 20); // Maks 20 kursi per kertas
+                    
+                    const page = document.createElement("div");
+                    page.className = "page-sheet";
+                    page.style.cssText = "background: white; width: 215mm; height: 330mm; padding: 10mm; box-sizing: border-box; font-family: Arial, sans-serif;";
+
+                    // Header Denah
+                    page.innerHTML = `
+                        <div style="text-align: center; margin-bottom: 25px;">
+                            <h2 style="margin:0; background: #0d6efd; color: white; padding: 5px; border: 2px solid black; border-bottom: none;">DENAH KURSI RUANG UJIAN ${ruang}</h2>
+                            <h3 style="margin:0; background: #f8f9fa; padding: 5px; border: 2px solid black;">${configKartu.sekolah} - ${configKartu.judul} ${configKartu.tahun}</h3>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 500px; padding: 0 50px; box-sizing: border-box;">
+                                <div style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px;">Pengawas 1</div>
+                                <div style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px;">Pengawas 2</div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 100%; max-width: 600px; margin-top: 10px;" id="grid-denah-${ruang}">
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(page);
+                    
+                    const gridTarget = document.getElementById(`grid-denah-${ruang}`);
+                    for (let i = 0; i < 20; i++) {
+                        const s = siswaDiRuang[i];
+                        if (s) {
+                            const linkFoto = formatDriveImage(s.foto);
+                            const fotoSiswa = linkFoto ? `<img src="${linkFoto}" style="width:55px; height:75px; object-fit:cover; border:1px solid #ccc; margin-bottom:5px;">` : `<div style="width:55px; height:75px; background:#eee; display:flex; align-items:center; justify-content:center; font-size:8px; color:#999; margin-bottom:5px;">No Foto</div>`;
+                            
+                            gridTarget.innerHTML += `
+                                <div style="border: 2px solid black; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 130px; background: white;">
+                                    ${fotoSiswa}
+                                    <div style="font-size: 10px; font-weight: bold; font-family: monospace;">${s.noPeserta}</div>
+                                    <div style="font-size: 9px; font-weight: bold; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${s.nama}</div>
+                                </div>
+                            `;
+                        } else {
+                            gridTarget.innerHTML += `
+                                <div style="border: 2px dashed #999; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 130px; background: #f9f9f9;">
+                                    <div style="font-size: 14px; font-weight: bold; color: #ccc;">KOSONG</div>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+            }
 
             window.tutupModePrint = function() {
                 document.getElementById("print-view").style.display = "none";
@@ -663,134 +841,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }, 600);
             });
 
-            // 1. RENDER KARTU PESERTA (8 Kartu per halaman F4)
-            function renderKartuPeserta(container) {
-                const chunkSize = 8;
-                for (let i = 0; i < window.dataSiswaKartu.length; i += chunkSize) {
-                    const chunk = window.dataSiswaKartu.slice(i, i + chunkSize);
-                    
-                    const page = document.createElement("div");
-                    page.className = "page-sheet";
-                    page.style.cssText = "background: white; width: 215mm; height: 330mm; padding: 10mm; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, 1fr); gap: 10px;";
-
-                    chunk.forEach(s => {
-                        const linkFoto = formatDriveImage(s.foto);
-                        const elemenFoto = linkFoto ? `<img src="${linkFoto}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="width:100%; height:100%; background:#eee; display:flex; align-items:center; justify-content:center; color:#999; font-size:10px;">Foto 3x4</div>`;
-                        const elemenLogo = configKartu.logoUrl ? `<img src="${configKartu.logoUrl}" style="height:35px; width:35px; object-fit:contain;">` : `<div style="height:35px; width:35px; background:#ddd; font-size:8px; display:flex; align-items:center; justify-content:center;">LOGO</div>`;
-                        const elemenTtd = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="height:40px; object-fit:contain; margin-top:5px;">` : `<div style="height:40px;"></div>`;
-
-                        page.innerHTML += `
-                            <div style="border: 2px solid black; padding: 6px; display: flex; flex-direction: column; font-family: Arial, sans-serif; font-size: 10px; line-height: 1.2; overflow: hidden; position: relative;">
-                                <div style="display: flex; gap: 8px; border-bottom: 2px solid black; padding-bottom: 5px; margin-bottom: 5px;">
-                                    ${elemenLogo}
-                                    <div style="flex: 1; text-align: center;">
-                                        <div style="font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${configKartu.judul}</div>
-                                        <div style="font-size: 13px; font-weight: bold;">${configKartu.sekolah}</div>
-                                        <div style="font-size: 7px;">${configKartu.alamat}</div>
-                                    </div>
-                                    <div style="background: #f0f0f0; border: 1px solid #ccc; font-size: 18px; font-weight: bold; padding: 5px 10px; display: flex; align-items: center; justify-content: center;">
-                                        ${s.ruang}
-                                    </div>
-                                </div>
-                                
-                                <div style="text-align: center; background: #eee; font-weight: bold; padding: 3px; border: 1px solid #ccc; margin-bottom: 8px; font-size: 11px;">
-                                    KARTU PESERTA UJIAN ${configKartu.tahun}
-                                </div>
-
-                                <table style="width: 100%; font-size: 11px; margin-bottom: 10px;">
-                                    <tr><td style="width: 70px; font-weight: bold;">No. Peserta</td><td>: <span style="font-family: monospace; font-weight: bold;">${s.noPeserta}</span></td></tr>
-                                    <tr><td style="font-weight: bold;">Nama</td><td>: <span style="text-transform: uppercase; font-weight: bold;">${s.nama}</span></td></tr>
-                                    <tr><td style="font-weight: bold;">Jns. Kelamin</td><td>: ${s.gender}</td></tr>
-                                </table>
-
-                                <div style="display: flex; gap: 10px; flex: 1;">
-                                    <div style="width: 65px; height: 85px; border: 2px solid #555; overflow: hidden; flex-shrink: 0;">
-                                        ${elemenFoto}
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="border: 1px solid #ccc; text-align: center;">
-                                            <div style="background: #eee; font-size: 9px; font-weight: bold; padding: 3px; border-bottom: 1px solid #ccc;">Jadwal Sesi Ujian</div>
-                                            <div style="font-size: 8px; font-weight: bold; padding: 2px;">Sesi 1 : 08.00 - 09.00</div>
-                                            <div style="font-size: 8px; font-weight: bold; padding: 2px; background: #f9f9f9;">Sesi 2 : 10.00 - 11.00</div>
-                                            <div style="font-size: 8px; font-weight: bold; padding: 2px;">Sesi 3 : 12.30 - 13.30</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div style="position: absolute; bottom: 5px; right: 10px; text-align: center; font-size: 9px;">
-                                    <div>${configKartu.kota}, ${configKartu.tanggal}</div>
-                                    <div style="font-weight: bold; margin-top: 2px;">${configKartu.jabatan}</div>
-                                    ${elemenTtd}
-                                    <div style="font-weight: bold; text-decoration: underline; margin-top: 2px;">${configKartu.namaTtd}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    container.appendChild(page);
-                }
-            }
+            
 
             // 2. RENDER DENAH TEMPAT DUDUK (Per Ruang)
-            function renderDenahRuangan(container) {
-                // Kelompokkan siswa berdasarkan Ruang
-                const siswaPerRuang = {};
-                window.dataSiswaKartu.forEach(s => {
-                    if (!siswaPerRuang[s.ruang]) siswaPerRuang[s.ruang] = [];
-                    siswaPerRuang[s.ruang].push(s);
-                });
-
-                Object.keys(siswaPerRuang).forEach(ruang => {
-                    const siswaDiRuang = siswaPerRuang[ruang].slice(0, 20); // Maksimal 20 kursi (5 baris x 4 kolom)
-                    
-                    const page = document.createElement("div");
-                    page.className = "page-sheet";
-                    page.style.cssText = "background: white; width: 215mm; height: 330mm; padding: 10mm; box-sizing: border-box; font-family: Arial, sans-serif;";
-
-                    // Header Denah
-                    page.innerHTML = `
-                        <div style="text-align: center; margin-bottom: 25px;">
-                            <h2 style="margin:0; background: #0d6efd; color: white; padding: 5px; border: 2px solid black; border-bottom: none;">DENAH KURSI RUANG UJIAN ${ruang}</h2>
-                            <h3 style="margin:0; background: #f8f9fa; padding: 5px; border: 2px solid black;">${configKartu.sekolah} - ${configKartu.judul} ${configKartu.tahun}</h3>
-                        </div>
-                        
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 500px; padding: 0 50px; box-sizing: border-box;">
-                                <div style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px;">Pengawas 1</div>
-                                <div style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px;">Pengawas 2</div>
-                            </div>
-
-                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 100%; max-width: 600px; margin-top: 10px;" id="grid-denah-${ruang}">
-                            </div>
-                        </div>
-                    `;
-                    
-                    container.appendChild(page);
-                    
-                    const gridTarget = document.getElementById(`grid-denah-${ruang}`);
-                    for (let i = 0; i < 20; i++) {
-                        const s = siswaDiRuang[i];
-                        if (s) {
-                            const linkFoto = formatDriveImage(s.foto);
-                            const fotoSiswa = linkFoto ? `<img src="${linkFoto}" style="width:55px; height:75px; object-fit:cover; border:1px solid #ccc; margin-bottom:5px;">` : `<div style="width:55px; height:75px; background:#eee; display:flex; align-items:center; justify-content:center; font-size:8px; color:#999; margin-bottom:5px;">No Foto</div>`;
-                            
-                            gridTarget.innerHTML += `
-                                <div style="border: 2px solid black; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 130px; background: white;">
-                                    ${fotoSiswa}
-                                    <div style="font-size: 10px; font-weight: bold; font-family: monospace;">${s.noPeserta}</div>
-                                    <div style="font-size: 9px; font-weight: bold; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${s.nama}</div>
-                                </div>
-                            `;
-                        } else {
-                            // Kursi Kosong
-                            gridTarget.innerHTML += `
-                                <div style="border: 2px dashed #999; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 130px; background: #f9f9f9;">
-                                    <div style="font-size: 14px; font-weight: bold; color: #ccc;">KOSONG</div>
-                                </div>
-                            `;
-                        }
-                    }
-                });
-            }
+           
         }
        // =========================================================
         // --- LOGIKA EDU-GAME HUB (PUSAT PERMAINAN) ---
