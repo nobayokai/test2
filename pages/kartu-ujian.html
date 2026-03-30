@@ -51,26 +51,55 @@
             </div>
 
             <div style="flex: 2; min-width: 400px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #ccc; display: flex; flex-direction: column;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h4 style="margin:0;"><i class="fa-solid fa-users"></i> Data Peserta dari Database</h4>
-                    <button onclick="tarikDataSiswaKartu()" class="btn-cbt" style="background: #0d6efd; color: white; padding: 5px 10px; font-size: 13px;"><i class="fa-solid fa-cloud-arrow-down"></i> Tarik Data Terbaru</button>
+                
+                <div style="display: flex; gap: 10px; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
+                    <button class="tab-siswa-btn" data-target="tab-siswa-db" style="flex:1; padding:8px; border:none; background:#0d6efd; color:white; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fa-solid fa-server"></i> Data Database</button>
+                    <button class="tab-siswa-btn" data-target="tab-siswa-upload" style="flex:1; padding:8px; border:none; background:#e9ecef; color:#333; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fa-solid fa-file-excel"></i> Upload Excel & Foto</button>
+                </div>
+
+                <div id="tab-siswa-db" class="tab-siswa-konten" style="display: flex; flex-direction: column; flex: 1;">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                        <button onclick="tarikDataSiswaKartu()" class="btn-cbt" style="background: #198754; color: white; padding: 5px 10px; font-size: 13px;"><i class="fa-solid fa-cloud-arrow-down"></i> Tarik Data Terbaru</button>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; max-height: 450px; border: 1px solid #eee;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+                            <thead style="background: #f8f9fa; position: sticky; top: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                <tr>
+                                    <th style="padding: 10px;">No. Peserta</th><th style="padding: 10px;">Nama</th><th style="padding: 10px;">Kls & Rng</th><th style="padding: 10px; text-align: center;">Foto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ku-tbody-siswa">
+                                <tr><td colspan="4" style="text-align: center; padding: 20px;">Silakan klik "Tarik Data Terbaru"</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-siswa-upload" class="tab-siswa-konten" style="display: none; flex-direction: column; flex: 1;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; background: #e9ecef; padding: 10px; border-radius: 8px; align-items: center;">
+                        <button id="btn-dl-template-siswa" style="background: #198754; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold;"><i class="fa-solid fa-download"></i> Unduh Template</button>
+                        <div style="flex: 1;">
+                            <input type="file" id="file-excel-siswa" accept=".xlsx, .xls" style="width: 100%; font-size: 13px; padding: 5px; border: 1px dashed #0d6efd; border-radius: 4px; background: white;">
+                        </div>
+                    </div>
+                    
+                    <div id="area-preview-siswa" style="display: none; flex-direction: column; flex: 1;">
+                        <div style="flex: 1; overflow-y: auto; max-height: 400px; border: 1px solid #ccc;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+                                <thead style="background: #333; color: white; position: sticky; top: 0; z-index: 10;">
+                                    <tr>
+                                        <th style="padding: 8px;">No</th><th style="padding: 8px;">No Peserta</th><th style="padding: 8px;">Nama Lengkap</th>
+                                        <th style="padding: 8px;">L/P</th><th style="padding: 8px;">Kls</th><th style="padding: 8px;">Rng</th>
+                                        <th style="padding: 8px;">Foto (Opsional)</th><th style="padding: 8px;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="body-preview-siswa"></tbody>
+                            </table>
+                        </div>
+                        <button id="btn-simpan-siswa-massal" style="width: 100%; margin-top: 15px; padding: 12px; font-size: 16px; font-weight: bold; background: #0d6efd; color: white; border: none; border-radius: 5px; cursor: pointer;"><i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Database</button>
+                    </div>
                 </div>
                 
-                <div style="flex: 1; overflow-y: auto; max-height: 500px; border: 1px solid #eee;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
-                        <thead style="background: #f8f9fa; position: sticky; top: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                            <tr>
-                                <th style="padding: 10px;">No. Peserta</th>
-                                <th style="padding: 10px;">Nama</th>
-                                <th style="padding: 10px;">Kls & Rng</th>
-                                <th style="padding: 10px; text-align: center;">Status Foto</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ku-tbody-siswa">
-                            <tr><td colspan="4" style="text-align: center; padding: 20px;">Silakan klik "Tarik Data Terbaru"</td></tr>
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
     </div>
