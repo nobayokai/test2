@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // --- Logika Menu Hamburger untuk HP ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyg4cYTcRTGiu8tAN5aL1Chd6mSS_uk2NB9EmxEg5v2rrBOpaWDW3ueG5_s_7rE9WkO/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSs6Scol6SQMF7z4MJDp8lbDZlw7W6d5pKgRvuwJ0Xr3Yz5lxzOVGzz8UeusX2BAk4/exec";
     
     const mobileMenuBtn = document.getElementById("mobile-menu-btn");
     const navMenu = document.getElementById("nav-menu");
@@ -393,6 +393,198 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("print-view").style.display = "none";
                 document.getElementById("dashboard-kartu").style.display = "block";
             };
+
+            // ==========================================
+            // --- LOGIKA UPLOAD & PREVIEW DATA SISWA ---
+            // ==========================================
+            window.previewDataSiswa = [];
+
+            // 1. Kontrol Tab Panel Kanan
+            document.querySelectorAll(".tab-siswa-btn").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    document.querySelectorAll(".tab-siswa-btn").forEach(b => {
+                        b.style.background = "#e9ecef"; b.style.color = "#333";
+                    });
+                    this.style.background = "#0d6efd"; this.style.color = "white";
+                    
+                    document.querySelectorAll(".tab-siswa-konten").forEach(k => k.style.display = "none");
+                    document.getElementById(this.getAttribute("data-target")).style.display = "flex";
+                });
+            });
+
+            // 2. Unduh Template Excel Siswa
+            document.getElementById("btn-dl-template-siswa").addEventListener("click", () => {
+                const ws_data = [
+                    ["Nama Lengkap", "Nomor Peserta", "L/P", "Kelas", "Ruang"],
+                    ["AHMAD DAHLAN", "001-10-A", "L", "X-A", "01"],
+                    ["SITI AMINAH", "002-10-A", "P", "X-A", "01"]
+                ];
+                const ws = XLSX.utils.aoa_to_sheet(ws_data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Data_Siswa");
+                XLSX.writeFile(wb, "Template_Data_Siswa.xlsx");
+            });
+
+            // 3. Baca File Excel
+            document.getElementById("file-excel-siswa").addEventListener("change", (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1}); 
+                    
+                    window.previewDataSiswa = [];
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (row.length === 0 || !row[0]) continue; 
+                        
+                        window.previewDataSiswa.push({
+                            id: Date.now() + i,
+                            nama: row[0] || "", noPeserta: row[1] || "", gender: row[2] || "L",
+                            kelas: row[3] || "", ruang: row[4] || "",
+                            imgBase64: "", imgMime: "", imgName: ""
+                        });
+                    }
+                    renderPreviewSiswaTable();
+                };
+                reader.readAsArrayBuffer(file);
+            });
+
+            // 4. Render Tabel Preview Editable
+            function renderPreviewSiswaTable() {
+                const tbody = document.getElementById("body-preview-siswa");
+                const areaPreview = document.getElementById("area-preview-siswa");
+                
+                if (window.previewDataSiswa.length === 0) {
+                    areaPreview.style.display = "none"; return;
+                }
+                
+                areaPreview.style.display = "flex";
+                let html = "";
+                
+                window.previewDataSiswa.forEach((s, idx) => {
+                    html += `
+                        <tr id="row-siswa-${s.id}" style="border-bottom: 1px solid #ddd; background: ${idx % 2 === 0 ? 'white' : '#f8f9fa'};">
+                            <td style="padding: 5px; text-align:center;">${idx + 1}</td>
+                            <td style="padding: 5px;"><input type="text" value="${s.noPeserta}" class="s-nopes" style="width:100%; border:1px solid #ccc; padding:4px;"></td>
+                            <td style="padding: 5px;"><input type="text" value="${s.nama}" class="s-nama" style="width:100%; border:1px solid #ccc; padding:4px; text-transform:uppercase;"></td>
+                            <td style="padding: 5px;"><input type="text" value="${s.gender}" class="s-jk" style="width:30px; border:1px solid #ccc; padding:4px; text-align:center;"></td>
+                            <td style="padding: 5px;"><input type="text" value="${s.kelas}" class="s-kls" style="width:50px; border:1px solid #ccc; padding:4px;"></td>
+                            <td style="padding: 5px;"><input type="text" value="${s.ruang}" class="s-rng" style="width:50px; border:1px solid #ccc; padding:4px;"></td>
+                            <td style="padding: 5px;">
+                                <input type="file" class="s-img" accept="image/*" data-id="${s.id}" style="width:100px; font-size:10px;">
+                                <div id="s-img-status-${s.id}" style="font-size:10px; color:#0d6efd; margin-top:2px;"></div>
+                            </td>
+                            <td style="padding: 5px; text-align:center;"><button onclick="hapusBarisSiswa(${s.id})" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;"><i class="fa-solid fa-trash"></i></button></td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+
+                // Event Listener Kompresi Gambar Siswa (Sama seperti soal)
+                document.querySelectorAll(".s-img").forEach(input => {
+                    input.addEventListener("change", async function() {
+                        const file = this.files[0];
+                        const id = this.getAttribute("data-id");
+                        const statusText = document.getElementById(`s-img-status-${id}`);
+                        
+                        if (file) {
+                            statusText.innerText = "⏳ Mengompres..."; statusText.style.color = "#ffc107";
+                            try {
+                                const compressedDataUrl = await window.compressImage(file, 600, 800, 0.7); // Ukuran pass foto
+                                const base64Data = compressedDataUrl.split(',')[1]; 
+                                
+                                const item = window.previewDataSiswa.find(x => x.id == id);
+                                if(item) {
+                                    item.imgBase64 = base64Data; item.imgMime = "image/jpeg"; 
+                                    item.imgName = item.noPeserta + "_" + item.nama.replace(/\s+/g, '_') + ".jpg";
+                                }
+                                statusText.innerText = `✅ Siap`; statusText.style.color = "#198754";
+                            } catch (err) {
+                                statusText.innerText = "❌ Gagal"; statusText.style.color = "#dc3545";
+                            }
+                        }
+                    });
+                });
+            }
+
+            window.hapusBarisSiswa = function(id) {
+                window.previewDataSiswa = window.previewDataSiswa.filter(x => x.id !== id);
+                renderPreviewSiswaTable();
+            };
+
+            // 5. Simpan Massal ke Server
+            document.getElementById("btn-simpan-siswa-massal").addEventListener("click", async function() {
+                if(!confirm("Yakin ingin menyimpan data siswa ini ke Database? Foto akan otomatis terunggah ke Google Drive.")) return;
+
+                const finalPayload = [];
+                window.previewDataSiswa.forEach(s => {
+                    const row = document.getElementById(`row-siswa-${s.id}`);
+                    if(row) {
+                        finalPayload.push({
+                            nama: row.querySelector('.s-nama').value.toUpperCase(),
+                            noPeserta: row.querySelector('.s-nopes').value,
+                            gender: row.querySelector('.s-jk').value.toUpperCase(),
+                            kelas: row.querySelector('.s-kls').value,
+                            ruang: row.querySelector('.s-rng').value,
+                            image_base64: s.imgBase64,
+                            image_mime: s.imgMime,
+                            image_name: s.imgName || (row.querySelector('.s-nopes').value + ".jpg")
+                        });
+                    }
+                });
+
+                if (finalPayload.length === 0) return;
+
+                // Overlay Loading Progress Bar
+                const overlay = document.createElement("div");
+                overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:999999; display:flex; justify-content:center; align-items:center;";
+                overlay.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 400px;">
+                        <i class="fa-solid fa-address-card fa-fade" style="font-size: 50px; color: #0d6efd; margin-bottom: 20px;"></i>
+                        <h3 style="margin: 0 0 15px 0;">Menyimpan & Mengunggah Foto...</h3>
+                        <div style="background: #e9ecef; border-radius: 8px; height: 25px; width: 100%; margin-bottom: 15px; overflow: hidden; border: 1px solid #ccc;">
+                            <div id="prog-siswa-fill" style="background: #0d6efd; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                        </div>
+                        <p id="prog-siswa-text" style="margin: 0; font-weight: bold;">0 / ${finalPayload.length} Siswa</p>
+                    </div>`;
+                document.body.appendChild(overlay);
+
+                let suksesCount = 0; let gagalCount = 0;
+
+                // Mengirim 1 per 1 agar Google Drive tidak timeout
+                for (let i = 0; i < finalPayload.length; i++) {
+                    try {
+                        const response = await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify({ action: "simpan_siswa_massal", data_siswa: [finalPayload[i]] })
+                        });
+                        const result = await response.json();
+                        if(result.status === "sukses") suksesCount++; else gagalCount++;
+                    } catch (err) { gagalCount++; }
+
+                    document.getElementById("prog-siswa-fill").style.width = Math.round(((i + 1) / finalPayload.length) * 100) + "%";
+                    document.getElementById("prog-siswa-text").innerText = `${i + 1} / ${finalPayload.length} Siswa Tersimpan`;
+                }
+
+                setTimeout(() => {
+                    document.body.removeChild(overlay);
+                    if (gagalCount === 0) {
+                        alert("✅ Sempurna! Semua data dan foto berhasil masuk database.");
+                        document.getElementById("file-excel-siswa").value = "";
+                        window.previewDataSiswa = [];
+                        renderPreviewSiswaTable();
+                        document.querySelector('.tab-siswa-btn[data-target="tab-siswa-db"]').click();
+                        tarikDataSiswaKartu(); // Refresh tabel db
+                    } else {
+                        alert(`Selesai. ${suksesCount} berhasil, ${gagalCount} gagal diunggah.`);
+                    }
+                }, 600);
+            });
 
             // 1. RENDER KARTU PESERTA (8 Kartu per halaman F4)
             function renderKartuPeserta(container) {
