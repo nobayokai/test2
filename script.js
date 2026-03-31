@@ -593,19 +593,17 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <tr><td style="font-weight: bold;">Jns. Kelamin</td><td>: ${s.gender}</td></tr>
                                 </table>
                                 
-                                <div style="display: flex; justify-content: space-between; margin-top: 8px; flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 5px; gap: 8px;">
                                     
-                                    <div style="display: flex; gap: 10px; align-items: flex-start; flex: 1;">
-                                        <div style="width: 60px; height: 80px; border: 1px solid black; overflow: hidden; flex-shrink: 0;">
-                                            ${elemenFoto}
-                                        </div>
-                                        
-                                        <div style="flex: 1; max-width: 170px;">
-                                            ${htmlTabelJadwal}
-                                        </div>
+                                    <div style="width: 60px; height: 80px; border: 1px solid black; overflow: hidden; flex-shrink: 0;">
+                                        ${elemenFoto}
                                     </div>
                                     
-                                    <div style="width: 90px; font-size: 8px; flex-shrink: 0; text-align: left; display: flex; flex-direction: column; justify-content: flex-end;">
+                                    <div style="flex: 1; max-width: 180px;">
+                                        ${htmlTabelJadwal}
+                                    </div>
+                                    
+                                    <div style="width: 90px; font-size: 8px; flex-shrink: 0; text-align: left;">
                                         <div style="margin-bottom: 2px;">${configKartu.kota}, ${configKartu.tanggal}</div>
                                         <div>${configKartu.jabatan}</div>
                                         ${elemenTtd}
