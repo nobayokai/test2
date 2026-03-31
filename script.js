@@ -542,26 +542,41 @@ document.addEventListener("DOMContentLoaded", () => {
                         const elemenTtd = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="height:35px; object-fit:contain; margin: 2px 0;">` : `<div style="height:35px;"></div>`;
 
                        // --- LOGIKA PEMBUATAN TABEL JADWAL OTOMATIS ---
+                        // --- LOGIKA PEMBUATAN TABEL JADWAL OTOMATIS (AUTO-SHRINK) ---
                         let barisJadwalRaw = configKartu.jadwalUjian ? configKartu.jadwalUjian.split('\n') : [];
-                        // KUNCI 1: Hapus baris kosong agar tabel tidak memunculkan kolom tak terisi
                         let barisJadwal = barisJadwalRaw.filter(line => line.trim() !== "");
                         
+                        // KUNCI PERBAIKAN: Deteksi jumlah baris untuk mengubah ukuran dinamis
+                        let jmlBaris = barisJadwal.length;
+                        let ukuranFont = "7.5px"; // Ukuran normal
+                        let paddingSel = "3px";   // Jarak normal
+                        
+                        if (jmlBaris >= 10) {
+                            ukuranFont = "5.5px"; // Sangat kecil untuk jadwal padat (Senin-Jumat full)
+                            paddingSel = "1px";
+                        } else if (jmlBaris >= 8) {
+                            ukuranFont = "6px";
+                            paddingSel = "1.5px";
+                        } else if (jmlBaris >= 6) {
+                            ukuranFont = "6.5px";
+                            paddingSel = "2px";
+                        }
+                        
                         let htmlTabelJadwal = '';
-                        if (barisJadwal.length > 0) {
-                            htmlTabelJadwal = `<table style="width: 100%; border-collapse: collapse; font-size: 7.5px; text-align: center; border: 1px solid black;">
-                                <tr><th colspan="3" style="border: 1px solid black; padding: 4px; background: #f8f9fa;">Jadwal Ujian</th></tr>`;
+                        if (jmlBaris > 0) {
+                            htmlTabelJadwal = `<table style="width: 100%; border-collapse: collapse; font-size: ${ukuranFont}; text-align: center; border: 1px solid black;">
+                                <tr><th colspan="3" style="border: 1px solid black; padding: ${paddingSel}; background: #f8f9fa;">Jadwal Ujian</th></tr>`;
                             
-                            // Looping HANYA sebanyak jadwal yang diisi
-                            for(let r = 0; r < barisJadwal.length; r++) {
+                            for(let r = 0; r < jmlBaris; r++) {
                                 let cols = ["", "", ""];
                                 let parts = barisJadwal[r].split('|').map(p => p.trim());
                                 cols[0] = parts[0] || ""; cols[1] = parts[1] || ""; cols[2] = parts[2] || "";
                                 
                                 htmlTabelJadwal += `
                                     <tr>
-                                        <td style="border: 1px solid black; padding: 3px; width: 35%;">${cols[0]}</td>
-                                        <td style="border: 1px solid black; padding: 3px; width: 30%;">${cols[1]}</td>
-                                        <td style="border: 1px solid black; padding: 3px; width: 35%;">${cols[2]}</td>
+                                        <td style="border: 1px solid black; padding: ${paddingSel}; width: 35%;">${cols[0]}</td>
+                                        <td style="border: 1px solid black; padding: ${paddingSel}; width: 30%;">${cols[1]}</td>
+                                        <td style="border: 1px solid black; padding: ${paddingSel}; width: 35%;">${cols[2]}</td>
                                     </tr>`;
                             }
                             htmlTabelJadwal += `</table>`;
