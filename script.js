@@ -273,7 +273,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 sekolah: "SMA NEGERI 1 CONTOH", alamat: "Jl. Pendidikan No. 123",
                 judul: "PENILAIAN AKHIR SEMESTER", tahun: "2024/2025", logoUrl: "",
                 kota: "Jakarta", tanggal: "25 November 2024", jabatan: "Ketua Panitia",
-                namaTtd: "Budi Santoso, S.Pd", ttdUrl: ""
+                namaTtd: "Budi Santoso, S.Pd", ttdUrl: "",
+                jadwalUjian: "Senin, 25 Nov | 08.00-10.00 | Matematika\nSelasa, 26 Nov | 08.00-10.00 | B. Indonesia" // Default Jadwal
             };
 
             // Memuat Data Pengaturan ke Form
@@ -286,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("ku-tanggal").value = configKartu.tanggal;
                 document.getElementById("ku-jabatan").value = configKartu.jabatan;
                 document.getElementById("ku-nama-ttd").value = configKartu.namaTtd;
+                document.getElementById("ku-jadwal").value = configKartu.jadwalUjian || ""; // Munculkan jadwal
 
                 if (configKartu.logoUrl) {
                     const img = document.getElementById("ku-preview-logo");
@@ -308,6 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 configKartu.tanggal = document.getElementById("ku-tanggal").value;
                 configKartu.jabatan = document.getElementById("ku-jabatan").value;
                 configKartu.namaTtd = document.getElementById("ku-nama-ttd").value;
+                configKartu.jadwalUjian = document.getElementById("ku-jadwal").value; // Simpan jadwal
                 localStorage.setItem('config_kartu_ujian', JSON.stringify(configKartu));
             };
 
@@ -522,11 +525,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("dashboard-kartu").style.display = "block";
             };
 
-            // 1. RENDER KARTU PESERTA (Menerima parameter dataSiswa)
+            // 1. RENDER KARTU PESERTA (Gaya Tabel Bawah Baru)
             function renderKartuPeserta(container, dataSiswa) {
                 const chunkSize = 8;
                 for (let i = 0; i < dataSiswa.length; i += chunkSize) {
-                    const chunk = dataSiswa.slice(i, i + chunkSize); // Gunakan dataSiswa (yang sudah difilter)
+                    const chunk = dataSiswa.slice(i, i + chunkSize); 
                     
                     const page = document.createElement("div");
                     page.className = "page-sheet";
@@ -536,11 +539,33 @@ document.addEventListener("DOMContentLoaded", () => {
                         const linkFoto = formatDriveImage(s.foto);
                         const elemenFoto = linkFoto ? `<img src="${linkFoto}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="width:100%; height:100%; background:#eee; display:flex; align-items:center; justify-content:center; color:#999; font-size:10px;">Foto 3x4</div>`;
                         const elemenLogo = configKartu.logoUrl ? `<img src="${configKartu.logoUrl}" style="height:35px; width:35px; object-fit:contain;">` : `<div style="height:35px; width:35px; background:#ddd; font-size:8px; display:flex; align-items:center; justify-content:center;">LOGO</div>`;
-                        const elemenTtd = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="height:40px; object-fit:contain; margin-top:5px;">` : `<div style="height:40px;"></div>`;
+                        const elemenTtd = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="height:35px; object-fit:contain; margin: 2px 0;">` : `<div style="height:35px;"></div>`;
 
-                        // ... (ISI HTML KARTU SAMA PERSIS SEPERTI SEBELUMNYA) ...
+                        // --- LOGIKA PEMBUATAN TABEL JADWAL OTOMATIS ---
+                        let barisJadwal = configKartu.jadwalUjian ? configKartu.jadwalUjian.split('\n') : [];
+                        let htmlTabelJadwal = `<table style="width: 100%; border-collapse: collapse; font-size: 7px; text-align: center; border: 1px solid black; height: 100%;">
+                            <tr><th colspan="3" style="border: 1px solid black; padding: 3px; background: white;">Jadwal Ujian</th></tr>`;
+                        
+                        const totalRows = Math.max(barisJadwal.length, 5); // Memastikan tabel minimal punya 5 baris
+                        for(let r = 0; r < totalRows; r++) {
+                            let cols = ["", "", ""];
+                            if(barisJadwal[r]) {
+                                let parts = barisJadwal[r].split('|').map(p => p.trim());
+                                cols[0] = parts[0] || ""; cols[1] = parts[1] || ""; cols[2] = parts[2] || "";
+                            }
+                            htmlTabelJadwal += `
+                                <tr>
+                                    <td style="border: 1px solid black; padding: 2px; height: 11px;">${cols[0]}</td>
+                                    <td style="border: 1px solid black; padding: 2px;">${cols[1]}</td>
+                                    <td style="border: 1px solid black; padding: 2px;">${cols[2]}</td>
+                                </tr>`;
+                        }
+                        htmlTabelJadwal += `</table>`;
+
+                        // --- RENDER KESELURUHAN KARTU ---
                         page.innerHTML += `
                             <div style="border: 2px solid black; padding: 6px; display: flex; flex-direction: column; font-family: Arial, sans-serif; font-size: 10px; line-height: 1.2; overflow: hidden; position: relative;">
+                                
                                 <div style="display: flex; gap: 8px; border-bottom: 2px solid black; padding-bottom: 5px; margin-bottom: 5px;">
                                     ${elemenLogo}
                                     <div style="flex: 1; text-align: center;">
@@ -552,32 +577,36 @@ document.addEventListener("DOMContentLoaded", () => {
                                         ${s.ruang}
                                     </div>
                                 </div>
+                                
                                 <div style="text-align: center; background: #eee; font-weight: bold; padding: 3px; border: 1px solid #ccc; margin-bottom: 8px; font-size: 11px;">
                                     KARTU PESERTA UJIAN ${configKartu.tahun}
                                 </div>
-                                <table style="width: 100%; font-size: 11px; margin-bottom: 10px;">
+                                
+                                <table style="width: 100%; font-size: 11px; margin-bottom: 5px;">
                                     <tr><td style="width: 70px; font-weight: bold;">No. Peserta</td><td>: <span style="font-family: monospace; font-weight: bold;">${s.noPeserta}</span></td></tr>
                                     <tr><td style="font-weight: bold;">Nama</td><td>: <span style="text-transform: uppercase; font-weight: bold;">${s.nama}</span></td></tr>
                                     <tr><td style="font-weight: bold;">Jns. Kelamin</td><td>: ${s.gender}</td></tr>
                                 </table>
-                                <div style="display: flex; gap: 10px; flex: 1;">
-                                    <div style="width: 65px; height: 85px; border: 2px solid #555; overflow: hidden; flex-shrink: 0;">
+                                
+                                <div style="display: flex; gap: 8px; flex: 1; align-items: stretch; margin-top: 5px;">
+                                    
+                                    <div style="width: 60px; height: 80px; border: 1px solid black; overflow: hidden; flex-shrink: 0;">
                                         ${elemenFoto}
                                     </div>
+                                    
                                     <div style="flex: 1;">
-                                        <div style="border: 1px solid #ccc; text-align: center;">
-                                            <div style="background: #eee; font-size: 9px; font-weight: bold; padding: 3px; border-bottom: 1px solid #ccc;">Jadwal Sesi Ujian</div>
-                                            <div style="font-size: 8px; font-weight: bold; padding: 2px;">Sesi 1 : 08.00 - 09.00</div>
-                                            <div style="font-size: 8px; font-weight: bold; padding: 2px; background: #f9f9f9;">Sesi 2 : 10.00 - 11.00</div>
-                                            <div style="font-size: 8px; font-weight: bold; padding: 2px;">Sesi 3 : 12.30 - 13.30</div>
-                                        </div>
+                                        ${htmlTabelJadwal}
                                     </div>
-                                </div>
-                                <div style="position: absolute; bottom: 5px; right: 10px; text-align: center; font-size: 9px;">
-                                    <div>${configKartu.kota}, ${configKartu.tanggal}</div>
-                                    <div style="font-weight: bold; margin-top: 2px;">${configKartu.jabatan}</div>
-                                    ${elemenTtd}
-                                    <div style="font-weight: bold; text-decoration: underline; margin-top: 2px;">${configKartu.namaTtd}</div>
+                                    
+                                    <div style="width: 90px; font-size: 8px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; text-align: left;">
+                                        <div>
+                                            <div>${configKartu.kota}, ${configKartu.tanggal}</div>
+                                            <div style="margin-top: 2px;">${configKartu.jabatan}</div>
+                                        </div>
+                                        ${elemenTtd}
+                                        <div>${configKartu.namaTtd}</div>
+                                    </div>
+                                    
                                 </div>
                             </div>
                         `;
