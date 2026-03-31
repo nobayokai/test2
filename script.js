@@ -452,19 +452,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // --- FUNGSI MENGHAPUS SISWA ---
             window.hapusDataSiswa = async function(noPeserta) {
-                if(!confirm(`Yakin ingin MENGHAPUS data siswa dengan No Peserta ${noPeserta} secara permanen?`)) return;
+                if(!confirm(`Yakin ingin MENGHAPUS data siswa dengan No Peserta ${noPeserta} secara permanen?\n\n(Foto di Google Drive juga akan ikut terhapus)`)) return;
                 
+                // --- MUNCULKAN OVERLAY LOADING HAPUS ---
+                const overlay = document.createElement("div");
+                overlay.id = "loading-hapus-siswa";
+                overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:999999; display:flex; justify-content:center; align-items:center;";
+                overlay.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        <i class="fa-solid fa-trash-can fa-bounce" style="font-size: 50px; color: #dc3545; margin-bottom: 20px;"></i>
+                        <h3 style="margin: 0; color: #333;">Menghapus Data...</h3>
+                        <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">Membongkar data dan foto dari server.</p>
+                    </div>`;
+                document.body.appendChild(overlay);
+
                 try {
                     const response = await fetch(SCRIPT_URL, { 
                         method: "POST", 
                         body: JSON.stringify({ action: "hapus_siswa_kartu", no_peserta: noPeserta }) 
                     });
                     const result = await response.json();
+                    
+                    // Hapus layar loading sebelum memunculkan alert
+                    document.body.removeChild(overlay); 
+                    
                     if(result.status === "sukses") {
-                        alert("✅ Data peserta berhasil dihapus!");
+                        alert("✅ Data peserta dan foto berhasil dihapus!");
                         tarikDataSiswaKartu(); // Refresh tabel
                     } else { alert("❌ Gagal menghapus data."); }
-                } catch(e) { alert("Terjadi kesalahan jaringan."); }
+                } catch(e) { 
+                    if(document.getElementById("loading-hapus-siswa")) document.body.removeChild(overlay);
+                    alert("Terjadi kesalahan jaringan."); 
+                }
             };
 
            // --- FUNGSI PENGUBAH LINK G-DRIVE MENJADI LINK GAMBAR NATIVE ---
@@ -1603,30 +1622,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Fungsi Hapus Soal 
             window.hapusSoal = async function(kode, pertanyaan, rowId) {
-                // ... (Kode hapus soal Anda sebelumnya tidak ada yang berubah, tetap sama!)
-                const konfirmasi = confirm(`🚨 PERINGATAN!\n\nApakah Anda yakin ingin MENGHAPUS soal ini?\nData akan dihapus secara permanen dari Google Sheets.`);
-                if (konfirmasi) {
-                    const btnHapus = document.getElementById(`btn-hapus-${rowId}`);
-                    btnHapus.innerHTML = "Menghapus...";
-                    btnHapus.disabled = true;
-                    try {
-                        const payload = { action: "hapus_soal", kode_soal: kode, pertanyaan: pertanyaan };
-                        const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
-                        const result = await response.json();
-                        if(result.status === "sukses") {
-                            alert("✅ Soal berhasil dihapus dari Database!");
-                            await fetchSemuaSoalUntukGuru(); 
-                            renderTabelSoal(document.getElementById("filter-kode-soal").value);
-                        } else {
-                            alert("❌ Gagal menghapus soal: " + result.message);
-                            btnHapus.innerHTML = `<i class="fa-solid fa-trash-can"></i> Hapus`;
-                            btnHapus.disabled = false;
-                        }
-                    } catch (error) {
-                        alert("Terjadi kesalahan sistem saat mencoba menghapus.");
-                        btnHapus.innerHTML = `<i class="fa-solid fa-trash-can"></i> Hapus`;
-                        btnHapus.disabled = false;
+                const konfirmasi = confirm(`🚨 PERINGATAN!\n\nApakah Anda yakin ingin MENGHAPUS soal ini?\nData dan gambar soal akan dihapus secara permanen dari server.`);
+                if (!konfirmasi) return;
+
+                // --- MUNCULKAN OVERLAY LOADING HAPUS ---
+                const overlay = document.createElement("div");
+                overlay.id = "loading-hapus-soal";
+                overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:999999; display:flex; justify-content:center; align-items:center;";
+                overlay.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        <i class="fa-solid fa-trash-can fa-bounce" style="font-size: 50px; color: #dc3545; margin-bottom: 20px;"></i>
+                        <h3 style="margin: 0; color: #333;">Menghapus Soal...</h3>
+                        <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">Membuang soal dan gambar dari server.</p>
+                    </div>`;
+                document.body.appendChild(overlay);
+
+                try {
+                    const payload = { action: "hapus_soal", kode_soal: kode, pertanyaan: pertanyaan };
+                    const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+                    const result = await response.json();
+                    
+                    // Hapus layar loading sebelum memunculkan alert
+                    document.body.removeChild(overlay); 
+
+                    if(result.status === "sukses") {
+                        alert("✅ Soal berhasil dihapus dari Database!");
+                        await fetchSemuaSoalUntukGuru(); 
+                        renderTabelSoal(document.getElementById("filter-kode-soal").value);
+                    } else {
+                        alert("❌ Gagal menghapus soal: " + result.message);
                     }
+                } catch (error) {
+                    if(document.getElementById("loading-hapus-soal")) document.body.removeChild(overlay);
+                    alert("Terjadi kesalahan sistem saat mencoba menghapus.");
                 }
             };
 
