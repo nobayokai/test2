@@ -412,7 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("edit-s-nopes").value = siswa.noPeserta;
                 document.getElementById("edit-s-nopes-asli").value = siswa.noPeserta;
                 document.getElementById("edit-s-nama").value = siswa.nama;
-                document.getElementById("edit-s-jk").value = siswa.gender;
+                document.getElementById("edit-s-ttl").value = siswa.ttl || ""; // <-- UBAH INI
                 document.getElementById("edit-s-kls").value = siswa.kelas;
                 document.getElementById("edit-s-rng").value = siswa.ruang;
                 document.getElementById("edit-s-foto").value = siswa.foto || "";
@@ -429,7 +429,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     action: "update_siswa_kartu",
                     no_peserta: noPeserta,
                     nama: document.getElementById("edit-s-nama").value.trim().toUpperCase(),
-                    gender: document.getElementById("edit-s-jk").value.trim().toUpperCase(),
+                    ttl: document.getElementById("edit-s-ttl").value.trim(), // <-- UBAH INI
                     kelas: document.getElementById("edit-s-kls").value.trim(),
                     ruang: document.getElementById("edit-s-rng").value.trim(),
                     foto: document.getElementById("edit-s-foto").value.trim()
@@ -590,7 +590,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <table style="width: 100%; font-size: 11px; margin-bottom: 5px;">
                                     <tr><td style="width: 70px; font-weight: bold;">No. Peserta</td><td>: <span style="font-family: monospace; font-weight: bold;">${s.noPeserta}</span></td></tr>
                                     <tr><td style="font-weight: bold;">Nama</td><td>: <span style="text-transform: uppercase; font-weight: bold;">${s.nama}</span></td></tr>
-                                    <tr><td style="font-weight: bold;">Jns. Kelamin</td><td>: ${s.gender}</td></tr>
+                                    <tr><td style="font-weight: bold;">Tempat, Tgl Lahir</td><td>: <span style="text-transform: capitalize;">${s.ttl}</span></td></tr>
                                 </table>
                                 
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 5px; gap: 8px;">
@@ -703,9 +703,9 @@ document.addEventListener("DOMContentLoaded", () => {
             // 2. Unduh Template Excel Siswa
             document.getElementById("btn-dl-template-siswa").addEventListener("click", () => {
                 const ws_data = [
-                    ["Nama Lengkap", "Nomor Peserta", "L/P", "Kelas", "Ruang"],
-                    ["AHMAD DAHLAN", "001-10-A", "L", "X-A", "01"],
-                    ["SITI AMINAH", "002-10-A", "P", "X-A", "01"]
+                    ["Nama Lengkap", "Nomor Peserta", "Tempat & Tgl Lahir", "Kelas", "Ruang"],
+                    ["AHMAD DAHLAN", "001-10-A", "Jakarta, 01 Januari 2010", "X-A", "01"],
+                    ["SITI AMINAH", "002-10-A", "Bandung, 15 Agustus 2010", "X-A", "01"]
                 ];
                 const ws = XLSX.utils.aoa_to_sheet(ws_data);
                 const wb = XLSX.utils.book_new();
@@ -732,7 +732,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         
                         window.previewDataSiswa.push({
                             id: Date.now() + i,
-                            nama: row[0] || "", noPeserta: row[1] || "", gender: row[2] || "L",
+                            nama: row[0] || "", noPeserta: row[1] || "", ttl: row[2] || "", // <-- UBAH KE TTL
                             kelas: row[3] || "", ruang: row[4] || "",
                             imgBase64: "", imgMime: "", imgName: ""
                         });
@@ -760,7 +760,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <td style="padding: 5px; text-align:center;">${idx + 1}</td>
                             <td style="padding: 5px;"><input type="text" value="${s.noPeserta}" class="s-nopes" style="width:100%; border:1px solid #ccc; padding:4px;"></td>
                             <td style="padding: 5px;"><input type="text" value="${s.nama}" class="s-nama" style="width:100%; border:1px solid #ccc; padding:4px; text-transform:uppercase;"></td>
-                            <td style="padding: 5px;"><input type="text" value="${s.gender}" class="s-jk" style="width:30px; border:1px solid #ccc; padding:4px; text-align:center;"></td>
+                           <td style="padding: 5px;"><input type="text" value="${s.ttl}" class="s-ttl" style="width:100%; border:1px solid #ccc; padding:4px;"></td>
                             <td style="padding: 5px;"><input type="text" value="${s.kelas}" class="s-kls" style="width:50px; border:1px solid #ccc; padding:4px;"></td>
                             <td style="padding: 5px;"><input type="text" value="${s.ruang}" class="s-rng" style="width:50px; border:1px solid #ccc; padding:4px;"></td>
                             <td style="padding: 5px;">
@@ -816,7 +816,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         finalPayload.push({
                             nama: row.querySelector('.s-nama').value.toUpperCase(),
                             noPeserta: row.querySelector('.s-nopes').value,
-                            gender: row.querySelector('.s-jk').value.toUpperCase(),
+                            ttl: row.querySelector('.s-ttl').value.toUpperCase(),
                             kelas: row.querySelector('.s-kls').value,
                             ruang: row.querySelector('.s-rng').value,
                             image_base64: s.imgBase64,
