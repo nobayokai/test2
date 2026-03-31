@@ -542,37 +542,34 @@ document.addEventListener("DOMContentLoaded", () => {
                         const elemenTtd = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="height:35px; object-fit:contain; margin: 2px 0;">` : `<div style="height:35px;"></div>`;
 
                        // --- LOGIKA PEMBUATAN TABEL JADWAL OTOMATIS ---
-                        // --- LOGIKA PEMBUATAN TABEL JADWAL OTOMATIS ---
-                        // KUNCI 1: Hapus baris kosong (Enter) yang tidak sengaja terketik
-                        let barisJadwal = configKartu.jadwalUjian ? configKartu.jadwalUjian.split('\n').filter(baris => baris.trim() !== '') : [];
+                        let barisJadwalRaw = configKartu.jadwalUjian ? configKartu.jadwalUjian.split('\n') : [];
+                        // KUNCI 1: Hapus baris kosong agar tabel tidak memunculkan kolom tak terisi
+                        let barisJadwal = barisJadwalRaw.filter(line => line.trim() !== "");
                         
-                        let htmlTabelJadwal = `<table style="width: 100%; border-collapse: collapse; font-size: 7.5px; text-align: center; border: 1px solid black;">
-                            <tr><th colspan="3" style="border: 1px solid black; padding: 4px; background: #f8f9fa;">Jadwal Ujian</th></tr>`;
-                        
-                        // KUNCI 2: Jumlah baris menyesuaikan input Guru (Tidak lagi dipaksa 5)
-                        const totalRows = barisJadwal.length > 0 ? barisJadwal.length : 1; 
-                        
-                        for(let r = 0; r < totalRows; r++) {
-                            let cols = ["", "", ""];
-                            if(barisJadwal[r]) {
+                        let htmlTabelJadwal = '';
+                        if (barisJadwal.length > 0) {
+                            htmlTabelJadwal = `<table style="width: 100%; border-collapse: collapse; font-size: 7.5px; text-align: center; border: 1px solid black;">
+                                <tr><th colspan="3" style="border: 1px solid black; padding: 4px; background: #f8f9fa;">Jadwal Ujian</th></tr>`;
+                            
+                            // Looping HANYA sebanyak jadwal yang diisi
+                            for(let r = 0; r < barisJadwal.length; r++) {
+                                let cols = ["", "", ""];
                                 let parts = barisJadwal[r].split('|').map(p => p.trim());
                                 cols[0] = parts[0] || ""; cols[1] = parts[1] || ""; cols[2] = parts[2] || "";
+                                
+                                htmlTabelJadwal += `
+                                    <tr>
+                                        <td style="border: 1px solid black; padding: 3px; width: 35%;">${cols[0]}</td>
+                                        <td style="border: 1px solid black; padding: 3px; width: 30%;">${cols[1]}</td>
+                                        <td style="border: 1px solid black; padding: 3px; width: 35%;">${cols[2]}</td>
+                                    </tr>`;
                             }
-                            htmlTabelJadwal += `
-                                <tr>
-                                    <td style="border: 1px solid black; padding: 3px; width: 35%;">${cols[0]}</td>
-                                    <td style="border: 1px solid black; padding: 3px; width: 30%;">${cols[1]}</td>
-                                    <td style="border: 1px solid black; padding: 3px; width: 35%;">${cols[2]}</td>
-                                </tr>`;
+                            htmlTabelJadwal += `</table>`;
                         }
-                        htmlTabelJadwal += `</table>`;
-
-                        // --- KUNCI 3: Rapatkan Jarak Tanda Tangan ---
-                        const elemenTtd = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="height:30px; object-fit:contain; margin: 2px 0;">` : `<div style="height:25px;"></div>`;
 
                         // --- RENDER KESELURUHAN KARTU ---
                         page.innerHTML += `
-                            <div style="border: 2px solid black; padding: 6px; display: flex; flex-direction: column; font-family: Arial, sans-serif; font-size: 10px; line-height: 1.2; overflow: hidden; position: relative;">
+                            <div style="border: 2px solid black; padding: 6px; display: flex; flex-direction: column; font-family: Arial, sans-serif; font-size: 10px; line-height: 1.2; overflow: hidden; position: relative; height: 100%;">
                                 
                                 <div style="display: flex; gap: 8px; border-bottom: 2px solid black; padding-bottom: 5px; margin-bottom: 5px;">
                                     ${elemenLogo}
@@ -596,17 +593,19 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <tr><td style="font-weight: bold;">Jns. Kelamin</td><td>: ${s.gender}</td></tr>
                                 </table>
                                 
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 8px;">
+                                <div style="display: flex; justify-content: space-between; margin-top: 8px; flex: 1;">
                                     
-                                    <div style="width: 60px; height: 80px; border: 1px solid black; overflow: hidden; flex-shrink: 0;">
-                                        ${elemenFoto}
+                                    <div style="display: flex; gap: 10px; align-items: flex-start; flex: 1;">
+                                        <div style="width: 60px; height: 80px; border: 1px solid black; overflow: hidden; flex-shrink: 0;">
+                                            ${elemenFoto}
+                                        </div>
+                                        
+                                        <div style="flex: 1; max-width: 170px;">
+                                            ${htmlTabelJadwal}
+                                        </div>
                                     </div>
                                     
-                                    <div style="flex: 1; max-width: 180px; margin: 0 10px;">
-                                        ${htmlTabelJadwal}
-                                    </div>
-                                    
-                                    <div style="width: 90px; font-size: 8px; flex-shrink: 0; text-align: left; display: flex; flex-direction: column; justify-content: flex-start;">
+                                    <div style="width: 90px; font-size: 8px; flex-shrink: 0; text-align: left; display: flex; flex-direction: column; justify-content: flex-end;">
                                         <div style="margin-bottom: 2px;">${configKartu.kota}, ${configKartu.tanggal}</div>
                                         <div>${configKartu.jabatan}</div>
                                         ${elemenTtd}
