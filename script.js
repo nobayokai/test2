@@ -541,16 +541,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         const elemenLogo = configKartu.logoUrl ? `<img src="${configKartu.logoUrl}" style="height:35px; width:35px; object-fit:contain;">` : `<div style="height:35px; width:35px; background:#ddd; font-size:8px; display:flex; align-items:center; justify-content:center;">LOGO</div>`;
                         const elemenTtd = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="height:35px; object-fit:contain; margin: 2px 0;">` : `<div style="height:35px;"></div>`;
 
-                        // --- LOGIKA PEMBUATAN TABEL JADWAL OTOMATIS ---
-                        // KUNCI 1: Hapus baris kosong (Enter) yang tidak sengaja terketik
-                        let barisJadwal = configKartu.jadwalUjian ? configKartu.jadwalUjian.split('\n').filter(baris => baris.trim() !== '') : [];
+                       // --- LOGIKA PEMBUATAN TABEL JADWAL OTOMATIS ---
+                        let barisJadwal = configKartu.jadwalUjian ? configKartu.jadwalUjian.split('\n') : [];
                         
+                        // KUNCI: Hapus height 100% dan atur lebar kolom agar proporsional
                         let htmlTabelJadwal = `<table style="width: 100%; border-collapse: collapse; font-size: 7.5px; text-align: center; border: 1px solid black;">
                             <tr><th colspan="3" style="border: 1px solid black; padding: 4px; background: #f8f9fa;">Jadwal Ujian</th></tr>`;
                         
-                        // KUNCI 2: Jumlah baris menyesuaikan input Guru (Tidak lagi dipaksa 5)
-                        const totalRows = barisJadwal.length > 0 ? barisJadwal.length : 1; 
-                        
+                        const totalRows = Math.max(barisJadwal.length, 5); 
                         for(let r = 0; r < totalRows; r++) {
                             let cols = ["", "", ""];
                             if(barisJadwal[r]) {
@@ -565,9 +563,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </tr>`;
                         }
                         htmlTabelJadwal += `</table>`;
-
-                        // --- KUNCI 3: Rapatkan Jarak Tanda Tangan ---
-                        const elemenTtd = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="height:30px; object-fit:contain; margin: 2px 0;">` : `<div style="height:25px;"></div>`;
 
                         // --- RENDER KESELURUHAN KARTU ---
                         page.innerHTML += `
@@ -601,11 +596,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                         ${elemenFoto}
                                     </div>
                                     
-                                    <div style="flex: 1; max-width: 180px; margin: 0 10px;">
+                                    <div style="flex: 1; max-width: 170px; margin: 0 10px;">
                                         ${htmlTabelJadwal}
                                     </div>
                                     
-                                    <div style="width: 90px; font-size: 8px; flex-shrink: 0; text-align: left; display: flex; flex-direction: column; justify-content: flex-start;">
+                                    <div style="width: 90px; font-size: 8px; flex-shrink: 0; text-align: left;">
                                         <div style="margin-bottom: 2px;">${configKartu.kota}, ${configKartu.tanggal}</div>
                                         <div>${configKartu.jabatan}</div>
                                         ${elemenTtd}
