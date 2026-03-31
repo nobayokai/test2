@@ -543,10 +543,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         // --- LOGIKA PEMBUATAN TABEL JADWAL OTOMATIS ---
                         let barisJadwal = configKartu.jadwalUjian ? configKartu.jadwalUjian.split('\n') : [];
-                        let htmlTabelJadwal = `<table style="width: 100%; border-collapse: collapse; font-size: 7px; text-align: center; border: 1px solid black; height: 100%;">
-                            <tr><th colspan="3" style="border: 1px solid black; padding: 3px; background: white;">Jadwal Ujian</th></tr>`;
                         
-                        const totalRows = Math.max(barisJadwal.length, 5); // Memastikan tabel minimal punya 5 baris
+                        // KUNCI: Hapus height 100% dan atur lebar kolom agar proporsional
+                        let htmlTabelJadwal = `<table style="width: 100%; border-collapse: collapse; font-size: 7.5px; text-align: center; border: 1px solid black;">
+                            <tr><th colspan="3" style="border: 1px solid black; padding: 4px; background: #f8f9fa;">Jadwal Ujian</th></tr>`;
+                        
+                        const totalRows = Math.max(barisJadwal.length, 5); 
                         for(let r = 0; r < totalRows; r++) {
                             let cols = ["", "", ""];
                             if(barisJadwal[r]) {
@@ -555,9 +557,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             }
                             htmlTabelJadwal += `
                                 <tr>
-                                    <td style="border: 1px solid black; padding: 2px; height: 11px;">${cols[0]}</td>
-                                    <td style="border: 1px solid black; padding: 2px;">${cols[1]}</td>
-                                    <td style="border: 1px solid black; padding: 2px;">${cols[2]}</td>
+                                    <td style="border: 1px solid black; padding: 3px; width: 35%;">${cols[0]}</td>
+                                    <td style="border: 1px solid black; padding: 3px; width: 30%;">${cols[1]}</td>
+                                    <td style="border: 1px solid black; padding: 3px; width: 35%;">${cols[2]}</td>
                                 </tr>`;
                         }
                         htmlTabelJadwal += `</table>`;
@@ -588,23 +590,21 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <tr><td style="font-weight: bold;">Jns. Kelamin</td><td>: ${s.gender}</td></tr>
                                 </table>
                                 
-                                <div style="display: flex; gap: 8px; flex: 1; align-items: stretch; margin-top: 5px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 8px;">
                                     
                                     <div style="width: 60px; height: 80px; border: 1px solid black; overflow: hidden; flex-shrink: 0;">
                                         ${elemenFoto}
                                     </div>
                                     
-                                    <div style="flex: 1;">
+                                    <div style="flex: 1; max-width: 170px; margin: 0 10px;">
                                         ${htmlTabelJadwal}
                                     </div>
                                     
-                                    <div style="width: 90px; font-size: 8px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; text-align: left;">
-                                        <div>
-                                            <div>${configKartu.kota}, ${configKartu.tanggal}</div>
-                                            <div style="margin-top: 2px;">${configKartu.jabatan}</div>
-                                        </div>
+                                    <div style="width: 90px; font-size: 8px; flex-shrink: 0; text-align: left;">
+                                        <div style="margin-bottom: 2px;">${configKartu.kota}, ${configKartu.tanggal}</div>
+                                        <div>${configKartu.jabatan}</div>
                                         ${elemenTtd}
-                                        <div>${configKartu.namaTtd}</div>
+                                        <div style="text-decoration: underline; font-weight: bold;">${configKartu.namaTtd}</div>
                                     </div>
                                     
                                 </div>
