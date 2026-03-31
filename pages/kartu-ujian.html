@@ -53,6 +53,12 @@
                     <input type="file" accept="image/*" onchange="uploadGambarKU(this, 'ttd')" style="width: 100%; font-size: 13px; margin-bottom: 5px;">
                     <img id="ku-preview-ttd" style="height: 50px; display: none; margin-top: 5px;">
                 </div>
+
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ccc;">
+                    <h4 style="margin-top:0;"><i class="fa-solid fa-calendar-days"></i> Jadwal Ujian</h4>
+                    <p style="font-size: 11px; color: #555; margin-bottom: 5px;">Format: <b>Kolom 1 | Kolom 2 | Kolom 3</b> (Tiap baris baru akan menjadi baris tabel).</p>
+                    <textarea id="ku-jadwal" rows="5" placeholder="Senin, 25 Nov | 08.00-09.30 | Matematika&#10;Selasa, 26 Nov | 08.00-09.30 | B. Indonesia" class="input-cbt" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:5px; font-size: 12px; resize: vertical;" oninput="simpanPengaturanKU()"></textarea>
+                </div>
             </div>
 
             <div style="flex: 2; min-width: 400px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #ccc; display: flex; flex-direction: column;">
