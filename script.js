@@ -1050,10 +1050,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         let arrayKataLengkap = acakUrutan(materiDipilih.kata.split(",").map(k => k.trim()));
                         dbGame.ref('rooms/' + pinRoom).set({ host: sessionStorage.getItem("userName"), materi: materiDipilih.materi, daftar_kata: arrayKataLengkap, status: "lobby", pemain: {}, chat: {} }).then(() => { sessionStorage.setItem("active_game_room", pinRoom); sessionStorage.setItem("is_game_host", "true"); loadPage("arena-bermain"); });
                     } else if (jenisGame === "balap_ketik") {
-                        const materiDipilih = window.bankKataGame.find(x => x.kode === kodeMateri);
-                        let arrayKataLengkap = materiDipilih.kata.split(",").map(k => k.trim());
-                        let teksBalapanUtuh = arrayKataLengkap.join(" "); 
-                        dbGame.ref('balap_rooms/' + pinRoom).set({ host: sessionStorage.getItem("userName"), materi: materiDipilih.materi, teks_balapan: teksBalapanUtuh, mode: "database", status: "lobby", pemain: {}, pemenang: "" }).then(() => { sessionStorage.setItem("active_balap_room", pinRoom); sessionStorage.setItem("is_balap_host", "true"); loadPage("arena-balap"); });
+                                // --- KUNCI: Biarkan teks utuh tanpa di-split koma agar format Enter (\n) tidak hilang ---
+                                let teksBalapanUtuh = teksMentah; 
+                                
+                                dbGame.ref('balap_rooms/' + pinRoom).set({ host: sessionStorage.getItem("userName"), materi: materiDipilih.materi, teks_balapan: teksBalapanUtuh, mode: "database", status: "lobby", pemain: {}, pemenang: "" })
+                                .then(() => { sessionStorage.setItem("active_balap_room", pinRoom); sessionStorage.setItem("is_balap_host", "true"); loadPage("arena-balap"); })
+                                .catch(err => { alert("Gagal membuat room!"); btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; });
                     } else if (jenisGame === "balap_ketik_free") {
                         // KUNCI: Mode Bebas tidak butuh teks materi, tapi butuh Target Finish
                         let targetKarakter = prompt("Masukkan Target Jumlah Huruf/Karakter untuk Finish.\n\nSaran: Ketik 300 sampai 1000 (1 Kata rata-rata = 5 huruf)", "500");
@@ -2694,12 +2696,18 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             function updateTeksBerjalan(benar, salah, aktif, sisa) {
-                document.getElementById("teks-selesai").innerText = benar;
-                document.getElementById("teks-salah").innerText = salah;
-                document.getElementById("teks-aktif").innerText = aktif || "";
-                document.getElementById("teks-sisa").innerText = sisa || "";
-                let shiftAmount = benar.length * 19.2; 
-                document.getElementById("wadah-teks-berjalan").style.transform = `translateX(calc(50% - ${shiftAmount}px))`;
+                // Menggunakan textContent agar spasi dan enter (\n) terbaca sempurna
+                document.getElementById("teks-selesai").textContent = benar;
+                document.getElementById("teks-salah").textContent = salah;
+                
+                // --- KUNCI: Jika huruf yang harus diketik adalah "Enter", munculkan simbol ↵ ---
+                let teksAktifVisual = (aktif === "\n") ? "↵\n" : aktif;
+                document.getElementById("teks-aktif").textContent = teksAktifVisual || "";
+                
+                document.getElementById("teks-sisa").textContent = sisa || "";
+                
+                // Matikan animasi geser horizontal karena wujudnya sekarang paragraf turun ke bawah
+                document.getElementById("wadah-teks-berjalan").style.transform = "none";
             }
 
             // 2. SENSOR KETIK & KECEPATAN (WPM)
