@@ -2557,7 +2557,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.currentBalapStatus = roomData.status;
                 document.getElementById("balap-materi").innerText = "Materi: " + roomData.materi;
                 targetTeksUtuh = roomData.teks_balapan || "";
-                let totalKarakter = targetTeksUtuh.length || 1;
+               
 
                 // Kontrol UI Status
                 let isFreeMode = roomData.mode === "free";
