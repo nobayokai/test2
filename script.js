@@ -2703,63 +2703,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // 2. SENSOR KETIK & KECEPATAN (WPM)
+            
+            // --- SENSOR KETIK MODE DATABASE ---
             inputKetik.addEventListener("input", () => {
-
-                // SENSOR KETIK MODE BEBAS (Menyalin Buku)
-            if (inputBebas) {
-                inputBebas.addEventListener("input", () => {
-                    if (inputBebas.disabled || roomData.pemain[myName]?.selesai) return;
-
-                    let charProgress = inputBebas.value.length;
-                    let targetKarakter = roomData.target_karakter || 500;
-
-                    // Hitung WPM
-                    let timeElapsedMin = (Date.now() - startTime) / 60000;
-                    let wpm = timeElapsedMin > 0 ? Math.round((charProgress / 5) / timeElapsedMin) : 0;
-                    document.getElementById("wpm-display").innerText = `${wpm} WPM`;
-
-                    let now = Date.now();
-                    // Sync ke Firebase & Aktifkan Nitro murni berdasarkan WPM > 30 (karena tidak ada sistem cek typo)
-                    if (now - lastSyncTime > 800 || charProgress >= targetKarakter) {
-                        let isNitro = wpm > 30; 
-                        dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ progress: charProgress, nitro: isNitro });
-                        lastSyncTime = now;
-                    }
-
-                    // JIKA MENCAPAI FINISH
-                    if (charProgress >= targetKarakter) {
-                        inputBebas.disabled = true;
-                        
-                        dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snapRank => {
-                            let rankData = snapRank.val();
-                            let currentRank = rankData.peringkat_sekarang || 1;
-                            
-                            dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({
-                                selesai: true, peringkat: currentRank, skor: (roomData.pemain[myName]?.skor || 0) + 10
-                            }).then(() => {
-                                dbGame.ref(`balap_rooms/${pinRoom}`).update({ peringkat_sekarang: currentRank + 1 }).then(() => {
-                                    dbGame.ref(`balap_rooms/${pinRoom}/pemain`).once('value', snapCheck => {
-                                        let playersObj = snapCheck.val() || {};
-                                        let totalPlayers = Object.keys(playersObj).length;
-                                        let finishedPlayers = Object.values(playersObj).filter(p => p.selesai).length;
-
-                                        if (finishedPlayers >= totalPlayers && window.currentBalapStatus !== "finished") {
-                                            dbGame.ref(`balap_rooms/${pinRoom}/status`).set("finished");
-                                        }
-                                    });
-                                });
-                            });
-                        });
-                    }
-                });
-            }
-
-            // Perbarui Event Klik agar menyesuaikan mode
-            areaMengetik.addEventListener("click", () => { 
-                let activeInput = (roomData && roomData.mode === "free") ? inputBebas : inputKetik;
-                if(activeInput && !activeInput.disabled) activeInput.focus(); 
-            });
-                
                 if (!targetTeksUtuh || inputKetik.disabled || roomData.pemain[myName]?.selesai) return;
                 
                 let ketikan = inputKetik.value; 
@@ -2796,23 +2742,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     inputKetik.disabled = true;
                     updateTeksBerjalan("", "", "", "✅ Luar biasa! Menunggu teman yang lain...");
                     
-                    // Ambil peringkat saat ini secara realtime
                     dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snapRank => {
                         let rankData = snapRank.val();
                         let currentRank = rankData.peringkat_sekarang || 1;
                         
-                        // Set status diri menjadi 'selesai' dan catat juara ke berapa
                         dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({
-                            selesai: true,
-                            peringkat: currentRank,
-                            skor: (roomData.pemain[myName]?.skor || 0) + 10 // Poin kemenangan ketik
+                            selesai: true, peringkat: currentRank, skor: (roomData.pemain[myName]?.skor || 0) + 10
                         }).then(() => {
-                            // Naikkan peringkat untuk orang selanjutnya
-                            dbGame.ref(`balap_rooms/${pinRoom}`).update({
-                                peringkat_sekarang: currentRank + 1
-                            }).then(() => {
-                                
-                                // CEK APAKAH SEMUA PEMAIN SUDAH SELESAI?
+                            dbGame.ref(`balap_rooms/${pinRoom}`).update({ peringkat_sekarang: currentRank + 1 }).then(() => {
                                 dbGame.ref(`balap_rooms/${pinRoom}/pemain`).once('value', snapCheck => {
                                     let playersObj = snapCheck.val() || {};
                                     let totalPlayers = Object.keys(playersObj).length;
@@ -2822,11 +2759,63 @@ document.addEventListener("DOMContentLoaded", () => {
                                         dbGame.ref(`balap_rooms/${pinRoom}/status`).set("finished");
                                     }
                                 });
-                                
                             });
                         });
                     });
                 }
+            });
+
+            // --- SENSOR KETIK MODE BEBAS (Menyalin Buku) ---
+            if (inputBebas) {
+                inputBebas.addEventListener("input", () => {
+                    if (inputBebas.disabled || roomData.pemain[myName]?.selesai) return;
+
+                    let charProgress = inputBebas.value.length;
+                    let targetKarakter = roomData.target_karakter || 500;
+
+                    // Hitung WPM
+                    let timeElapsedMin = (Date.now() - startTime) / 60000;
+                    let wpm = timeElapsedMin > 0 ? Math.round((charProgress / 5) / timeElapsedMin) : 0;
+                    document.getElementById("wpm-display").innerText = `${wpm} WPM`;
+
+                    let now = Date.now();
+                    if (now - lastSyncTime > 800 || charProgress >= targetKarakter) {
+                        let isNitro = wpm > 30; 
+                        dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ progress: charProgress, nitro: isNitro });
+                        lastSyncTime = now;
+                    }
+
+                    if (charProgress >= targetKarakter) {
+                        inputBebas.disabled = true;
+                        
+                        dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snapRank => {
+                            let rankData = snapRank.val();
+                            let currentRank = rankData.peringkat_sekarang || 1;
+                            
+                            dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({
+                                selesai: true, peringkat: currentRank, skor: (roomData.pemain[myName]?.skor || 0) + 10
+                            }).then(() => {
+                                dbGame.ref(`balap_rooms/${pinRoom}`).update({ peringkat_sekarang: currentRank + 1 }).then(() => {
+                                    dbGame.ref(`balap_rooms/${pinRoom}/pemain`).once('value', snapCheck => {
+                                        let playersObj = snapCheck.val() || {};
+                                        let totalPlayers = Object.keys(playersObj).length;
+                                        let finishedPlayers = Object.values(playersObj).filter(p => p.selesai).length;
+
+                                        if (finishedPlayers >= totalPlayers && window.currentBalapStatus !== "finished") {
+                                            dbGame.ref(`balap_rooms/${pinRoom}/status`).set("finished");
+                                        }
+                                    });
+                                });
+                            });
+                        });
+                    }
+                });
+            }
+
+            // Perbarui Event Klik agar menyesuaikan mode
+            areaMengetik.addEventListener("click", () => { 
+                let activeInput = (roomData && roomData.mode === "free") ? inputBebas : inputKetik;
+                if(activeInput && !activeInput.disabled) activeInput.focus(); 
             });
 
             // 3. KELUAR SIRKUIT
