@@ -2735,82 +2735,89 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             function updateTeksBerjalan(benar, salah, aktif, sisa) {
-                // Menggunakan textContent agar spasi dan enter (\n) terbaca sempurna
+                const wadah = document.getElementById("wadah-teks-berjalan");
                 document.getElementById("teks-selesai").textContent = benar;
                 document.getElementById("teks-salah").textContent = salah;
                 
-                // --- KUNCI: Jika huruf yang harus diketik adalah "Enter", munculkan simbol ↵ ---
                 let teksAktifVisual = (aktif === "\n") ? "↵\n" : aktif;
                 document.getElementById("teks-aktif").textContent = teksAktifVisual || "";
-                
                 document.getElementById("teks-sisa").textContent = sisa || "";
                 
-                // Matikan animasi geser horizontal karena wujudnya sekarang paragraf turun ke bawah
-                document.getElementById("wadah-teks-berjalan").style.transform = "none";
+                // Matikan animasi geser & Paksa kata yang panjang untuk turun baris
+                wadah.style.transform = "none";
+                wadah.style.wordWrap = "break-word";
+                wadah.style.wordBreak = "break-word";
             }
 
+            // ==============================================
             // 2. SENSOR KETIK & KECEPATAN (WPM)
+            // ==============================================
             
             // --- SENSOR KETIK MODE DATABASE ---
-            inputKetik.addEventListener("input", () => {
-                if (!targetTeksUtuh || inputKetik.disabled || roomData.pemain[myName]?.selesai) return;
-                
-                let ketikan = inputKetik.value; 
-                let charProgress = 0;
-                let hasError = false;
-
-                let teksBenar = ""; let teksSalah = "";
-                for (let i = 0; i < ketikan.length; i++) {
-                    if (ketikan[i] === targetTeksUtuh[i] && !hasError) { teksBenar += ketikan[i]; } 
-                    else { hasError = true; teksSalah += ketikan[i]; }
-                }
-
-                charProgress = teksBenar.length;
-                let sisaTeks = targetTeksUtuh.substring(charProgress + teksSalah.length);
-                let hurufAktif = sisaTeks.length > 0 ? sisaTeks[0] : "";
-                let hurufSisaLanjutan = sisaTeks.length > 1 ? sisaTeks.substring(1) : "";
-
-                updateTeksBerjalan(teksBenar, teksSalah, hurufAktif, hurufSisaLanjutan);
-                areaMengetik.style.borderColor = hasError ? "#dc3545" : "#0d6efd";
-
-                let timeElapsedMin = (Date.now() - startTime) / 60000;
-                let wpm = timeElapsedMin > 0 ? Math.round((charProgress / 5) / timeElapsedMin) : 0;
-                document.getElementById("wpm-display").innerText = `${wpm} WPM`;
-
-                let now = Date.now();
-                if (now - lastSyncTime > 800 || charProgress === targetTeksUtuh.length) {
-                    let isNitro = wpm > 30 && !hasError; 
-                    dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ progress: charProgress, nitro: isNitro });
-                    lastSyncTime = now;
-                }
-
-                // --- JIKA SISWA INI MENCAPAI FINISH ---
-                if (charProgress === targetTeksUtuh.length && !hasError) {
-                    inputKetik.disabled = true;
-                    updateTeksBerjalan("", "", "", "✅ Luar biasa! Menunggu teman yang lain...");
+            if (inputKetik) {
+                inputKetik.addEventListener("input", () => {
                     
-                    dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snapRank => {
-                        let rankData = snapRank.val();
-                        let currentRank = rankData.peringkat_sekarang || 1;
-                        
-                        dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({
-                            selesai: true, peringkat: currentRank, skor: (roomData.pemain[myName]?.skor || 0) + 10
-                        }).then(() => {
-                            dbGame.ref(`balap_rooms/${pinRoom}`).update({ peringkat_sekarang: currentRank + 1 }).then(() => {
-                                dbGame.ref(`balap_rooms/${pinRoom}/pemain`).once('value', snapCheck => {
-                                    let playersObj = snapCheck.val() || {};
-                                    let totalPlayers = Object.keys(playersObj).length;
-                                    let finishedPlayers = Object.values(playersObj).filter(p => p.selesai).length;
+                    // KUNCI PERBAIKAN: Paksa kunci scroll ke kiri agar teks tidak kepotong!
+                    if (areaMengetik) areaMengetik.scrollLeft = 0;
 
-                                    if (finishedPlayers >= totalPlayers && window.currentBalapStatus !== "finished") {
-                                        dbGame.ref(`balap_rooms/${pinRoom}/status`).set("finished");
-                                    }
+                    if (!targetTeksUtuh || inputKetik.disabled || roomData.pemain[myName]?.selesai) return;
+                    
+                    let ketikan = inputKetik.value; 
+                    let charProgress = 0;
+                    let hasError = false;
+
+                    let teksBenar = ""; let teksSalah = "";
+                    for (let i = 0; i < ketikan.length; i++) {
+                        if (ketikan[i] === targetTeksUtuh[i] && !hasError) { teksBenar += ketikan[i]; } 
+                        else { hasError = true; teksSalah += ketikan[i]; }
+                    }
+
+                    charProgress = teksBenar.length;
+                    let sisaTeks = targetTeksUtuh.substring(charProgress + teksSalah.length);
+                    let hurufAktif = sisaTeks.length > 0 ? sisaTeks[0] : "";
+                    let hurufSisaLanjutan = sisaTeks.length > 1 ? sisaTeks.substring(1) : "";
+
+                    updateTeksBerjalan(teksBenar, teksSalah, hurufAktif, hurufSisaLanjutan);
+                    areaMengetik.style.borderColor = hasError ? "#dc3545" : "#0d6efd";
+
+                    let timeElapsedMin = (Date.now() - startTime) / 60000;
+                    let wpm = timeElapsedMin > 0 ? Math.round((charProgress / 5) / timeElapsedMin) : 0;
+                    document.getElementById("wpm-display").innerText = `${wpm} WPM`;
+
+                    let now = Date.now();
+                    if (now - lastSyncTime > 800 || charProgress === targetTeksUtuh.length) {
+                        let isNitro = wpm > 30 && !hasError; 
+                        dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ progress: charProgress, nitro: isNitro });
+                        lastSyncTime = now;
+                    }
+
+                    if (charProgress === targetTeksUtuh.length && !hasError) {
+                        inputKetik.disabled = true;
+                        updateTeksBerjalan("", "", "", "✅ Luar biasa! Menunggu teman yang lain...");
+                        
+                        dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snapRank => {
+                            let rankData = snapRank.val();
+                            let currentRank = rankData.peringkat_sekarang || 1;
+                            
+                            dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({
+                                selesai: true, peringkat: currentRank, skor: (roomData.pemain[myName]?.skor || 0) + 10
+                            }).then(() => {
+                                dbGame.ref(`balap_rooms/${pinRoom}`).update({ peringkat_sekarang: currentRank + 1 }).then(() => {
+                                    dbGame.ref(`balap_rooms/${pinRoom}/pemain`).once('value', snapCheck => {
+                                        let playersObj = snapCheck.val() || {};
+                                        let totalPlayers = Object.keys(playersObj).length;
+                                        let finishedPlayers = Object.values(playersObj).filter(p => p.selesai).length;
+
+                                        if (finishedPlayers >= totalPlayers && window.currentBalapStatus !== "finished") {
+                                            dbGame.ref(`balap_rooms/${pinRoom}/status`).set("finished");
+                                        }
+                                    });
                                 });
                             });
                         });
-                    });
-                }
-            });
+                    }
+                });
+            }
 
             // --- SENSOR KETIK MODE BEBAS (Menyalin Buku) ---
             if (inputBebas) {
@@ -2820,7 +2827,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     let charProgress = inputBebas.value.length;
                     let targetKarakter = roomData.target_karakter || 500;
 
-                    // Hitung WPM
                     let timeElapsedMin = (Date.now() - startTime) / 60000;
                     let wpm = timeElapsedMin > 0 ? Math.round((charProgress / 5) / timeElapsedMin) : 0;
                     document.getElementById("wpm-display").innerText = `${wpm} WPM`;
@@ -2859,20 +2865,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
 
-            // Perbarui Event Klik agar menyesuaikan mode
-            areaMengetik.addEventListener("click", () => { 
-                let activeInput = (roomData && roomData.mode === "free") ? inputBebas : inputKetik;
-                if(activeInput && !activeInput.disabled) activeInput.focus(); 
-            });
-
-            // 3. KELUAR SIRKUIT
-            window.keluarBalap = function() {
-                if (isHost) dbGame.ref('balap_rooms/' + pinRoom).remove();
-                else dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).remove();
-                sessionStorage.removeItem("active_balap_room");
-                loadPage("edu-game");
-            };
-        }
+            // Perbarui Event Klik agar selalu fokus ke input yang benar
+            if (areaMengetik) {
+                areaMengetik.addEventListener("click", () => { 
+                    let activeInput = (roomData && roomData.mode === "free") ? inputBebas : inputKetik;
+                    if(activeInput && !activeInput.disabled) activeInput.focus(); 
+                });
+            }
         
         
     }; // ----- AKHIR dari loadPage = async function--------
