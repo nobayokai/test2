@@ -1038,30 +1038,69 @@ document.addEventListener("DOMContentLoaded", () => {
                 btnBuatRoom.addEventListener("click", () => {
                     const jenisGame = document.getElementById("select-jenis-game").value;
                     const kodeMateri = document.getElementById("select-materi-game").value;
-                    
+
                     // Jika BUKAN mode bebas, wajib pilih materi!
-                    if (jenisGame !== "balap_ketik_free" && !kodeMateri) { alert("Pilih materi terlebih dahulu!"); return; }
+                    if (jenisGame !== "balap_ketik_free" && !kodeMateri) { 
+                        alert("Pilih materi terlebih dahulu!"); 
+                        return; 
+                    }
 
                     const pinRoom = Math.floor(10000 + Math.random() * 90000).toString();
                     btnBuatRoom.innerText = "Membangun Room...";
-                    
-                    if (jenisGame === "tebak_kata") {
-                        const materiDipilih = window.bankKataGame.find(x => x.kode === kodeMateri);
-                        let arrayKataLengkap = acakUrutan(materiDipilih.kata.split(",").map(k => k.trim()));
-                        dbGame.ref('rooms/' + pinRoom).set({ host: sessionStorage.getItem("userName"), materi: materiDipilih.materi, daftar_kata: arrayKataLengkap, status: "lobby", pemain: {}, chat: {} }).then(() => { sessionStorage.setItem("active_game_room", pinRoom); sessionStorage.setItem("is_game_host", "true"); loadPage("arena-bermain"); });
-                    } else if (jenisGame === "balap_ketik") {
-                                // --- KUNCI: Biarkan teks utuh tanpa di-split koma agar format Enter (\n) tidak hilang ---
+
+                    try {
+                        if (jenisGame === "balap_ketik_free") {
+                            // MODE BEBAS
+                            let targetKarakter = prompt("Masukkan Target Jumlah Huruf/Karakter untuk Finish.\n\nSaran: Ketik 300 sampai 1000 (1 Kata rata-rata = 5 huruf)", "500");
+                            if (!targetKarakter || isNaN(targetKarakter)) { 
+                                btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; 
+                                return; 
+                            }
+                            
+                            dbGame.ref('balap_rooms/' + pinRoom).set({ host: sessionStorage.getItem("userName"), materi: "Menyalin Teks Buku Bebas", mode: "free", target_karakter: parseInt(targetKarakter), status: "lobby", pemain: {}, pemenang: "" })
+                            .then(() => { sessionStorage.setItem("active_balap_room", pinRoom); sessionStorage.setItem("is_balap_host", "true"); loadPage("arena-balap"); })
+                            .catch(err => { alert("Koneksi ke server terputus."); btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; });
+                            
+                        } else {
+                            // MODE DATABASE (Tebak Kata & Balap Ketik Biasa)
+                            const materiDipilih = window.bankKataGame.find(x => String(x.kode) === String(kodeMateri));
+                            
+                            if (!materiDipilih) {
+                                alert("Materi tidak ditemukan di sistem! Pastikan materi sudah ter-load dengan benar.");
+                                btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`;
+                                return;
+                            }
+
+                            // Deklarasikan teksMentah di luar sini agar bisa dibaca oleh semua mode game
+                            let teksMentah = materiDipilih.kata || materiDipilih.isi || "";
+                            if (teksMentah.trim() === "") {
+                                alert("Data kata pada materi ini kosong! Silakan periksa Database Excel Anda.");
+                                btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`;
+                                return;
+                            }
+
+                            if (jenisGame === "tebak_kata") {
+                                let arrayKataLengkap = teksMentah.split(",").map(k => k.trim());
+                                let arrayAcak = (typeof acakUrutan === "function") ? acakUrutan([...arrayKataLengkap]) : arrayKataLengkap;
+                                
+                                dbGame.ref('rooms/' + pinRoom).set({ host: sessionStorage.getItem("userName"), materi: materiDipilih.materi, daftar_kata: arrayAcak, status: "lobby", pemain: {}, chat: {} })
+                                .then(() => { sessionStorage.setItem("active_game_room", pinRoom); sessionStorage.setItem("is_game_host", "true"); loadPage("arena-bermain"); })
+                                .catch(err => { alert("Gagal membuat room!"); btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; });
+                                
+                            } else if (jenisGame === "balap_ketik") {
+                                // --- KUNCI: Biarkan teks utuh tanpa di-split agar format Enter (\n) terbaca ---
                                 let teksBalapanUtuh = teksMentah; 
                                 
                                 dbGame.ref('balap_rooms/' + pinRoom).set({ host: sessionStorage.getItem("userName"), materi: materiDipilih.materi, teks_balapan: teksBalapanUtuh, mode: "database", status: "lobby", pemain: {}, pemenang: "" })
                                 .then(() => { sessionStorage.setItem("active_balap_room", pinRoom); sessionStorage.setItem("is_balap_host", "true"); loadPage("arena-balap"); })
                                 .catch(err => { alert("Gagal membuat room!"); btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; });
-                    } else if (jenisGame === "balap_ketik_free") {
-                        // KUNCI: Mode Bebas tidak butuh teks materi, tapi butuh Target Finish
-                        let targetKarakter = prompt("Masukkan Target Jumlah Huruf/Karakter untuk Finish.\n\nSaran: Ketik 300 sampai 1000 (1 Kata rata-rata = 5 huruf)", "500");
-                        if (!targetKarakter || isNaN(targetKarakter)) { btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; return; }
-                        
-                        dbGame.ref('balap_rooms/' + pinRoom).set({ host: sessionStorage.getItem("userName"), materi: "Menyalin Teks Buku Bebas", mode: "free", target_karakter: parseInt(targetKarakter), status: "lobby", pemain: {}, pemenang: "" }).then(() => { sessionStorage.setItem("active_balap_room", pinRoom); sessionStorage.setItem("is_balap_host", "true"); loadPage("arena-balap"); });
+                            }
+                        }
+                    } catch (error) {
+                        // Jaring pengaman: Jika terjadi error sistem, kembalikan teks tombol!
+                        console.error("Error Game:", error);
+                        alert("Terjadi kesalahan sistem saat membuat room. Coba lagi.");
+                        btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`;
                     }
                 });
             }
