@@ -1515,7 +1515,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <tr>
                             <td style="text-align:center;">${index + 1}</td>
                             <td>${soal.tipe}</td>
-                            <td style="white-space: pre-wrap;">${previewPertanyaan}</td>
+                            <td style="white-space: pre-wrap; text-align: justify;">${previewPertanyaan}</td>
                             <td>${previewPilihan}</td>
                             <td style="font-weight:bold; color:#198754;">${soal.kunci || "-"}</td>
                             <td style="text-align:center;">
@@ -3104,7 +3104,7 @@ document.addEventListener("DOMContentLoaded", () => {
             teksPertanyaan = teksPertanyaan.replace(/\[IMG:.*?\]/, `<br><img src="${urlGambar}" style="max-width:100%; margin-top:10px; border-radius:5px;"><br>`);
         }
        // Kita ubah <p> menjadi <div> agar tag HTML dari CKEditor tidak rusak saat dimunculkan
-        htmlSoal += `<div class="pertanyaan" style="margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap;">${teksPertanyaan} <div style="display:inline-block; margin-left: 10px; font-weight: bold; color: #198754; font-size: 14px;" class="poin-soal">(${soal.poin} Poin)</div></div><hr style="margin: 15px 0; border-top: 1px solid #eee;">`;
+        htmlSoal += `<div class="pertanyaan" style="margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap; text-align: justify;">${teksPertanyaan} <div style="display:inline-block; margin-left: 10px; font-weight: bold; color: #198754; font-size: 14px;" class="poin-soal">(${soal.poin} Poin)</div></div><hr style="margin: 15px 0; border-top: 1px solid #eee;">`;
         
         // Render Tipe Soal (Logikanya sama seperti sebelumnya)
         if (soal.tipe === "PG" || soal.tipe === "Benar_Salah") {
