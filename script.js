@@ -1852,7 +1852,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (page === "upload-soal") {
             let previewData = []; 
 
-            // 1. Buat & Unduh Template Otomatis
+            // 1A. Buat & Unduh Template EXCEL
             document.getElementById("btn-download-template").addEventListener("click", () => {
                 const ws_data = [
                     ["Kode Soal", "Tipe Soal", "Pertanyaan", "Pilihan Jawaban", "Kunci Jawaban", "Poin"],
@@ -1866,42 +1866,151 @@ document.addEventListener("DOMContentLoaded", () => {
                 XLSX.writeFile(wb, "Template_Upload_CBT.xlsx");
             });
 
-            // 2. Membaca File Excel yang Diupload
+            // 1B. Buat & Unduh Template WORD (Anti-Numbering)
+            document.getElementById("btn-dl-template-word")?.addEventListener("click", () => {
+                const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Template Soal</title></head><body>";
+                const footer = "</body></html>";
+                const content = `
+                    <div style="border: 2px solid red; padding: 10px; background: #ffeeee; margin-bottom: 20px;">
+                        <h3 style="color: red; margin: 0;">🚨 JANGAN GUNAKAN BULLETS & NUMBERING OTOMATIS!</h3>
+                        <p>Ketik nomor soal (1.) dan huruf pilihan (A.) secara <b>MANUAL</b>. Jika Word menggeser teks secara otomatis, tekan <b>Ctrl+Z</b>.</p>
+                        <p>Tipe Soal Otomatis: <b>PG</b>. Poin Otomatis: <b>10</b>.</p>
+                    </div>
+                    <p><b>KODE: B.INDO-4B</b></p>
+                    <br>
+                    <p>1. Ibukota negara Indonesia adalah...</p>
+                    <p>A. Bandung</p>
+                    <p>B. Jakarta</p>
+                    <p>C. Surabaya</p>
+                    <p>D. Medan</p>
+                    <p>KUNCI: B</p>
+                    <br>
+                    <p>2. Hewan pemakan daging disebut...</p>
+                    <p>A. Herbivora</p>
+                    <p>B. Omnivora</p>
+                    <p>C. Karnivora</p>
+                    <p>D. Insektivora</p>
+                    <p>KUNCI: C</p>
+                `;
+                const blob = new Blob(['\ufeff', header + content + footer], { type: 'application/msword' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'Template_Soal_Word.doc';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            });
+
+            // 2. Membaca File yang Diupload (Deteksi Excel atau Word)
             document.getElementById("file-excel-soal").addEventListener("change", (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheet = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheet];
-                    
-                    // Ubah sheet jadi array
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1}); 
-                    
-                    previewData = [];
-                    // Mulai dari i=1 untuk melewati baris Judul (Header)
-                    for (let i = 1; i < jsonData.length; i++) {
-                        const row = jsonData[i];
-                        if (row.length === 0 || !row[0]) continue; // Lewati baris kosong
+                const fileName = file.name.toLowerCase();
+                const areaPreview = document.getElementById("area-preview-upload");
+
+                // JIKA EXCEL
+                if (fileName.includes(".xls")) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1}); 
                         
-                        previewData.push({
-                            id: Date.now() + i, // ID unik sementara
-                            kode: row[0] || "",
-                            tipe: row[1] || "",
-                            pertanyaan: row[2] || "",
-                            pilihan: row[3] || "-",
-                            kunci: row[4] || "-",
-                            poin: row[5] || 10,
-                            imgBase64: "", imgMime: "", imgName: ""
-                        });
-                    }
-                    renderPreviewTable();
-                };
-                reader.readAsArrayBuffer(file);
+                        previewData = [];
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (row.length === 0 || !row[0]) continue; 
+                            previewData.push({
+                                id: Date.now() + i,
+                                kode: row[0] || "", tipe: row[1] || "PG", pertanyaan: row[2] || "",
+                                pilihan: row[3] || "-", kunci: row[4] || "-", poin: row[5] || 10,
+                                imgBase64: "", imgMime: "", imgName: ""
+                            });
+                        }
+                        renderPreviewTable();
+                    };
+                    reader.readAsArrayBuffer(file);
+                } 
+                // JIKA WORD
+                else if (fileName.includes(".doc")) {
+                    areaPreview.style.display = "block";
+                    document.getElementById("body-preview-soal").innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Mengekstrak teks dari Word...</td></tr>`;
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        mammoth.extractRawText({arrayBuffer: event.target.result})
+                            .then(function(result) {
+                                previewData = bedahTeksWordKeJSON(result.value);
+                                if(previewData.length === 0) {
+                                    alert("Gagal membaca soal. Pastikan format pengetikan sesuai dengan Template Word!");
+                                }
+                                renderPreviewTable();
+                            })
+                            .catch(err => {
+                                alert("File Word rusak atau tidak terbaca.");
+                                areaPreview.style.display = "none";
+                            });
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    alert("Format file tidak didukung!");
+                }
             });
+
+            // --- FUNGSI PEMBEDAH TEKS WORD (Mengubah teks Word menjadi format Excel) ---
+            function bedahTeksWordKeJSON(text) {
+                const lines = text.split('\n').map(line => line.trim()).filter(line => line !== "");
+                let soalArray = [];
+                let soalAktif = null;
+                let kodeSoalGlobal = "UMUM"; 
+
+                const polaKode = /^KODE:\s*(.*)/i;
+                const polaSoal = /^\d+[\.\)]\s+(.*)/;      
+                const polaOpsi = /^([A-E])[\.\)]\s+(.*)/i; 
+                const polaKunci = /^KUNCI:\s*([A-E])/i;  
+
+                for (let i = 0; i < lines.length; i++) {
+                    let line = lines[i];
+
+                    if (polaKode.test(line)) { kodeSoalGlobal = line.match(polaKode)[1].trim(); }
+                    else if (polaSoal.test(line)) {
+                        if (soalAktif) simpanSoalKeArray(soalAktif, soalArray, kodeSoalGlobal);
+                        soalAktif = { pertanyaan: line.match(polaSoal)[1], opsi: [], kunciHuruf: "" };
+                    } 
+                    else if (polaOpsi.test(line) && soalAktif) {
+                        let match = line.match(polaOpsi);
+                        soalAktif.opsi.push({ huruf: match[1].toUpperCase(), teks: match[2] });
+                    } 
+                    else if (polaKunci.test(line) && soalAktif) {
+                        soalAktif.kunciHuruf = line.match(polaKunci)[1].toUpperCase();
+                    } 
+                    else if (soalAktif && !polaOpsi.test(line) && !polaKunci.test(line)) {
+                        soalAktif.pertanyaan += "\n" + line; // Sambungan paragraf
+                    }
+                }
+                if (soalAktif) simpanSoalKeArray(soalAktif, soalArray, kodeSoalGlobal);
+                return soalArray;
+            }
+
+            function simpanSoalKeArray(soal, array, kodeGlobal) {
+                // Konversi opsi menjadi string dipisah garis lurus (|) seperti format Excel Anda
+                let stringPilihan = soal.opsi.map(o => o.teks).join("|");
+                
+                // Cari teks jawaban yang benar berdasarkan huruf Kunci
+                let teksKunci = "-";
+                let opsiBenar = soal.opsi.find(o => o.huruf === soal.kunciHuruf);
+                if (opsiBenar) teksKunci = opsiBenar.teks; // Simpan teksnya, bukan hurufnya, agar sesuai sistem CBT Anda
+
+                array.push({
+                    id: Date.now() + array.length,
+                    kode: kodeGlobal,
+                    tipe: "PG", // Default Word dijadikan PG
+                    pertanyaan: soal.pertanyaan,
+                    pilihan: stringPilihan || "-",
+                    kunci: teksKunci,
+                    poin: 10,
+                    imgBase64: "", imgMime: "", imgName: ""
+                });
+            }
 
             // 3. Render Tabel Preview yang Bisa Di-Edit
             function renderPreviewTable() {
