@@ -1511,11 +1511,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     let poinAngka = Number(soal.poin) || 0;
                     totalPoin += poinAngka;
 
-                    html += `
+                   html += `
                         <tr>
                             <td style="text-align:center;">${index + 1}</td>
                             <td>${soal.tipe}</td>
-                            <td>${previewPertanyaan}</td>
+                            <td style="white-space: pre-wrap;">${previewPertanyaan}</td>
                             <td>${previewPilihan}</td>
                             <td style="font-weight:bold; color:#198754;">${soal.kunci || "-"}</td>
                             <td style="text-align:center;">
@@ -1757,7 +1757,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <td style="font-weight:bold;">${hasil.nama}</td>
                             <td style="text-align:center;">${hasil.kode}</td>
                             <td style="text-align:center; font-weight:bold; color:#198754; font-size:16px;">${hasil.skor}</td>
-                            <td style="font-size:12px;">${previewAI}</td>
+                            <td style="font-size:12px; white-space: pre-wrap; min-width: 300px; line-height: 1.5;">${hasil.analisis}</td>
                             <td style="text-align:center;">
                                 <button class="btn-hapus-soal" onclick="hapusHasilUjian(${hasil.indexAsli}, '${hasil.nama}', '${hasil.kode}')" style="width:auto; padding:5px 10px; font-size:12px;">
                                     <i class="fa-solid fa-trash"></i>
@@ -1812,7 +1812,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("pdf-cetak-skor").innerText = dataSiswa.skor;
                 
                 // Susun paragraf AI
-                const paragraphs = dataSiswa.analisis.split('\\n').filter(p => p.trim() !== '');
+                const paragraphs = dataSiswa.analisis.split('\n').filter(p => p.trim() !== '');
                 let formattedFeedback = '';
                 paragraphs.forEach(p => {
                     formattedFeedback += `<p style="margin-bottom: 12px; line-height: 1.6;">${p}</p>`;
@@ -3103,8 +3103,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const urlGambar = teksPertanyaan.match(/\[IMG:(.*?)\]/)[1];
             teksPertanyaan = teksPertanyaan.replace(/\[IMG:.*?\]/, `<br><img src="${urlGambar}" style="max-width:100%; margin-top:10px; border-radius:5px;"><br>`);
         }
-        // Kita ubah <p> menjadi <div> agar tag HTML dari CKEditor tidak rusak saat dimunculkan
-        htmlSoal += `<div class="pertanyaan" style="margin-bottom: 10px; line-height: 1.6;">${teksPertanyaan} <div style="display:inline-block; margin-left: 10px; font-weight: bold; color: #198754; font-size: 14px;" class="poin-soal">(${soal.poin} Poin)</div></div><hr style="margin: 15px 0; border-top: 1px solid #eee;">`;
+       // Kita ubah <p> menjadi <div> agar tag HTML dari CKEditor tidak rusak saat dimunculkan
+        htmlSoal += `<div class="pertanyaan" style="margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap;">${teksPertanyaan} <div style="display:inline-block; margin-left: 10px; font-weight: bold; color: #198754; font-size: 14px;" class="poin-soal">(${soal.poin} Poin)</div></div><hr style="margin: 15px 0; border-top: 1px solid #eee;">`;
         
         // Render Tipe Soal (Logikanya sama seperti sebelumnya)
         if (soal.tipe === "PG" || soal.tipe === "Benar_Salah") {
