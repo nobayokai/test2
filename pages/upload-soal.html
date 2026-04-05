@@ -1,15 +1,20 @@
 <div class="cbt-layout" style="max-width: 1200px; margin: auto;">
     <div class="cbt-main" style="padding: 30px;">
         <h2 style="color: #198754; border-bottom: 2px solid #198754; padding-bottom: 10px; margin-bottom: 20px;">
-            <i class="fa-solid fa-file-excel"></i> Upload Soal via Excel
+            <i class="fa-solid fa-file-excel"></i> <i class="fa-solid fa-file-word" style="color: #0d6efd;"></i> Upload Soal via Excel / Word
         </h2>
         
         <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #c8e6c9;">
             <h4 style="margin-top:0; color:#198754;"><i class="fa-solid fa-circle-info"></i> Panduan Upload:</h4>
             <ol style="color:#333; line-height: 1.8;">
-                <li>Unduh format tabel kosong di sini: <button id="btn-download-template" class="btn-cbt btn-blue" style="padding:5px 15px; font-size:12px; margin-left: 10px;"><i class="fa-solid fa-download"></i> Download Template Excel</button></li>
-                <li>Buka file Excel tersebut, isi soal-soal Anda. (Jangan ubah baris pertama/judul kolom).</li>
-                <li>Masukkan file yang sudah diisi ke sini: <br><input type="file" id="file-excel-soal" accept=".xlsx, .xls" style="margin-top:10px; padding: 10px; border: 1px dashed #198754; background: white; border-radius: 5px;"></li>
+                <li>Unduh format file kosong di sini: <br>
+                    <button id="btn-download-template" class="btn-cbt btn-blue" style="padding:5px 15px; font-size:12px; margin-top: 5px;"><i class="fa-solid fa-file-excel"></i> Template Excel</button>
+                    <button id="btn-dl-template-word" class="btn-cbt" style="background:#0d6efd; color:white; border:none; border-radius:4px; padding:5px 15px; font-size:12px; margin-top: 5px; margin-left: 5px;"><i class="fa-solid fa-file-word"></i> Template Word</button>
+                </li>
+                <li>Buka file Template tersebut, isi soal-soal Anda sesuai petunjuk di dalamnya.</li>
+                <li>Masukkan file yang sudah diisi ke sini (Bisa Excel atau Word): <br>
+                    <input type="file" id="file-excel-soal" accept=".xlsx, .xls, .doc, .docx" style="margin-top:10px; padding: 10px; border: 1px dashed #198754; background: white; border-radius: 5px; width: 100%; max-width: 400px;">
+                </li>
                 <li>Cek <b>Preview</b> di bawah, Anda bisa mengedit teksnya atau menyisipkan gambar pada soal tertentu sebelum disimpan permanen.</li>
             </ol>
         </div>
