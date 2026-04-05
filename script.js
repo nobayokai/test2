@@ -1915,7 +1915,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.body.appendChild(a); a.click(); document.body.removeChild(a);
             });
 
-            // 2. Membaca File yang Diupload (Deteksi Excel atau Word)
+            // 2. Membaca File yang Diupload (Deteksi Excel atau Word) + LOADING SCREEN
             document.getElementById("file-excel-soal").addEventListener("change", (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -1923,7 +1923,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const fileName = file.name.toLowerCase();
                 const areaPreview = document.getElementById("area-preview-upload");
 
-                // JIKA EXCEL
+                // --- JIKA EXCEL (.xls / .xlsx) ---
                 if (fileName.includes(".xls")) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
@@ -1942,33 +1942,57 @@ document.addEventListener("DOMContentLoaded", () => {
                                 imgBase64: "", imgMime: "", imgName: ""
                             });
                         }
+                        areaPreview.style.display = "block";
                         renderPreviewTable();
                     };
                     reader.readAsArrayBuffer(file);
                 } 
-                // JIKA WORD
+                // --- JIKA WORD (.doc / .docx) ---
                 else if (fileName.includes(".doc")) {
-                    areaPreview.style.display = "block";
-                    document.getElementById("body-preview-soal").innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Mengekstrak teks dari Word...</td></tr>`;
                     
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        mammoth.extractRawText({arrayBuffer: event.target.result})
-                            .then(function(result) {
-                                previewData = bedahTeksWordKeJSON(result.value);
-                                if(previewData.length === 0) {
-                                    alert("Gagal membaca soal. Pastikan format pengetikan sesuai dengan Template Word!");
-                                }
-                                renderPreviewTable();
-                            })
-                            .catch(err => {
-                                alert("File Word rusak atau tidak terbaca.");
-                                areaPreview.style.display = "none";
-                            });
-                    };
-                    reader.readAsArrayBuffer(file);
+                    // 1. MUNCULKAN OVERLAY LOADING EKSTRAK WORD
+                    const overlay = document.createElement("div");
+                    overlay.id = "loading-ekstrak-word";
+                    overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:999999; display:flex; justify-content:center; align-items:center;";
+                    overlay.innerHTML = `
+                        <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                            <i class="fa-solid fa-file-word fa-bounce" style="font-size: 60px; color: #0d6efd; margin-bottom: 20px;"></i>
+                            <h3 style="margin: 0; color: #333;">Membaca Dokumen...</h3>
+                            <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">Mohon tunggu, sedang mengekstrak teks dan mengenali pola soal dari file Word Anda.</p>
+                        </div>`;
+                    document.body.appendChild(overlay);
+                    
+                    areaPreview.style.display = "block";
+                    document.getElementById("body-preview-soal").innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan tabel preview...</td></tr>`;
+
+                    // 2. Beri jeda 50ms agar browser memunculkan UI Loading sebelum bekerja keras
+                    setTimeout(() => {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            mammoth.extractRawText({arrayBuffer: event.target.result})
+                                .then(function(result) {
+                                    // Matikan Loading setelah berhasil
+                                    if (document.getElementById("loading-ekstrak-word")) document.body.removeChild(overlay);
+                                    
+                                    previewData = bedahTeksWordKeJSON(result.value);
+                                    if(previewData.length === 0) {
+                                        alert("Gagal menemukan format soal. Pastikan pengetikan sesuai dengan Template Word!");
+                                        areaPreview.style.display = "none";
+                                    } else {
+                                        renderPreviewTable();
+                                    }
+                                })
+                                .catch(err => {
+                                    // Matikan Loading jika Error
+                                    if (document.getElementById("loading-ekstrak-word")) document.body.removeChild(overlay);
+                                    alert("File Word rusak atau tidak terbaca oleh sistem.");
+                                    areaPreview.style.display = "none";
+                                });
+                        };
+                        reader.readAsArrayBuffer(file);
+                    }, 50);
                 } else {
-                    alert("Format file tidak didukung!");
+                    alert("Format file tidak didukung! Harap masukkan Excel atau Word.");
                 }
             });
 
