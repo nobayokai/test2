@@ -1873,8 +1873,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const content = `
                     <div style="border: 2px solid red; padding: 10px; background: #ffeeee; margin-bottom: 20px;">
                         <h3 style="color: red; margin: 0;">🚨 ATURAN KETIK TEMPLATE WORD!</h3>
-                        <p>1. <b>JANGAN</b> gunakan Numbering/Bullets otomatis (tekan Ctrl+Z jika Word menggesernya).</p>
-                        <p>2. Selalu gunakan tag <b>TIPE:</b> sebelum mengetik soal baru jika tipenya berbeda.</p>
+                        <p>Selalu gunakan tag <b>TIPE:</b> sebelum mengetik soal baru.</p>
                         <p>Pilihan Tipe: <b>PG</b>, <b>PG_Kompleks</b>, <b>Isian</b>, <b>Esai</b></p>
                     </div>
                     
@@ -3104,7 +3103,7 @@ document.addEventListener("DOMContentLoaded", () => {
             teksPertanyaan = teksPertanyaan.replace(/\[IMG:.*?\]/, `<br><img src="${urlGambar}" style="max-width:100%; margin-top:10px; border-radius:5px;"><br>`);
         }
        // Kita ubah <p> menjadi <div> agar tag HTML dari CKEditor tidak rusak saat dimunculkan
-        htmlSoal += `<div class="pertanyaan" style="margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap; text-align: justify;">${teksPertanyaan} <div style="display:inline-block; margin-left: 10px; font-weight: bold; color: #198754; font-size: 14px;" class="poin-soal">(${soal.poin} Poin)</div></div><hr style="margin: 15px 0; border-top: 1px solid #eee;">`;
+        htmlSoal += `<div class="pertanyaan" style="margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap; text-align: justify;">${teksPertanyaan} <div style="display:inline-block; margin-left: 10px; color: #198754; font-size: 14px;" class="poin-soal">(${soal.poin} Poin)</div></div><hr style="margin: 15px 0; border-top: 1px solid #eee;">`;
         
         // Render Tipe Soal (Logikanya sama seperti sebelumnya)
         if (soal.tipe === "PG" || soal.tipe === "Benar_Salah") {
