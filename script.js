@@ -1866,18 +1866,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 XLSX.writeFile(wb, "Template_Upload_CBT.xlsx");
             });
 
-            // 1B. Buat & Unduh Template WORD (Anti-Numbering)
+            // 1B. Buat & Unduh Template WORD (Bisa 4 Tipe Soal)
             document.getElementById("btn-dl-template-word")?.addEventListener("click", () => {
                 const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Template Soal</title></head><body>";
                 const footer = "</body></html>";
                 const content = `
                     <div style="border: 2px solid red; padding: 10px; background: #ffeeee; margin-bottom: 20px;">
-                        <h3 style="color: red; margin: 0;">🚨 JANGAN GUNAKAN BULLETS & NUMBERING OTOMATIS!</h3>
-                        <p>Ketik nomor soal (1.) dan huruf pilihan (A.) secara <b>MANUAL</b>. Jika Word menggeser teks secara otomatis, tekan <b>Ctrl+Z</b>.</p>
-                        <p>Tipe Soal Otomatis: <b>PG</b>. Poin Otomatis: <b>10</b>.</p>
+                        <h3 style="color: red; margin: 0;">🚨 ATURAN KETIK TEMPLATE WORD!</h3>
+                        <p>1. <b>JANGAN</b> gunakan Numbering/Bullets otomatis (tekan Ctrl+Z jika Word menggesernya).</p>
+                        <p>2. Selalu gunakan tag <b>TIPE:</b> sebelum mengetik soal baru jika tipenya berbeda.</p>
+                        <p>Pilihan Tipe: <b>PG</b>, <b>PG_Kompleks</b>, <b>Isian</b>, <b>Esai</b></p>
                     </div>
+                    
                     <p><b>KODE: B.INDO-4B</b></p>
                     <br>
+                    
+                    <p><b>TIPE: PG</b></p>
                     <p>1. Ibukota negara Indonesia adalah...</p>
                     <p>A. Bandung</p>
                     <p>B. Jakarta</p>
@@ -1885,12 +1889,24 @@ document.addEventListener("DOMContentLoaded", () => {
                     <p>D. Medan</p>
                     <p>KUNCI: B</p>
                     <br>
-                    <p>2. Hewan pemakan daging disebut...</p>
-                    <p>A. Herbivora</p>
-                    <p>B. Omnivora</p>
-                    <p>C. Karnivora</p>
-                    <p>D. Insektivora</p>
-                    <p>KUNCI: C</p>
+                    
+                    <p><b>TIPE: PG_Kompleks</b></p>
+                    <p>2. Manakah yang termasuk hewan pemakan rumput? (Pilih 2 jawaban)</p>
+                    <p>A. Sapi</p>
+                    <p>B. Harimau</p>
+                    <p>C. Kambing</p>
+                    <p>D. Serigala</p>
+                    <p>KUNCI: A,C</p>
+                    <br>
+                    
+                    <p><b>TIPE: Isian</b></p>
+                    <p>3. Presiden pertama Republik Indonesia adalah...</p>
+                    <p>KUNCI: Ir. Soekarno</p>
+                    <br>
+
+                    <p><b>TIPE: Esai</b></p>
+                    <p>4. Jelaskan apa yang dimaksud dengan fotosintesis!</p>
+                    <p>KUNCI: -</p>
                 `;
                 const blob = new Blob(['\ufeff', header + content + footer], { type: 'application/msword' });
                 const a = document.createElement('a');
@@ -1956,57 +1972,91 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
-            // --- FUNGSI PEMBEDAH TEKS WORD (Mengubah teks Word menjadi format Excel) ---
+            // --- FUNGSI PEMBEDAH TEKS WORD (REGEX CERDAS UNTUK 4 TIPE) ---
             function bedahTeksWordKeJSON(text) {
                 const lines = text.split('\n').map(line => line.trim()).filter(line => line !== "");
                 let soalArray = [];
                 let soalAktif = null;
+                
                 let kodeSoalGlobal = "UMUM"; 
+                let tipeAktifGlobal = "PG"; // Default awal
 
                 const polaKode = /^KODE:\s*(.*)/i;
+                const polaTipe = /^TIPE:\s*(.*)/i;
                 const polaSoal = /^\d+[\.\)]\s+(.*)/;      
                 const polaOpsi = /^([A-E])[\.\)]\s+(.*)/i; 
-                const polaKunci = /^KUNCI:\s*([A-E])/i;  
+                const polaKunci = /^KUNCI:\s*(.*)/i;  
 
                 for (let i = 0; i < lines.length; i++) {
                     let line = lines[i];
 
-                    if (polaKode.test(line)) { kodeSoalGlobal = line.match(polaKode)[1].trim(); }
+                    if (polaKode.test(line)) { 
+                        kodeSoalGlobal = line.match(polaKode)[1].trim(); 
+                    }
+                    else if (polaTipe.test(line)) {
+                        // Membaca perubahan tipe soal
+                        tipeAktifGlobal = line.match(polaTipe)[1].trim();
+                    }
                     else if (polaSoal.test(line)) {
                         if (soalAktif) simpanSoalKeArray(soalAktif, soalArray, kodeSoalGlobal);
-                        soalAktif = { pertanyaan: line.match(polaSoal)[1], opsi: [], kunciHuruf: "" };
+                        soalAktif = { 
+                            tipe: tipeAktifGlobal, 
+                            pertanyaan: line.match(polaSoal)[1], 
+                            opsi: [], 
+                            kunciMentah: "" 
+                        };
                     } 
-                    else if (polaOpsi.test(line) && soalAktif) {
+                    // Baca opsi A,B,C,D hanya jika tipenya PG atau PG_Kompleks
+                    else if (polaOpsi.test(line) && soalAktif && (soalAktif.tipe === "PG" || soalAktif.tipe === "PG_Kompleks")) {
                         let match = line.match(polaOpsi);
                         soalAktif.opsi.push({ huruf: match[1].toUpperCase(), teks: match[2] });
                     } 
+                    // Baca Kunci (Sekarang bisa menangkap teks utuh untuk isian, atau multi-huruf 'A,C' untuk PG kompleks)
                     else if (polaKunci.test(line) && soalAktif) {
-                        soalAktif.kunciHuruf = line.match(polaKunci)[1].toUpperCase();
+                        soalAktif.kunciMentah = line.match(polaKunci)[1].trim();
                     } 
+                    // Menangkap sambungan paragraf cerita
                     else if (soalAktif && !polaOpsi.test(line) && !polaKunci.test(line)) {
-                        soalAktif.pertanyaan += "\n" + line; // Sambungan paragraf
+                        soalAktif.pertanyaan += "\n" + line; 
                     }
                 }
                 if (soalAktif) simpanSoalKeArray(soalAktif, soalArray, kodeSoalGlobal);
                 return soalArray;
             }
 
+            // --- FUNGSI MENGONVERSI FORMAT WORD KE STANDAR DATABASE EXCEL ---
             function simpanSoalKeArray(soal, array, kodeGlobal) {
-                // Konversi opsi menjadi string dipisah garis lurus (|) seperti format Excel Anda
-                let stringPilihan = soal.opsi.map(o => o.teks).join("|");
-                
-                // Cari teks jawaban yang benar berdasarkan huruf Kunci
-                let teksKunci = "-";
-                let opsiBenar = soal.opsi.find(o => o.huruf === soal.kunciHuruf);
-                if (opsiBenar) teksKunci = opsiBenar.teks; // Simpan teksnya, bukan hurufnya, agar sesuai sistem CBT Anda
+                let stringPilihan = "-";
+                let teksKunciAkhir = soal.kunciMentah;
+
+                // Jika PG atau PG Kompleks, ubah huruf kunci menjadi Teks Jawaban Penuh
+                if (soal.tipe === "PG" || soal.tipe === "PG_Kompleks") {
+                    stringPilihan = soal.opsi.map(o => o.teks).join("|"); // Gabung pakai garis lurus
+                    
+                    if (soal.kunciMentah && soal.kunciMentah !== "-") {
+                        // Pecah jika kuncinya ada dua (Misal: "A,C" -> di-split jadi ["A", "C"])
+                        let hurufKunciArray = soal.kunciMentah.split(',').map(h => h.trim().toUpperCase());
+                        let teksKunciArray = [];
+
+                        hurufKunciArray.forEach(huruf => {
+                            let opsiBenar = soal.opsi.find(o => o.huruf === huruf);
+                            if (opsiBenar) teksKunciArray.push(opsiBenar.teks);
+                        });
+
+                        // Gabung kembali jadi "Jawaban 1,Jawaban 2" sesuai standar PG Kompleks web Anda
+                        if (teksKunciArray.length > 0) {
+                            teksKunciAkhir = teksKunciArray.join(","); 
+                        }
+                    }
+                }
 
                 array.push({
                     id: Date.now() + array.length,
                     kode: kodeGlobal,
-                    tipe: "PG", // Default Word dijadikan PG
+                    tipe: soal.tipe,
                     pertanyaan: soal.pertanyaan,
-                    pilihan: stringPilihan || "-",
-                    kunci: teksKunci,
+                    pilihan: stringPilihan,
+                    kunci: teksKunciAkhir || "-",
                     poin: 10,
                     imgBase64: "", imgMime: "", imgName: ""
                 });
