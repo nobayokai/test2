@@ -1921,10 +1921,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!file) return;
 
                 const fileName = file.name.toLowerCase();
+                const fileType = file.type.toLowerCase();
                 const areaPreview = document.getElementById("area-preview-upload");
 
-                // --- JIKA EXCEL (.xls / .xlsx) ---
-                if (fileName.includes(".xls")) {
+                // --- DETEKSI SUPER KEBAL: JIKA EXCEL ---
+                // Mengecek dari nama ekstensi ATAU tipe file bawaan sistem
+                if (fileName.includes(".xls") || fileName.includes(".csv") || fileType.includes("excel") || fileType.includes("sheet")) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const data = new Uint8Array(e.target.result);
@@ -1947,8 +1949,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     };
                     reader.readAsArrayBuffer(file);
                 } 
-                // --- JIKA WORD (.doc / .docx) ---
-                else if (fileName.includes(".doc")) {
+                // --- DETEKSI SUPER KEBAL: JIKA WORD ---
+                else if (fileName.includes(".doc") || fileName.includes(".rtf") || fileType.includes("word") || fileType.includes("document") || fileType === "") {
                     
                     // 1. MUNCULKAN OVERLAY LOADING EKSTRAK WORD
                     const overlay = document.createElement("div");
@@ -1992,7 +1994,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         reader.readAsArrayBuffer(file);
                     }, 50);
                 } else {
-                    alert("Format file tidak didukung! Harap masukkan Excel atau Word.");
+                    // Pesan error diperbarui agar memunculkan nama file-nya untuk dilacak
+                    alert(`Format file tidak didukung!\nNama file yang terbaca: "${fileName}"\nTipe terbaca: "${fileType}"\nHarap masukkan Excel atau Word.`);
                 }
             });
 
