@@ -1950,7 +1950,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     reader.readAsArrayBuffer(file);
                 } 
                 // --- DETEKSI SUPER KEBAL: JIKA WORD ---
-                else if (fileName.includes(".doc") || fileName.includes(".rtf") || fileType.includes("word") || fileType.includes("document") || fileType === "") {
+                else if (fileName.includes(".doc") || fileName.includes(".docx") || fileType.includes("word") || fileType.includes("document") || fileType === "") {
                     
                     // 1. MUNCULKAN OVERLAY LOADING EKSTRAK WORD
                     const overlay = document.createElement("div");
@@ -1960,42 +1960,73 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                             <i class="fa-solid fa-file-word fa-bounce" style="font-size: 60px; color: #0d6efd; margin-bottom: 20px;"></i>
                             <h3 style="margin: 0; color: #333;">Membaca Dokumen...</h3>
-                            <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">Mohon tunggu, sedang mengekstrak teks dan mengenali pola soal dari file Word Anda.</p>
+                            <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">Mohon tunggu, sedang mengekstrak teks dan mengenali pola soal...</p>
                         </div>`;
                     document.body.appendChild(overlay);
                     
                     areaPreview.style.display = "block";
                     document.getElementById("body-preview-soal").innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan tabel preview...</td></tr>`;
 
-                    // 2. Beri jeda 50ms agar browser memunculkan UI Loading sebelum bekerja keras
+                    // 2. Beri jeda agar animasi loading muncul, lalu eksekusi
                     setTimeout(() => {
                         const reader = new FileReader();
                         reader.onload = function(event) {
-                            mammoth.extractRawText({arrayBuffer: event.target.result})
-                                .then(function(result) {
-                                    // Matikan Loading setelah berhasil
-                                    if (document.getElementById("loading-ekstrak-word")) document.body.removeChild(overlay);
-                                    
-                                    previewData = bedahTeksWordKeJSON(result.value);
-                                    if(previewData.length === 0) {
-                                        alert("Gagal menemukan format soal. Pastikan pengetikan sesuai dengan Template Word!");
-                                        areaPreview.style.display = "none";
-                                    } else {
-                                        renderPreviewTable();
-                                    }
-                                })
-                                .catch(err => {
-                                    // Matikan Loading jika Error
-                                    if (document.getElementById("loading-ekstrak-word")) document.body.removeChild(overlay);
-                                    alert("File Word rusak atau tidak terbaca oleh sistem.");
+                            const arrayBuffer = event.target.result;
+                            
+                            // --- KUNCI PERBAIKAN: NGINTIP ISI FILE (HTML .doc vs ZIP .docx) ---
+                            const textDecoder = new TextDecoder("utf-8");
+                            const textStr = textDecoder.decode(arrayBuffer);
+
+                            if (textStr.includes("<html") || textStr.includes("urn:schemas-microsoft-com:office:word")) {
+                                
+                                // INI ADALAH FILE .DOC TEMPLATE BUATAN KITA! (Ekstrak tanpa Mammoth)
+                                if (document.getElementById("loading-ekstrak-word")) document.body.removeChild(overlay);
+                                
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(textStr, "text/html");
+                                
+                                // Ubah <p> dan <br> menjadi Enter (ganti baris), lalu hapus tag HTML
+                                let rawText = doc.body.innerHTML
+                                    .replace(/<br\s*[\/]?>/gi, "\n")
+                                    .replace(/<\/p>/gi, "\n")
+                                    .replace(/<[^>]+>/g, "")
+                                    .replace(/&nbsp;/gi, " ")
+                                    .trim();
+                                
+                                // Decode simbol HTML (seperti &amp; menjadi &)
+                                const txtArea = document.createElement("textarea");
+                                txtArea.innerHTML = rawText;
+                                rawText = txtArea.value;
+
+                                previewData = bedahTeksWordKeJSON(rawText);
+                                if(previewData.length === 0) {
+                                    alert("Gagal menemukan format soal. Pastikan pengetikan sesuai dengan Template!");
                                     areaPreview.style.display = "none";
-                                });
+                                } else { renderPreviewTable(); }
+                                
+                            } else {
+                                
+                                // INI ADALAH FILE .DOCX ASLI (Gunakan Mammoth)
+                                mammoth.extractRawText({arrayBuffer: arrayBuffer})
+                                    .then(function(result) {
+                                        if (document.getElementById("loading-ekstrak-word")) document.body.removeChild(overlay);
+                                        previewData = bedahTeksWordKeJSON(result.value);
+                                        if(previewData.length === 0) {
+                                            alert("Gagal menemukan format soal. Pastikan pengetikan sesuai dengan Template!");
+                                            areaPreview.style.display = "none";
+                                        } else { renderPreviewTable(); }
+                                    })
+                                    .catch(err => {
+                                        if (document.getElementById("loading-ekstrak-word")) document.body.removeChild(overlay);
+                                        alert("Gagal membaca file. Jika ini file .doc, cobalah 'Save As' menjadi format .docx di Microsoft Word lalu upload ulang.");
+                                        areaPreview.style.display = "none";
+                                    });
+                            }
                         };
                         reader.readAsArrayBuffer(file);
                     }, 50);
                 } else {
-                    // Pesan error diperbarui agar memunculkan nama file-nya untuk dilacak
-                    alert(`Format file tidak didukung!\nNama file yang terbaca: "${fileName}"\nTipe terbaca: "${fileType}"\nHarap masukkan Excel atau Word.`);
+                    alert(`Format file tidak didukung!\nNama: "${fileName}"\nHarap masukkan Excel atau Word.`);
                 }
             });
 
