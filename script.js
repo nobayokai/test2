@@ -2955,6 +2955,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // 2. SENSOR KETIK & KECEPATAN (WPM)
             if (inputKetik) {
+                // 1. Blokir tombol panah dan navigasi
+                inputKetik.addEventListener("keydown", (e) => {
+                    const tombolDilarang = [
+                        "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", 
+                        "Home", "End", "PageUp", "PageDown"
+                    ];
+                    
+                    if (tombolDilarang.includes(e.key)) {
+                        e.preventDefault(); // Tolak penekanan tombol
+                    }
+                });
+
+                // 2. Paksa kursor selalu berada di ujung kanan teks meski di-klik
+                inputKetik.addEventListener("click", function() {
+                    this.selectionStart = this.value.length;
+                    this.selectionEnd = this.value.length;
+                });
+            }
+            // -------------------------------------------------------------
+            if (inputKetik) {
                 inputKetik.addEventListener("input", () => {
                     if (areaMengetik) areaMengetik.scrollLeft = 0;
                     if (!targetTeksUtuh || inputKetik.disabled || roomData.pemain[myName]?.selesai) return;
