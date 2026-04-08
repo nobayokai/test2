@@ -1087,14 +1087,36 @@ document.addEventListener("DOMContentLoaded", () => {
                                 .then(() => { sessionStorage.setItem("active_game_room", pinRoom); sessionStorage.setItem("is_game_host", "true"); loadPage("arena-bermain"); })
                                 .catch(err => { alert("Gagal membuat room!"); btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; });
                                 
+                            
                             } else if (jenisGame === "balap_ketik") {
-                                // --- KUNCI: Biarkan teks utuh tanpa di-split agar format Enter (\n) terbaca ---
+                                // (Kode balap ketik Anda yang sudah ada tetap di sini)
                                 let teksBalapanUtuh = teksMentah; 
-                                
                                 dbGame.ref('balap_rooms/' + pinRoom).set({ host: sessionStorage.getItem("userName"), materi: materiDipilih.materi, teks_balapan: teksBalapanUtuh, mode: "database", status: "lobby", pemain: {}, pemenang: "" })
                                 .then(() => { sessionStorage.setItem("active_balap_room", pinRoom); sessionStorage.setItem("is_balap_host", "true"); loadPage("arena-balap"); })
                                 .catch(err => { alert("Gagal membuat room!"); btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; });
+                            
+                            // --- TAMBAHKAN LOGIKA BATTLE ROYALE DI SINI ---
+                            } else if (jenisGame === "battle_royale") {
+                                // Pecah kata dari database menjadi array (peluru serangan)
+                                let arrayPeluru = teksMentah.split(",").map(k => k.trim()).filter(k => k !== "");
+                                // Acak urutan peluru agar tidak bisa ditebak
+                                arrayPeluru = arrayPeluru.sort(() => Math.random() - 0.5);
+
+                                dbGame.ref('balap_rooms/' + pinRoom).set({ 
+                                    host: sessionStorage.getItem("userName"), 
+                                    materi: materiDipilih.materi, 
+                                    daftar_peluru: arrayPeluru, 
+                                    indeks_peluru: 0, // Kata ke berapa yang sedang ditampilkan
+                                    mode: "battle", 
+                                    status: "lobby", 
+                                    pemain: {}, 
+                                    pemenang: "" 
+                                })
+                                .then(() => { sessionStorage.setItem("active_balap_room", pinRoom); sessionStorage.setItem("is_balap_host", "true"); loadPage("arena-balap"); })
+                                .catch(err => { alert("Gagal membuat room!"); btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; });
                             }
+
+                            
                         }
                     } catch (error) {
                         // Jaring pengaman: Jika terjadi error sistem, kembalikan teks tombol!
@@ -2911,31 +2933,125 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 // Render Sirkuit Mobil
+// Render UI Berdasarkan Mode (Balapan vs Pertarungan)
                 if (!tbodyTrack) return;
-                let htmlTrack = "";
+                
                 let players = roomData.pemain || {};
-                const colors = ["#dc3545", "#0d6efd", "#ffc107", "#198754", "#e83e8c", "#0dcaf0"];
+                
+                // JIKA MODE BATTLE ROYALE
+                if (roomData.mode === "battle") {
+                    let htmlBattle = `<div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; padding: 20px;">`;
+                    
+                    let aliveCount = 0;
+                    let lastManStanding = "";
 
-                Object.keys(players).forEach((nama, idx) => {
-                    let prog = players[nama].progress || 0;
-                    let persen = Math.min((prog / totalKarakter) * 100, 100);
-                    let warnaMobil = colors[idx % colors.length];
-                    let ikonNama = (nama === roomData.host) ? '<i class="fa-solid fa-crown" style="color: gold;"></i>' : '<i class="fa-solid fa-car"></i>';
-                    let apiNitro = players[nama].nitro ? `<i class="fa-solid fa-fire-flame-curved fa-fade" style="color:#ff9800; font-size:30px; transform: rotate(-90deg) translateX(5px);"></i>` : "";
-                    let badgeJuara = players[nama].selesai ? `<span style="background: gold; color: black; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px;">🏆 Ke-${players[nama].peringkat}</span>` : "";
+                    Object.keys(players).forEach(nama => {
+                        let hp = players[nama].hp !== undefined ? players[nama].hp : 100;
+                        let mati = hp <= 0;
+                        if (!mati) { aliveCount++; lastManStanding = nama; }
 
-                    htmlTrack += `
-                        <div style="position: relative; height: 65px; border-bottom: 2px dashed #555; display: flex; align-items: center; background: rgba(255,255,255,0.05); margin-bottom: -2px;">
-                            <div style="position: absolute; left: 10px; background: #f8f9fa; color: #333; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; z-index: 3; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px;">
-                                ${ikonNama} ${nama} ${badgeJuara}
+                        // Berikan avatar acak jika belum punya
+                        if (!players[nama].avatar) {
+                            const avatars = ["🧙‍♂️", "🥷", "🦸‍♂️", "🧟", "🧛‍♂️", "🤖", "🐉", "👹", "👽", "👻", "🤠", "🤖"];
+                            players[nama].avatar = avatars[Math.floor(Math.random() * avatars.length)];
+                            if (nama === myName) dbGame.ref(`balap_rooms/${pinRoom}/pemain/${nama}`).update({ avatar: players[nama].avatar, hp: 100 });
+                        }
+
+                        let avatar = players[nama].avatar;
+                        let warnaHP = hp > 50 ? "#198754" : (hp > 20 ? "#ffc107" : "#dc3545");
+                        let filterMati = mati ? "grayscale(100%) opacity(0.5)" : "none";
+                        let apiSerang = players[nama].isAttacking ? `<div style="position:absolute; top:-20px; right:-10px; font-size:30px; animation: bounce 0.5s;">💥</div>` : "";
+
+                        htmlBattle += `
+                            <div style="background: ${mati ? '#f8f9fa' : '#fff'}; border: 3px solid ${mati ? '#ccc' : warnaHP}; border-radius: 10px; padding: 15px; width: 150px; text-align: center; position: relative; filter: ${filterMati}; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: all 0.3s;">
+                                ${apiSerang}
+                                <div style="font-size: 50px; margin-bottom: 10px;">${mati ? '☠️' : avatar}</div>
+                                <div style="font-weight: bold; font-size: 14px; color: #333; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${nama}</div>
+                                <div style="background: #e9ecef; border-radius: 10px; height: 15px; width: 100%; margin-top: 10px; overflow: hidden;">
+                                    <div style="background: ${warnaHP}; height: 100%; width: ${hp}%; transition: width 0.5s, background-color 0.5s;"></div>
+                                </div>
+                                <div style="font-size: 12px; font-weight: bold; margin-top: 5px; color: ${warnaHP};">${hp} HP</div>
                             </div>
-                            <div style="position: absolute; left: ${persen}%; transform: translateX(-${persen}%); transition: left 0.8s linear; font-size: 40px; color: ${warnaMobil}; display: flex; align-items: center; z-index: 4; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">
-                                ${apiNitro} <i class="fa-solid fa-car-side"></i>
+                        `;
+                    });
+                    htmlBattle += `</div>`;
+                    tbodyTrack.innerHTML = htmlBattle === "" ? `<div style="text-align:center; color:#888;">Menunggu petarung...</div>` : htmlBattle;
+
+                    // Logika Battle (Kata Target & Serangan)
+                    let indexPeluru = roomData.indeks_peluru || 0;
+                    let arrayPeluru = roomData.daftar_peluru || [];
+                    let kataTarget = arrayPeluru[indexPeluru] || "SELESAI";
+
+                    if (roomData.status === "playing") {
+                        if (kataTarget === "SELESAI" || aliveCount <= 1) {
+                            // Game Over
+                            statusTeks.innerText = "PERTARUNGAN SELESAI!";
+                            updateTeksBerjalan("", "", "", `🏁 Pemenang: ${lastManStanding || "Tidak ada"} 🏁`);
+                            if (inputKetik) inputKetik.disabled = true;
+                            if (isHost && window.currentBalapStatus !== "finished") dbGame.ref(`balap_rooms/${pinRoom}/status`).set("finished");
+                        } else {
+                            // Tampilkan kata yang harus diketik sebagai "Mantra Serangan"
+                            statusTeks.innerText = "KETIK KATA INI UNTUK MENYERANG SEMUA LAWAN!";
+                            statusTeks.style.color = "#dc3545";
+                            document.getElementById("teks-sisa").textContent = kataTarget;
+                            document.getElementById("teks-sisa").style.fontSize = "30px";
+                            document.getElementById("teks-sisa").style.fontWeight = "bold";
+                            
+                            // Logika Sensor Ketik Khusus Battle
+                            if (inputKetik && !inputKetik.disabled && !(roomData.pemain[myName]?.hp <= 0)) {
+                                inputKetik.oninput = () => {
+                                    if (inputKetik.value.trim().toLowerCase() === kataTarget.toLowerCase()) {
+                                        inputKetik.value = ""; // Reset input
+                                        
+                                        // 1. Tandai sedang menyerang
+                                        dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ isAttacking: true });
+                                        setTimeout(() => dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ isAttacking: false }), 1000);
+
+                                        // 2. Majukan kata ke target berikutnya
+                                        dbGame.ref(`balap_rooms/${pinRoom}`).update({ indeks_peluru: indexPeluru + 1 });
+
+                                        // 3. Hajar semua musuh (AoE Damage)
+                                        Object.keys(players).forEach(musuh => {
+                                            if (musuh !== myName && players[musuh].hp > 0) {
+                                                let hpBaru = players[musuh].hp - Math.floor(Math.random() * 15 + 15); // Damage acak 15-30
+                                                if (hpBaru < 0) hpBaru = 0;
+                                                dbGame.ref(`balap_rooms/${pinRoom}/pemain/${musuh}`).update({ hp: hpBaru });
+                                            }
+                                        });
+                                    }
+                                };
+                            } else if (roomData.pemain[myName]?.hp <= 0) {
+                                inputKetik.disabled = true;
+                                document.getElementById("teks-sisa").textContent = "ANDA TERELIMINASI ☠️";
+                            }
+                        }
+                    }
+
+                } 
+                // JIKA MODE BALAPAN BIASA (Kode Asli Anda)
+                else {
+                    let htmlTrack = "";
+                    const colors = ["#dc3545", "#0d6efd", "#ffc107", "#198754", "#e83e8c", "#0dcaf0"];
+                    Object.keys(players).forEach((nama, idx) => {
+                        let prog = players[nama].progress || 0;
+                        let persen = Math.min((prog / totalKarakter) * 100, 100);
+                        let warnaMobil = colors[idx % colors.length];
+                        let ikonNama = (nama === roomData.host) ? '<i class="fa-solid fa-crown" style="color: gold;"></i>' : '<i class="fa-solid fa-car"></i>';
+                        let badgeJuara = players[nama].selesai ? `<span style="background: gold; color: black; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px;">🏆 Ke-${players[nama].peringkat}</span>` : "";
+
+                        htmlTrack += `
+                            <div style="position: relative; height: 65px; border-bottom: 2px dashed #555; display: flex; align-items: center; background: rgba(255,255,255,0.05); margin-bottom: -2px;">
+                                <div style="position: absolute; left: 10px; background: #f8f9fa; color: #333; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; z-index: 3; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px;">
+                                    ${ikonNama} ${nama} ${badgeJuara}
+                                </div>
+                                <div style="position: absolute; left: ${persen}%; transform: translateX(-${persen}%); transition: left 0.8s linear; font-size: 40px; color: ${warnaMobil}; z-index: 4; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">
+                                    <i class="fa-solid fa-car-side"></i>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                });
-                tbodyTrack.innerHTML = htmlTrack === "" ? `<div style="text-align:center; color:#888; margin-top: 50px;">Menunggu pemain...</div>` : htmlTrack;
+                        `;
+                    });
+                    tbodyTrack.innerHTML = htmlTrack === "" ? `<div style="text-align:center; color:#888; margin-top: 50px;">Menunggu pemain...</div>` : htmlTrack;
+                }
             });
 
             function updateTeksBerjalan(benar, salah, aktif, sisa) {
