@@ -3003,9 +3003,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     // KUNCI PERBAIKAN: KAMERA AUTO-SCROLL MENGIKUTI BLOK KUNING
                     const spanAktif = document.getElementById("teks-aktif");
                     if (spanAktif && areaMengetik) {
-                        // OffsetTop adalah jarak kata kuning dari atap container
-                        // Kita kurangi 50px agar kata kuningnya berada di tengah pandangan mata (tidak mentok di atas)
-                        areaMengetik.scrollTop = spanAktif.offsetTop - 50; 
+                        // 1. Geser kotak ketik gaib mengikuti kata kuning agar browser tenang
+                        inputKetik.style.top = spanAktif.offsetTop + "px";
+
+                        // 2. Hitung agar kata kuning selalu berada TEPAT DI TENGAH kotak
+                        let setengahLayar = areaMengetik.clientHeight / 2;
+                        
+                        // Terapkan scroll dengan posisi yang sangat nyaman di mata (+20px penyeimbang)
+                        areaMengetik.scrollTop = spanAktif.offsetTop - setengahLayar + 20; 
                     }
                     let timeElapsedMin = (Date.now() - startTime) / 60000;
                     let wpm = timeElapsedMin > 0 ? Math.round((charProgress / 5) / timeElapsedMin) : 0;
