@@ -2995,8 +2995,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     let hurufSisaLanjutan = sisaTeks.length > 1 ? sisaTeks.substring(1) : "";
 
                     updateTeksBerjalan(teksBenar, teksSalah, hurufAktif, hurufSisaLanjutan);
-                    areaMengetik.style.borderColor = hasError ? "#dc3545" : "#0d6efd";
+                    
+                    // Peringatan Merah saat salah ketik (Sekarang menargetkan Wadah Utama)
+                    const wadahUtama = document.getElementById("wadah-utama-balap");
+                    if (wadahUtama) wadahUtama.style.borderColor = hasError ? "#dc3545" : "#0d6efd";
 
+                    // KUNCI PERBAIKAN: KAMERA AUTO-SCROLL MENGIKUTI BLOK KUNING
+                    const spanAktif = document.getElementById("teks-aktif");
+                    if (spanAktif && areaMengetik) {
+                        // OffsetTop adalah jarak kata kuning dari atap container
+                        // Kita kurangi 50px agar kata kuningnya berada di tengah pandangan mata (tidak mentok di atas)
+                        areaMengetik.scrollTop = spanAktif.offsetTop - 50; 
+                    }
                     let timeElapsedMin = (Date.now() - startTime) / 60000;
                     let wpm = timeElapsedMin > 0 ? Math.round((charProgress / 5) / timeElapsedMin) : 0;
                     document.getElementById("wpm-display").innerText = `${wpm} WPM`;
