@@ -3944,6 +3944,7 @@ function init3DArena(pinRoom, myName, isHost) {
         }
 
         // Render Pemain
+        // Render Pemain
         Object.keys(players).forEach((nama, i) => {
             let data = players[nama];
             let hp = data.hp !== undefined ? data.hp : 2; // Nyawa maksimal 2x jatuh
@@ -3951,31 +3952,47 @@ function init3DArena(pinRoom, myName, isHost) {
             
             // Buat Mesh jika belum ada
             if (!playerMeshes[nama]) {
-                let mesh = new THREE.Mesh(new THREE.CapsuleGeometry(1, 2, 4, 8), new THREE.MeshStandardMaterial({ color: warnaKarakter[i % warnaKarakter.length] }));
+                // KUNCI PERBAIKAN 1: Gunakan CylinderGeometry (Bentuk Bidak Catur yang aman di semua versi)
+                let mesh = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 3, 16), new THREE.MeshStandardMaterial({ color: warnaKarakter[i % warnaKarakter.length] }));
                 mesh.castShadow = true;
-                mesh.position.set(0, posisiY, 0); // Mulai di tengah
+                
+                // KUNCI PERBAIKAN 2: Simpan posisi acak permanen di memori karakter
+                // Ini mencegah karakter bergetar hebat saat timer database berjalan
+                mesh.userData.offsetX = (Math.random() * 5) - 2.5;
+                mesh.userData.offsetZ = (Math.random() * 5) - 2.5;
+                
+                mesh.position.set(mesh.userData.offsetX, posisiY, mesh.userData.offsetZ); 
                 scene.add(mesh);
                 playerMeshes[nama] = mesh;
             }
 
             let pMesh = playerMeshes[nama];
 
-            // Gerakkan karakter (Animasi Lompat)
-            if (room.status === "playing" && hp > 0) {
-                let targetX = data.posisi === "kiri" ? (-7.5 + (Math.random()*6 - 3)) : (data.posisi === "kanan" ? (7.5 + (Math.random()*6 - 3)) : 0);
-                gsap.to(pMesh.position, { x: targetX, y: 2, duration: 0.5, ease: "power1.out" });
-                pMesh.material.color.setHex(warnaKarakter[i % warnaKarakter.length]); // Reset warna
+            // Gerakkan karakter (Animasi Lompat ke Kiri/Kanan/Tengah)
+            if ((room.status === "playing" || room.status === "lobby") && hp > 0) {
+                // Tentukan pijakan dasar
+                let baseX = 0; // Tengah (Saat di Lobby)
+                if (data.posisi === "kiri") baseX = -7.5;
+                else if (data.posisi === "kanan") baseX = 7.5;
+                
+                // Terapkan jarak aman antar siswa agar tidak saling bertumpuk (Clipping)
+                let targetX = baseX + pMesh.userData.offsetX;
+                let targetZ = pMesh.userData.offsetZ;
+                
+                // Gunakan overwrite: "auto" agar animasi GSAP tidak bertabrakan
+                gsap.to(pMesh.position, { x: targetX, z: targetZ, y: 2, duration: 0.5, ease: "power1.out", overwrite: "auto" });
+                pMesh.material.color.setHex(warnaKarakter[i % warnaKarakter.length]); // Reset warna jika baru pulih
             }
             
-            // Logika Hukuman Jatuh
+            // Logika Hukuman Jatuh Tersetrum
             if (room.status === "revealing" && soalAktif) {
                 let jawabanBenar = soalAktif.jawaban_benar;
                 if (data.posisi !== jawabanBenar && hp > 0) {
-                    // JATUH & TERSETRUM!
-                    gsap.to(pMesh.position, { y: -14, duration: 0.8, ease: "power2.in" });
+                    // JATUH!
+                    gsap.to(pMesh.position, { y: -14, duration: 0.8, ease: "power2.in", overwrite: "auto" });
                     gsap.to(pMesh.material.color, { r: 1, g: 1, b: 0, duration: 0.1, yoyo: true, repeat: 10 });
                     
-                    // Kurangi HP di database (Hanya player itu sendiri yang nge-update agar tidak double)
+                    // Kurangi HP di database (Hanya sistem diri sendiri yang mengirim agar tidak ganda)
                     if (nama === myName) {
                         setTimeout(() => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ hp: hp - 1, posisi: "tengah" }); }, 1000);
                     }
