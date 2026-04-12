@@ -1116,6 +1116,38 @@ document.addEventListener("DOMContentLoaded", () => {
                                 .catch(err => { alert("Gagal membuat room!"); btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; });
                             }
 
+                            // --- TAMBAHKAN LOGIKA BUAT ROOM 3D SURVIVAL DI SINI ---
+                            } else if (jenisGame === "lantai_runtuh") {
+                                
+                                // Kita ubah bank kata menjadi soal Kiri/Kanan
+                                let arrayPeluru = teksMentah.split(",").map(k => k.trim()).filter(k => k !== "");
+                                let daftarSoal3D = arrayPeluru.map(kataBenar => {
+                                     let kataSalah = arrayPeluru[Math.floor(Math.random() * arrayPeluru.length)];
+                                     while(kataSalah === kataBenar && arrayPeluru.length > 1) {
+                                         kataSalah = arrayPeluru[Math.floor(Math.random() * arrayPeluru.length)];
+                                     }
+                                     let isKiriBenar = Math.random() > 0.5; // Acak posisi
+                                     return {
+                                         pertanyaan: "Pilih kata yang benar: " + kataBenar,
+                                         kiri: isKiriBenar ? kataBenar : kataSalah,
+                                         kanan: isKiriBenar ? kataSalah : kataBenar,
+                                         jawaban_benar: isKiriBenar ? "kiri" : "kanan"
+                                     };
+                                });
+
+                                dbGame.ref('balap_rooms/' + pinRoom).set({ 
+                                    host: sessionStorage.getItem("userName"), materi: materiDipilih.materi, 
+                                    daftar_soal: daftarSoal3D, indeks_soal: 0,
+                                    mode: "3d_survival", status: "lobby", pemain: {} 
+                                })
+                                .then(() => { 
+                                    sessionStorage.setItem("active_3d_room", pinRoom); 
+                                    sessionStorage.setItem("is_3d_host", "true"); 
+                                    loadPage("arena-3d"); // <-- Melempar ke page baru
+                                })
+                                .catch(err => { alert("Gagal membuat room!"); btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; });
+                            }
+
                             
                         }
                     } catch (error) {
@@ -3227,6 +3259,60 @@ document.addEventListener("DOMContentLoaded", () => {
                 loadPage("edu-game");
             };
         }
+
+
+
+    // ==========================================
+        // --- LOGIKA ARENA 3D SURVIVAL (LANTAI RUNTUH) ---
+        // ==========================================
+        if (page === "arena-3d") {
+            const pinRoom = sessionStorage.getItem("active_3d_room");
+            const isHost = sessionStorage.getItem("is_3d_host") === "true";
+            const myName = sessionStorage.getItem("userName");
+            
+            if (!pinRoom) { loadPage("edu-game"); return; }
+            document.getElementById("survival-pin").innerText = pinRoom;
+
+            // Kontrol Guru
+            if (isHost) {
+                document.getElementById("kontrol-guru-3d").style.display = "flex";
+                
+                document.getElementById("btn-mulai-3d").onclick = () => {
+                    dbGame.ref(`balap_rooms/${pinRoom}`).update({ status: "playing" });
+                };
+                
+                document.getElementById("btn-ungkap-3d").onclick = () => {
+                    dbGame.ref(`balap_rooms/${pinRoom}`).update({ status: "revealing" });
+                    
+                    // Setelah 4 detik lantai runtuh, lanjut ke soal berikutnya otomatis
+                    setTimeout(() => {
+                        dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snap => {
+                            let r = snap.val();
+                            if(r && r.status === "revealing") {
+                                dbGame.ref(`balap_rooms/${pinRoom}`).update({ 
+                                    indeks_soal: r.indeks_soal + 1, 
+                                    status: "playing" 
+                                });
+                            }
+                        });
+                    }, 4000);
+                };
+
+                document.getElementById("btn-stop-3d").onclick = () => {
+                    dbGame.ref(`balap_rooms/${pinRoom}`).update({ status: "lobby", indeks_soal: 0 });
+                };
+            }
+
+            // Panggil Mesin 3D (Hanya dipanggil sekali)
+            if (typeof init3DArena === "function") {
+                init3DArena(pinRoom, myName, isHost);
+            } else {
+                console.error("Fungsi init3DArena belum tersedia!");
+            }
+        }
+
+
+        
         
     }; // ----- AKHIR dari loadPage = async function--------
     
@@ -3775,5 +3861,145 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+// ====================================================
+// ENGINE THREE.JS: 3D SURVIVAL (DICEY DESCENT)
+// ====================================================
+function init3DArena(pinRoom, myName, isHost) {
+    const container = document.getElementById("canvas-container-3d");
+    if (!container || container.innerHTML !== "") return; // Cegah render ganda
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB); 
+    scene.fog = new THREE.Fog(0x87CEEB, 10, 50); 
+
+    const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(0, 15, 25);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(5, 20, 10);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    // Bangun Platform Kiri (Merah) & Kanan (Biru)
+    const platformGeo = new THREE.BoxGeometry(14, 2, 14);
+    const platKiri = new THREE.Mesh(platformGeo, new THREE.MeshStandardMaterial({ color: 0xdc3545 }));
+    platKiri.position.set(-7.5, 0, 0); platKiri.receiveShadow = true; scene.add(platKiri);
+
+    const platKanan = new THREE.Mesh(platformGeo, new THREE.MeshStandardMaterial({ color: 0x0d6efd }));
+    platKanan.position.set(7.5, 0, 0); platKanan.receiveShadow = true; scene.add(platKanan);
+
+    // Awan Petir di Bawah
+    const cloudGeo = new THREE.PlaneGeometry(100, 100);
+    const thunderCloud = new THREE.Mesh(cloudGeo, new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.8 }));
+    thunderCloud.rotation.x = -Math.PI / 2; thunderCloud.position.y = -15; scene.add(thunderCloud);
+
+    let playerMeshes = {};
+    const warnaKarakter = [0xffff00, 0x00ff00, 0xff00ff, 0xffa500, 0xffffff];
+
+    // Sinkronisasi Firebase
+    dbGame.ref('balap_rooms/' + pinRoom).on('value', (snap) => {
+        let room = snap.val();
+        if (!room) return;
+
+        let players = room.pemain || {};
+        let soalAktif = room.daftar_soal ? room.daftar_soal[room.indeks_soal] : null;
+
+        // Update UI Text
+        if (room.status === "lobby") {
+            document.getElementById("ui-soal-3d").innerText = "Menunggu Guru Memulai...";
+            document.getElementById("ui-opsi-kiri").style.display = "none";
+            document.getElementById("ui-opsi-kanan").style.display = "none";
+            gsap.to(platKiri.position, { y: 0, duration: 1 });
+            gsap.to(platKanan.position, { y: 0, duration: 1 });
+        } else if (soalAktif) {
+            document.getElementById("ui-soal-3d").innerText = soalAktif.pertanyaan;
+            document.getElementById("ui-opsi-kiri").style.display = "block";
+            document.getElementById("ui-opsi-kanan").style.display = "block";
+            document.getElementById("ui-opsi-kiri").innerText = soalAktif.kiri;
+            document.getElementById("ui-opsi-kanan").innerText = soalAktif.kanan;
+        }
+
+        // Render Pemain
+        Object.keys(players).forEach((nama, i) => {
+            let data = players[nama];
+            let hp = data.hp !== undefined ? data.hp : 2; // Nyawa maksimal 2x jatuh
+            let posisiY = hp > 0 ? 2 : -16; // Jika HP 0, taruh di awan bawah selamanya
+            
+            // Buat Mesh jika belum ada
+            if (!playerMeshes[nama]) {
+                let mesh = new THREE.Mesh(new THREE.CapsuleGeometry(1, 2, 4, 8), new THREE.MeshStandardMaterial({ color: warnaKarakter[i % warnaKarakter.length] }));
+                mesh.castShadow = true;
+                mesh.position.set(0, posisiY, 0); // Mulai di tengah
+                scene.add(mesh);
+                playerMeshes[nama] = mesh;
+            }
+
+            let pMesh = playerMeshes[nama];
+
+            // Gerakkan karakter (Animasi Lompat)
+            if (room.status === "playing" && hp > 0) {
+                let targetX = data.posisi === "kiri" ? (-7.5 + (Math.random()*6 - 3)) : (data.posisi === "kanan" ? (7.5 + (Math.random()*6 - 3)) : 0);
+                gsap.to(pMesh.position, { x: targetX, y: 2, duration: 0.5, ease: "power1.out" });
+                pMesh.material.color.setHex(warnaKarakter[i % warnaKarakter.length]); // Reset warna
+            }
+            
+            // Logika Hukuman Jatuh
+            if (room.status === "revealing" && soalAktif) {
+                let jawabanBenar = soalAktif.jawaban_benar;
+                if (data.posisi !== jawabanBenar && hp > 0) {
+                    // JATUH & TERSETRUM!
+                    gsap.to(pMesh.position, { y: -14, duration: 0.8, ease: "power2.in" });
+                    gsap.to(pMesh.material.color, { r: 1, g: 1, b: 0, duration: 0.1, yoyo: true, repeat: 10 });
+                    
+                    // Kurangi HP di database (Hanya player itu sendiri yang nge-update agar tidak double)
+                    if (nama === myName) {
+                        setTimeout(() => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ hp: hp - 1, posisi: "tengah" }); }, 1000);
+                    }
+                }
+            }
+        });
+
+        // Animasi Lantai Runtuh
+        if (room.status === "revealing" && soalAktif) {
+            let jawabanBenar = soalAktif.jawaban_benar;
+            if (jawabanBenar === "kiri") {
+                gsap.to(platKanan.position, { y: -25, duration: 0.8, ease: "power2.in" });
+            } else {
+                gsap.to(platKiri.position, { y: -25, duration: 0.8, ease: "power2.in" });
+            }
+        } else if (room.status === "playing") {
+            gsap.to(platKiri.position, { y: 0, duration: 1, ease: "bounce.out" });
+            gsap.to(platKanan.position, { y: 0, duration: 1, ease: "bounce.out" });
+        }
+    });
+
+    // Kontrol Siswa
+    document.getElementById("btn-pindah-kiri").onclick = () => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ posisi: "kiri" }); };
+    document.getElementById("btn-pindah-kanan").onclick = () => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ posisi: "kanan" }); };
+
+    // Loop Animasi
+    function animate() {
+        requestAnimationFrame(animate);
+        thunderCloud.material.opacity = 0.5 + Math.random() * 0.4; // Efek petir
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // Responsive
+    window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+}
         
 });
