@@ -1119,33 +1119,78 @@ document.addEventListener("DOMContentLoaded", () => {
                             // --- TAMBAHKAN LOGIKA BUAT ROOM 3D SURVIVAL DI SINI ---
                              else if (jenisGame === "lantai_runtuh") {
                                 
-                                // Kita ubah bank kata menjadi soal Kiri/Kanan
-                                let arrayPeluru = teksMentah.split(",").map(k => k.trim()).filter(k => k !== "");
-                                let daftarSoal3D = arrayPeluru.map(kataBenar => {
-                                     let kataSalah = arrayPeluru[Math.floor(Math.random() * arrayPeluru.length)];
-                                     while(kataSalah === kataBenar && arrayPeluru.length > 1) {
-                                         kataSalah = arrayPeluru[Math.floor(Math.random() * arrayPeluru.length)];
-                                     }
-                                     let isKiriBenar = Math.random() > 0.5; // Acak posisi
-                                     return {
-                                         pertanyaan: "Pilih kata yang benar: " + kataBenar,
-                                         kiri: isKiriBenar ? kataBenar : kataSalah,
-                                         kanan: isKiriBenar ? kataSalah : kataBenar,
-                                         jawaban_benar: isKiriBenar ? "kiri" : "kanan"
-                                     };
-                                });
+                                // 1. Munculkan Pop-up menanyakan Kode Soal ke Guru
+                                let kodePilihan = prompt("🎮 ARENA 3D SURVIVAL\\n\\nMasukkan KODE SOAL (Contoh: IPA-01).\\n\\nKosongkan kolom ini lalu klik OK jika Anda ingin menggunakan SEMUA SOAL yang ada di Database:", "");
+                                
+                                // Jika guru menekan tombol Cancel / Batal
+                                if (kodePilihan === null) return; 
+                                
+                                // Ubah tombol jadi loading
+                                let teksAwalTombol = btnBuatRoom.innerHTML;
+                                btnBuatRoom.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Sedang menarik soal dari Database...`;
+                                btnBuatRoom.disabled = true;
 
-                                dbGame.ref('balap_rooms/' + pinRoom).set({ 
-                                    host: sessionStorage.getItem("userName"), materi: materiDipilih.materi, 
-                                    daftar_soal: daftarSoal3D, indeks_soal: 0,
-                                    mode: "3d_survival", status: "lobby", pemain: {} 
+                                // 2. Tarik Data dari Google Sheets menggunakan SCRIPT_URL
+                                fetch(SCRIPT_URL + "?action=getSoal3D")
+                                .then(res => res.json())
+                                .then(data => {
+                                    
+                                    // 3. Saring soal berdasarkan Kode yang diketik Guru
+                                    let soalTersaring = data;
+                                    kodePilihan = kodePilihan.trim().toUpperCase();
+                                    
+                                    if (kodePilihan !== "") {
+                                        soalTersaring = data.filter(s => String(s.kode).toUpperCase() === kodePilihan);
+                                    }
+
+                                    // Jika kode tidak ditemukan
+                                    if (soalTersaring.length === 0) {
+                                        alert(`❌ Soal dengan Kode "${kodePilihan}" tidak ditemukan di lembar 'Bank_Soal_3D'!`);
+                                        btnBuatRoom.innerHTML = teksAwalTombol;
+                                        btnBuatRoom.disabled = false;
+                                        return;
+                                    }
+
+                                    // 4. Acak urutan soal agar tidak bisa ditebak
+                                    soalTersaring = soalTersaring.sort(() => Math.random() - 0.5);
+
+                                    // 5. Ubah format data menjadi format Arena 3D (Kiri/Kanan)
+                                    let daftarSoal3D = soalTersaring.map(item => {
+                                        let jwb = String(item.jawaban).trim().toUpperCase();
+                                        let isBenar = (jwb === "B" || jwb === "BENAR");
+                                        return {
+                                            pertanyaan: item.pertanyaan,
+                                            kiri: "SALAH",
+                                            kanan: "BENAR",
+                                            jawaban_benar: isBenar ? "kanan" : "kiri" 
+                                        };
+                                    });
+
+                                    // 6. Buat Room di Firebase
+                                    dbGame.ref('balap_rooms/' + pinRoom).set({ 
+                                        host: sessionStorage.getItem("userName"), 
+                                        materi: kodePilihan === "" ? "Semua Soal Campuran" : ("Kode: " + kodePilihan), 
+                                        daftar_soal: daftarSoal3D, 
+                                        indeks_soal: 0,
+                                        mode: "3d_survival", status: "lobby", pemain: {}, pemenang: "" 
+                                    })
+                                    .then(() => { 
+                                        sessionStorage.setItem("active_3d_room", pinRoom); 
+                                        sessionStorage.setItem("is_3d_host", "true"); 
+                                        loadPage("arena-3d"); 
+                                    })
+                                    .catch(err => { 
+                                        alert("Gagal membuat room 3D di server!"); 
+                                        btnBuatRoom.innerHTML = teksAwalTombol; 
+                                        btnBuatRoom.disabled = false; 
+                                    });
+
                                 })
-                                .then(() => { 
-                                    sessionStorage.setItem("active_3d_room", pinRoom); 
-                                    sessionStorage.setItem("is_3d_host", "true"); 
-                                    loadPage("arena-3d"); // <-- Melempar ke page baru
-                                })
-                                .catch(err => { alert("Gagal membuat room!"); btnBuatRoom.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> BUAT ROOM SEKARANG`; });
+                                .catch(err => {
+                                    alert("❌ Gagal terhubung ke Google Sheets! Pastikan Anda sudah membuat lembar 'Bank_Soal_3D' dan melakukan 'Terapkan (Deploy) Versi Baru' di Apps Script.");
+                                    btnBuatRoom.innerHTML = teksAwalTombol;
+                                    btnBuatRoom.disabled = false;
+                                });
                             }
 
                             
