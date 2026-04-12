@@ -3325,19 +3325,50 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!pinRoom) { loadPage("edu-game"); return; }
             document.getElementById("survival-pin").innerText = pinRoom;
 
-            // Kontrol Guru
-            // Kontrol Guru
+            // --- 1. FUNGSI KELUAR ARENA (Siswa & Guru) ---
+            document.getElementById("btn-keluar-3d").onclick = () => {
+                if (confirm("Yakin ingin keluar dari Arena 3D?")) {
+                    if (isHost) dbGame.ref('balap_rooms/' + pinRoom).remove();
+                    else dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).remove();
+                    sessionStorage.removeItem("active_3d_room");
+                    dbGame.ref('global_scores_3d').off(); // Matikan sensor skor
+                    loadPage("edu-game");
+                }
+            };
+
+            // --- 2. SINKRONISASI SKOR GLOBAL (Tersimpan Permanen) ---
+            dbGame.ref(`global_scores_3d/${myName}`).on('value', snap => {
+                document.getElementById("skor-saya-3d").innerText = snap.val() || 0;
+            });
+
+            dbGame.ref('global_scores_3d').orderByValue().limitToLast(5).on('value', snap => {
+                let list = [];
+                snap.forEach(child => { list.push({ nama: child.key, skor: child.val() }); });
+                list.reverse(); // Urutkan dari Juara 1 ke bawah
+
+                let html = "";
+                list.forEach((item, idx) => {
+                    let medal = idx === 0 ? "🥇" : (idx === 1 ? "🥈" : (idx === 2 ? "🥉" : "🔸"));
+                    let color = idx === 0 ? "gold" : (idx === 1 ? "silver" : (idx === 2 ? "#cd7f32" : "white"));
+                    html += `<div style="display: flex; justify-content: space-between; font-weight: bold; color: ${color}; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">${medal} ${item.nama}</span>
+                                <span>${item.skor}</span>
+                             </div>`;
+                });
+                document.getElementById("list-highscore-3d").innerHTML = html || "<div style='text-align:center; color:#888;'>Belum ada juara</div>";
+            });
+
+            // --- 3. KONTROL GURU ---
             if (isHost) {
                 document.getElementById("kontrol-guru-3d").style.display = "flex";
                 
                 document.getElementById("btn-mulai-3d").onclick = () => {
-                    // KUNCI 1: Sembuhkan Nyawa (HP) & kembalikan posisi ke tengah saat mulai ulang
                     dbGame.ref(`balap_rooms/${pinRoom}`).once('value', (snap) => {
                         let current = snap.val();
                         if(!current) return;
                         let multiUpdate = {};
                         Object.keys(current.pemain || {}).forEach(p => {
-                            multiUpdate[`pemain/${p}/hp`] = 2; // Beri nyawa 2 lagi
+                            multiUpdate[`pemain/${p}/hp`] = 2; 
                             multiUpdate[`pemain/${p}/posisi`] = "tengah";
                         });
                         multiUpdate[`status`] = "playing";
@@ -3350,32 +3381,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("btn-ungkap-3d").onclick = () => {
                     dbGame.ref(`balap_rooms/${pinRoom}`).update({ status: "revealing" });
                     
-                    // Setelah 4 detik lantai runtuh, WASIT BEKERJA!
                     setTimeout(() => {
                         dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snap => {
                             let r = snap.val();
                             if(r && r.status === "revealing") {
-                                
-                                // Hitung berapa siswa yang masih hidup
                                 let players = r.pemain || {};
                                 let aliveCount = 0;
                                 let winnerName = "";
 
                                 Object.keys(players).forEach(p => {
-                                    if(players[p].hp > 0) {
-                                        aliveCount++;
-                                        winnerName = p;
-                                    }
+                                    if(players[p].hp > 0) { aliveCount++; winnerName = p; }
                                 });
 
-                                // KUNCI 2: Jika sisa 1 orang, 0 orang, ATAU soal sudah habis -> GAME OVER!
                                 if(aliveCount <= 1 || r.indeks_soal >= (r.daftar_soal.length - 1)) {
                                     dbGame.ref(`balap_rooms/${pinRoom}`).update({
                                         status: "finished",
-                                        pemenang: aliveCount === 1 ? winnerName : (aliveCount === 0 ? "Tersetrum Semua (Seri)" : "Bertahan Bersama")
+                                        pemenang: aliveCount === 1 ? winnerName : (aliveCount === 0 ? "Tersetrum Semua" : "Bertahan Bersama")
                                     });
                                 } else {
-                                    // Masih banyak yang hidup, lanjut ke soal berikutnya
                                     dbGame.ref(`balap_rooms/${pinRoom}`).update({ 
                                         indeks_soal: r.indeks_soal + 1, 
                                         status: "playing" 
@@ -3387,7 +3410,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
 
                 document.getElementById("btn-stop-3d").onclick = () => {
-                    // Reset Nyawa (HP) juga saat Guru menghentikan game (Kembali ke Lobby)
                     dbGame.ref(`balap_rooms/${pinRoom}`).once('value', (snap) => {
                         let current = snap.val();
                         if(!current) return;
@@ -3404,12 +3426,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
             }
 
-            // Panggil Mesin 3D (Hanya dipanggil sekali)
-            if (typeof init3DArena === "function") {
-                init3DArena(pinRoom, myName, isHost);
-            } else {
-                console.error("Fungsi init3DArena belum tersedia!");
-            }
+            // Panggil Mesin 3D
+            if (typeof init3DArena === "function") { init3DArena(pinRoom, myName, isHost); } 
         }
 
 
@@ -3968,7 +3986,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // ====================================================
 function init3DArena(pinRoom, myName, isHost) {
     const container = document.getElementById("canvas-container-3d");
-    if (!container || container.innerHTML !== "") return; // Cegah render ganda
+    if (!container || container.innerHTML !== "") return; 
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x87CEEB); 
@@ -3990,7 +4008,6 @@ function init3DArena(pinRoom, myName, isHost) {
     dirLight.castShadow = true;
     scene.add(dirLight);
 
-    // Bangun Platform Kiri (Merah) & Kanan (Biru)
     const platformGeo = new THREE.BoxGeometry(14, 2, 14);
     const platKiri = new THREE.Mesh(platformGeo, new THREE.MeshStandardMaterial({ color: 0xdc3545 }));
     platKiri.position.set(-7.5, 0, 0); platKiri.receiveShadow = true; scene.add(platKiri);
@@ -3998,170 +4015,98 @@ function init3DArena(pinRoom, myName, isHost) {
     const platKanan = new THREE.Mesh(platformGeo, new THREE.MeshStandardMaterial({ color: 0x0d6efd }));
     platKanan.position.set(7.5, 0, 0); platKanan.receiveShadow = true; scene.add(platKanan);
 
-    // --- 10. TAMBAHAN: AWAN DEKORATIF BERJALAN ---
+    // --- AWAN DEKORATIF BERJALAN ---
     const dekorasiAwanGroup = new THREE.Group();
     scene.add(dekorasiAwanGroup);
 
     function buatSatuAwanDekorasi() {
         const groupAwan = new THREE.Group();
-        // Menggunakan kotak-kotak putih (Voxel style) agar senada dengan karakter hewan
         const geoAwan = new THREE.BoxGeometry(4, 2, 4);
-        const matAwan = new THREE.MeshLambertMaterial({ 
-            color: 0xffffff, 
-            transparent: true, 
-            opacity: 0.6 
-        });
+        const matAwan = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
 
-        // Menyusun beberapa kotak menjadi satu gumpalan awan
         for (let i = 0; i < 4; i++) {
             const part = new THREE.Mesh(geoAwan, matAwan);
-            part.position.set(
-                (Math.random() - 0.5) * 4,
-                (Math.random() - 0.5) * 2,
-                (Math.random() - 0.5) * 4
-            );
+            part.position.set((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 4);
             part.scale.set(Math.random() + 0.5, Math.random() + 0.5, Math.random() + 0.5);
             groupAwan.add(part);
         }
-
-        // Sebar awan di posisi acak di sekitar arena
-        groupAwan.position.set(
-            (Math.random() - 0.5) * 100, // Sebaran horisontal
-            Math.random() * 10 + 5,      // Tinggi awan (di atas platform)
-            (Math.random() - 0.5) * 100  // Sebaran kedalaman
-        );
-
-        // Berikan kecepatan acak untuk efek alami
+        groupAwan.position.set((Math.random() - 0.5) * 100, Math.random() * 10 + 5, (Math.random() - 0.5) * 100);
         groupAwan.userData.speed = 0.02 + Math.random() * 0.05;
         return groupAwan;
     }
+    for (let i = 0; i < 15; i++) { dekorasiAwanGroup.add(buatSatuAwanDekorasi()); }
 
-    // Buat 15 gumpalan awan untuk background
-    for (let i = 0; i < 15; i++) {
-        dekorasiAwanGroup.add(buatSatuAwanDekorasi());
-    }
-
-    
-
-
-    let playerMeshes = {};
-    // ==========================================
-    // --- 3D ZOO FACTORY (GAYA KOTAK CUTE) ---
-    // ==========================================
-    
-    // Bahan Baku Material (GSAP butuh warna yang bisa di-update)
-    function createMaterial(colorHex) {
-        return new THREE.MeshStandardMaterial({ color: colorHex, flatShading: true });
-    }
-
+    // --- 3D ZOO FACTORY ---
+    function createMaterial(colorHex) { return new THREE.MeshStandardMaterial({ color: colorHex, flatShading: true }); }
     const matHitam = createMaterial(0x333333);
     const matPutih = createMaterial(0xffffff);
 
-    // 1. PEMBUAT BABI CUTE (PINK)
     function createBabiMesh() {
         const group = new THREE.Group();
-        const matBody = createMaterial(0xffc0cb); // Pink
-        
-        // Badan
+        const matBody = createMaterial(0xffc0cb); 
         const body = new THREE.Mesh(new THREE.BoxGeometry(2, 1.8, 2.5), matBody);
         body.position.y = 0.9; body.castShadow = true; group.add(body);
-        
-        // Moncong
         const snout = new THREE.Mesh(new THREE.BoxGeometry(1, 0.8, 0.4), createMaterial(0xffa0af));
         snout.position.set(0, 0.8, 1.4); snout.castShadow = true; group.add(snout);
-        
-        // Mata (Kiri-Kanan)
         const mataKiri = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.2), matHitam);
         mataKiri.position.set(0.5, 1.3, 1.25); group.add(mataKiri);
         const mataKanan = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.2), matHitam);
         mataKanan.position.set(-0.5, 1.3, 1.25); group.add(mataKanan);
-        
-        // Kaki (4 Buah)
         const kakiGeo = new THREE.BoxGeometry(0.5, 0.8, 0.5);
         for(let i=0; i<4; i++){
             const kaki = new THREE.Mesh(kakiGeo, createMaterial(0xff808f));
             kaki.position.set((i<2?0.6:-0.6), -0.4, (i%2===0?0.8:-0.8));
             kaki.castShadow = true; group.add(kaki);
         }
-        
-        group.userData.matAsli = matBody; // Simpan untuk reset warna GSAP
-        return group;
+        group.userData.matAsli = matBody; return group;
     }
 
-    // 2. PEMBUAT AYAM KOTAK (KUNING)
     function createAyamMesh() {
         const group = new THREE.Group();
-        const matBody = createMaterial(0xffff00); // Kuning
-        
-        // Badan
+        const matBody = createMaterial(0xffff00); 
         const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.2, 1.5), matBody);
         body.position.y = 1.1; body.castShadow = true; group.add(body);
-        
-        // Paruh
         const paruh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), createMaterial(0xffa500));
         paruh.position.set(0, 1.3, 0.9); group.add(paruh);
-        
-        // Mata
         const mataKiri = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.2), matHitam);
         mataKiri.position.set(0.4, 1.8, 0.7); group.add(mataKiri);
         const mataKanan = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.2), matHitam);
         mataKanan.position.set(-0.4, 1.8, 0.7); group.add(mataKanan);
-        
-        // Sayap (Kiri-Kanan)
         const sayap = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.2, 1.3), createMaterial(0xeeee00));
         sayap.position.set(0.85, 1.0, 0); group.add(sayap);
         const sayap2 = sayap.clone(); sayap2.position.x = -0.85; group.add(sayap2);
-        
-        // Kaki (2 Buah)
         const kaki = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), createMaterial(0x8b4513));
         kaki.position.set(0.4, -0.4, 0); group.add(kaki);
         const kaki2 = kaki.clone(); kaki2.position.x = -0.4; group.add(kaki2);
-        
-        group.userData.matAsli = matBody;
-        return group;
+        group.userData.matAsli = matBody; return group;
     }
 
-    // 3. PEMBUAT PANDA CUTE (HITAM PUTIH)
     function createPandaMesh() {
         const group = new THREE.Group();
-        
-        // Badan (Putih)
         const matBody = createMaterial(0xffffff);
         const body = new THREE.Mesh(new THREE.BoxGeometry(2, 2.3, 2.2), matBody);
         body.position.y = 1.15; body.castShadow = true; group.add(body);
-        
-        // Kepala (Putih)
         const head = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.6), matBody);
         head.position.set(0, 2.8, 0); head.castShadow = true; group.add(head);
-        
-        // Mata (Bercak Hitam ala Panda)
         const mata = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.2), matHitam);
         mata.position.set(0.5, 2.8, 0.8); group.add(mata);
         const mata2 = mata.clone(); mata2.position.x = -0.5; group.add(mata2);
-        
-        // Pupil (Mata kecil di dalam bercak)
         const pupil = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.25), matPutih);
         pupil.position.set(0.5, 2.8, 0.8); group.add(pupil);
         const pupil2 = pupil.clone(); pupil2.position.x = -0.5; group.add(pupil2);
-        
-        // Telinga (Hitam Kotak)
         const telinga = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.3), matHitam);
         telinga.position.set(0.7, 3.6, -0.1); group.add(telinga);
         const telinga2 = telinga.clone(); telinga2.position.x = -0.7; group.add(telinga2);
-        
-        // Kaki Atas/Lengan (Hitam)
         const lengan = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.7), matHitam);
         lengan.position.set(0.8, 0.6, 0.9); lengan.castShadow = true; group.add(lengan);
-        const lengan2 = lengan.clone(); lengan2.position.x = -0.8; group.add(lengan22);
-        
-        group.userData.matAsli = matBody;
-        return group;
+        const lengan2 = lengan.clone(); lengan2.position.x = -0.8; group.add(lengan2);
+        group.userData.matAsli = matBody; return group;
     }
 
-    // Daftar Pabrik Hewan
     const pabrikHewan = [createBabiMesh, createAyamMesh, createPandaMesh];
+    let playerMeshes = {};
 
-    // Sinkronisasi Firebase
+    // SINKRONISASI GAME FIREBASE
     dbGame.ref('balap_rooms/' + pinRoom).on('value', (snap) => {
         let room = snap.val();
         if (!room) return;
@@ -4169,76 +4114,62 @@ function init3DArena(pinRoom, myName, isHost) {
         let players = room.pemain || {};
         let soalAktif = room.daftar_soal ? room.daftar_soal[room.indeks_soal] : null;
 
-        // KUNCI 3: Update UI Text & Layar Game Over
         if (room.status === "lobby") {
             document.getElementById("ui-soal-3d").innerText = "Menunggu Guru Memulai...";
             document.getElementById("ui-opsi-kiri").style.display = "none";
             document.getElementById("ui-opsi-kanan").style.display = "none";
-            document.getElementById("ui-status-3d").style.display = "none"; // Matikan teks game over
+            document.getElementById("ui-status-3d").style.display = "none"; 
             gsap.to(platKiri.position, { y: 0, duration: 1 });
             gsap.to(platKanan.position, { y: 0, duration: 1 });
+            window.lastScoredRound = null; // Reset memori skor
         } else if (room.status === "finished") {
             document.getElementById("ui-soal-3d").innerText = "🏆 PERMAINAN SELESAI 🏆";
             document.getElementById("ui-opsi-kiri").style.display = "none";
             document.getElementById("ui-opsi-kanan").style.display = "none";
             
-            // Munculkan Pemenang Raksasa di Tengah Layar!
             let uiStatus = document.getElementById("ui-status-3d");
-            uiStatus.innerText = `PEMENANG: ${room.pemenang || "SERI"}`;
+            uiStatus.innerText = `PEMENANG:\n${room.pemenang || "SERI"}`;
             uiStatus.style.display = "block";
             
             gsap.to(platKiri.position, { y: 0, duration: 1 });
             gsap.to(platKanan.position, { y: 0, duration: 1 });
+            window.lastScoredRound = null;
         } else if (soalAktif) {
             document.getElementById("ui-soal-3d").innerText = soalAktif.pertanyaan;
             document.getElementById("ui-opsi-kiri").style.display = "block";
             document.getElementById("ui-opsi-kanan").style.display = "block";
             document.getElementById("ui-status-3d").style.display = "none";
-            document.getElementById("ui-opsi-kiri").innerText = soalAktif.kiri;
-            document.getElementById("ui-opsi-kanan").innerText = soalAktif.kanan;
+            
+            document.getElementById("ui-opsi-kiri").innerText = "❌ SALAH";
+            document.getElementById("ui-opsi-kanan").innerText = "✅ BENAR";
         }
 
-// Render Pemain (Dengan Deteksi Kembar & Efek Gosong)
-        
-        // 1. Urutkan nama pemain agar pembagian warna selalu konsisten di semua layar HP siswa
+        // --- RENDER PEMAIN ---
         let daftarNama = Object.keys(players).sort();
-        let hitungHewan = {}; // Memori untuk mengecek hewan kembar
+        let hitungHewan = {}; 
 
         daftarNama.forEach((nama) => {
             let data = players[nama];
             let hp = data.hp !== undefined ? data.hp : 2; 
-            let posisiY = hp > 0 ? 0.9 : -100;
+            let posisiY = hp > 0 ? 0.9 : -100; 
             
-            // KUNCI 1: Tentukan jenis hewan (Hash)
             let hash = 0;
             for (let k = 0; k < nama.length; k++) { hash += nama.charCodeAt(k); }
             let indeksHewan = hash % pabrikHewan.length;
 
-            // KUNCI 2: Hitung urutan kembar untuk membedakan warna
             if (!hitungHewan[indeksHewan]) hitungHewan[indeksHewan] = 0;
             let urutanKembar = hitungHewan[indeksHewan];
             hitungHewan[indeksHewan]++;
 
-            // Palet Warna Kaya (Pink, Kuning, Putih, Hijau, Cyan, Magenta, Orange, Ungu, Biru, Merah)
-            const paletWarna = [
-                0xffc0cb, 0xffff00, 0xffffff, 0x00ff00, 0x00ffff, 
-                0xff00ff, 0xffa500, 0x8a2be2, 0x1e90ff, 0xff4500
-            ];
-            
-            // Geser index palet sejauh 3 langkah untuk setiap hewan kembar agar warnanya mencolok perbedaannya
+            const paletWarna = [0xffc0cb, 0xffff00, 0xffffff, 0x00ff00, 0x00ffff, 0xff00ff, 0xffa500, 0x8a2be2, 0x1e90ff, 0xff4500];
             let hexWarnaUnik = paletWarna[(indeksHewan + (urutanKembar * 3)) % paletWarna.length];
 
-            // Buat MESH HEWAN jika belum ada
             if (!playerMeshes[nama]) {
                 let mesh = pabrikHewan[indeksHewan]();
-                
                 mesh.userData.offsetX = (Math.random() * 6) - 3;
                 mesh.userData.offsetZ = (Math.random() * 6) - 3;
-                mesh.userData.warnaAsli = hexWarnaUnik; // Simpan warna aslinya ke dalam memori karakter!
-                
-                // Terapkan warna unik ke badan hewan
+                mesh.userData.warnaAsli = hexWarnaUnik; 
                 mesh.userData.matAsli.color.setHex(hexWarnaUnik);
-                
                 mesh.position.set(mesh.userData.offsetX, posisiY, mesh.userData.offsetZ); 
                 scene.add(mesh);
                 playerMeshes[nama] = mesh;
@@ -4246,9 +4177,7 @@ function init3DArena(pinRoom, myName, isHost) {
 
             let pMesh = playerMeshes[nama];
             
-            // KUNCI 3: Animasi Hidup & RESET WARNA (Saat HP > 0)
             if ((room.status === "playing" || room.status === "lobby" || room.status === "finished") && hp > 0) {
-                
                 let baseX = 0; 
                 if (data.posisi === "kiri" && room.status === "playing") baseX = -7.5;
                 else if (data.posisi === "kanan" && room.status === "playing") baseX = 7.5;
@@ -4258,78 +4187,73 @@ function init3DArena(pinRoom, myName, isHost) {
                 
                 gsap.to(pMesh.position, { x: targetX, z: targetZ, y: 0.9, duration: 0.5, ease: "power1.out", overwrite: "auto" });
                 
-                // Pulihkan warnanya ke warna ceria aslinya (Jika sebelumnya gosong)
                 const warnaOri = new THREE.Color(pMesh.userData.warnaAsli);
                 gsap.to(pMesh.userData.matAsli.color, { r: warnaOri.r, g: warnaOri.g, b: warnaOri.b, duration: 0.5 });
             }
             
-            // KUNCI 4: Logika Hukuman Jatuh (Terjun Bebas Tanpa Batas)
             if (room.status === "revealing" && soalAktif) {
                 let jawabanBenar = soalAktif.jawaban_benar;
                 
                 if (data.posisi !== jawabanBenar) {
-                    // Animasi Jatuh Terus ke Bawah (Y: -100)
                     gsap.to(pMesh.position, { y: -100, duration: 1.5, ease: "power2.in", overwrite: "auto" });
-                    
                     if (hp > 0) {
-                        // Masih Punya Nyawa: Jatuh hilang, lalu di-reset oleh Guru kembali ke atas
                         if (nama === myName) {
-                            // Jeda waktu dibuat lebih lama (1.5 detik) agar siswa puas melihat karakternya jatuh
                             setTimeout(() => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ hp: hp - 1, posisi: "tengah" }); }, 1500);
                         }
                     } else {
-                        // MATI TOTAL: Tetap jadi hitam gosong sambil jatuh
                         gsap.to(pMesh.userData.matAsli.color, { r: 0.13, g: 0.13, b: 0.13, duration: 0.5, delay: 0.2 });
+                    }
+                } else {
+                    // --- SISTEM PENAMBAHAN SKOR OTOMATIS ---
+                    if (nama === myName && hp > 0) {
+                        let roundKey = room.indeks_soal;
+                        if (window.lastScoredRound !== roundKey) {
+                            window.lastScoredRound = roundKey; // Kunci agar tidak ditambah 2x
+                            
+                            // Tambah 10 Poin!
+                            dbGame.ref(`global_scores_3d/${myName}`).once('value', snap => {
+                                let skorLama = snap.val() || 0;
+                                dbGame.ref(`global_scores_3d/${myName}`).set(skorLama + 10);
+                            });
+                            
+                            // Animasi Teks Skor Menyala Emas
+                            let skorUI = document.getElementById("skor-saya-3d");
+                            if (skorUI) gsap.fromTo(skorUI, { scale: 1.8, color: "#00ff00" }, { scale: 1, color: "gold", duration: 1 });
+                        }
                     }
                 }
             } else if (hp <= 0) {
-                // Pastikan siswa yang sudah mati tetap hitam dan berada jauh di bawah layar (-100)
                 pMesh.userData.matAsli.color.setHex(0x222222);
                 pMesh.position.y = -100;
             }
         });
 
-        // Animasi Lantai Runtuh (Jatuhkan lebih dalam juga ke -50)
         if (room.status === "revealing" && soalAktif) {
             let jawabanBenar = soalAktif.jawaban_benar;
-            if (jawabanBenar === "kiri") {
-                gsap.to(platKanan.position, { y: -50, duration: 1.5, ease: "power2.in" });
-            } else {
-                gsap.to(platKiri.position, { y: -50, duration: 1.5, ease: "power2.in" });
-            }
+            if (jawabanBenar === "kiri") { gsap.to(platKanan.position, { y: -50, duration: 1.5, ease: "power2.in" }); } 
+            else { gsap.to(platKiri.position, { y: -50, duration: 1.5, ease: "power2.in" }); }
         } else if (room.status === "playing") {
             gsap.to(platKiri.position, { y: 0, duration: 1, ease: "bounce.out" });
             gsap.to(platKanan.position, { y: 0, duration: 1, ease: "bounce.out" });
         }
     });
 
-    // Kontrol Siswa
     document.getElementById("btn-pindah-kiri").onclick = () => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ posisi: "kiri" }); };
     document.getElementById("btn-pindah-kanan").onclick = () => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ posisi: "kanan" }); };
 
-    // Loop Animasi
-    // Loop Animasi
     function animate() {
         requestAnimationFrame(animate);
-        
-        
-
-        // --- GERAKKAN AWAN DEKORASI ---
         dekorasiAwanGroup.children.forEach(awan => {
             awan.position.x += awan.userData.speed;
-            
-            // Jika awan sudah terlalu jauh ke kanan, pindahkan kembali ke kiri (looping)
             if (awan.position.x > 60) {
                 awan.position.x = -60;
-                awan.position.z = (Math.random() - 0.5) * 100; // Acak ulang jalur z-nya
+                awan.position.z = (Math.random() - 0.5) * 100; 
             }
         });
-
         renderer.render(scene, camera);
     }
     animate();
 
-    // Responsive
     window.addEventListener('resize', () => {
         camera.aspect = container.clientWidth / container.clientHeight;
         camera.updateProjectionMatrix();
