@@ -4120,26 +4120,46 @@ function init3DArena(pinRoom, myName, isHost) {
             document.getElementById("ui-opsi-kanan").innerText = soalAktif.kanan;
         }
 
-// Render Pemain
-        Object.keys(players).forEach((nama, i) => {
+// Render Pemain (Dengan Deteksi Kembar & Efek Gosong)
+        
+        // 1. Urutkan nama pemain agar pembagian warna selalu konsisten di semua layar HP siswa
+        let daftarNama = Object.keys(players).sort();
+        let hitungHewan = {}; // Memori untuk mengecek hewan kembar
+
+        daftarNama.forEach((nama) => {
             let data = players[nama];
             let hp = data.hp !== undefined ? data.hp : 2; 
-            let posisiY = hp > 0 ? 0.9 : -16; // Hewan kotak berdiri di Y=0.9
+            let posisiY = hp > 0 ? 0.9 : -16; 
             
-            // KUNCI PERBAIKAN: Buat MESH HEWAN ACAK jika belum ada
+            // KUNCI 1: Tentukan jenis hewan (Hash)
+            let hash = 0;
+            for (let k = 0; k < nama.length; k++) { hash += nama.charCodeAt(k); }
+            let indeksHewan = hash % pabrikHewan.length;
+
+            // KUNCI 2: Hitung urutan kembar untuk membedakan warna
+            if (!hitungHewan[indeksHewan]) hitungHewan[indeksHewan] = 0;
+            let urutanKembar = hitungHewan[indeksHewan];
+            hitungHewan[indeksHewan]++;
+
+            // Palet Warna Kaya (Pink, Kuning, Putih, Hijau, Cyan, Magenta, Orange, Ungu, Biru, Merah)
+            const paletWarna = [
+                0xffc0cb, 0xffff00, 0xffffff, 0x00ff00, 0x00ffff, 
+                0xff00ff, 0xffa500, 0x8a2be2, 0x1e90ff, 0xff4500
+            ];
+            
+            // Geser index palet sejauh 3 langkah untuk setiap hewan kembar agar warnanya mencolok perbedaannya
+            let hexWarnaUnik = paletWarna[(indeksHewan + (urutanKembar * 3)) % paletWarna.length];
+
+            // Buat MESH HEWAN jika belum ada
             if (!playerMeshes[nama]) {
-                
-                // Gunakan nama untuk menentukan hewan permanen (Hash sederhana)
-                let hash = 0;
-                for (let k = 0; k < nama.length; k++) { hash += nama.charCodeAt(k); }
-                let indeksHewan = hash % pabrikHewan.length;
-                
-                // Panggil Pabrik Pembuat Hewan
                 let mesh = pabrikHewan[indeksHewan]();
                 
-                // Simpan posisi acak permanen agar tidak bergetar hebat saat timer jalan
-                mesh.userData.offsetX = (Math.random() * 6) - 3; // Sedikit lebih tersebar
+                mesh.userData.offsetX = (Math.random() * 6) - 3;
                 mesh.userData.offsetZ = (Math.random() * 6) - 3;
+                mesh.userData.warnaAsli = hexWarnaUnik; // Simpan warna aslinya ke dalam memori karakter!
+                
+                // Terapkan warna unik ke badan hewan
+                mesh.userData.matAsli.color.setHex(hexWarnaUnik);
                 
                 mesh.position.set(mesh.userData.offsetX, posisiY, mesh.userData.offsetZ); 
                 scene.add(mesh);
@@ -4148,41 +4168,47 @@ function init3DArena(pinRoom, myName, isHost) {
 
             let pMesh = playerMeshes[nama];
             
-            // Gerakkan karakter hewan (Animasi Lompat ke Kiri/Kanan/Tengah)
+            // KUNCI 3: Animasi Hidup & RESET WARNA (Saat HP > 0)
             if ((room.status === "playing" || room.status === "lobby" || room.status === "finished") && hp > 0) {
                 
-                // Tentukan pijakan dasar
-                let baseX = 0; // Tengah (Saat di Lobby/Lantai Runtuh)
+                let baseX = 0; 
                 if (data.posisi === "kiri" && room.status === "playing") baseX = -7.5;
                 else if (data.posisi === "kanan" && room.status === "playing") baseX = 7.5;
                 
-                // Terapkan jarak aman antar siswa (userData acak permanen)
                 let targetX = baseX + pMesh.userData.offsetX;
                 let targetZ = pMesh.userData.offsetZ;
                 
-                // Gunakan overwrite: "auto" agar animasi tidak bertabrakan saat timer refresh
                 gsap.to(pMesh.position, { x: targetX, z: targetZ, y: 0.9, duration: 0.5, ease: "power1.out", overwrite: "auto" });
                 
-                // Reset warna badan hewan (karena bahan dasarnya sudah berwarna-warni)
-                pMesh.userData.matAsli.color.setHex(pMesh.userData.matAsli.color.getHex()); 
+                // Pulihkan warnanya ke warna ceria aslinya (Jika sebelumnya gosong)
+                const warnaOri = new THREE.Color(pMesh.userData.warnaAsli);
+                gsap.to(pMesh.userData.matAsli.color, { r: warnaOri.r, g: warnaOri.g, b: warnaOri.b, duration: 0.5 });
             }
             
-            // Logika Hukuman Jatuh Tersetrum (HP 0)
+            // KUNCI 4: Logika Hukuman Jatuh & GOSONG
             if (room.status === "revealing" && soalAktif) {
                 let jawabanBenar = soalAktif.jawaban_benar;
-                if (data.posisi !== jawabanBenar && hp > 0) {
-                    
-                    // JATUH! (Kamera Menorot Y turun drastis)
+                
+                if (data.posisi !== jawabanBenar) {
+                    // Animasi Jatuh
                     gsap.to(pMesh.position, { y: -14, duration: 0.8, ease: "power2.in", overwrite: "auto" });
                     
-                    // Efek kedip kuning/putih (Tersetrum) - Menargetkan material utama badan hewan
-                    gsap.to(pMesh.userData.matAsli.color, { r: 1, g: 1, b: 0, duration: 0.1, yoyo: true, repeat: 10 });
-                    
-                    // Kurangi HP di database (Hanya sistem diri sendiri yang mengirim agar tidak ganda)
-                    if (nama === myName) {
-                        setTimeout(() => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ hp: hp - 1, posisi: "tengah" }); }, 1000);
+                    if (hp > 0) {
+                        // Masih Punya Nyawa: Hanya berkedip kesetrum 
+                        gsap.to(pMesh.userData.matAsli.color, { r: 1, g: 1, b: 0, duration: 0.1, yoyo: true, repeat: 7 });
+                        
+                        if (nama === myName) {
+                            setTimeout(() => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ hp: hp - 1, posisi: "tengah" }); }, 1000);
+                        }
+                    } else {
+                        // MATI TOTAL: Berubah Hitam Gosong (0x222222)
+                        gsap.to(pMesh.userData.matAsli.color, { r: 0.13, g: 0.13, b: 0.13, duration: 0.5, delay: 0.5 });
                     }
                 }
+            } else if (hp <= 0) {
+                // Pastikan siswa yang sudah mati tetap hitam dan berada di bawah (awan petir)
+                pMesh.userData.matAsli.color.setHex(0x222222);
+                pMesh.position.y = -16;
             }
         });
 
