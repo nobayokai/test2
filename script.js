@@ -1224,7 +1224,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     // KUNCI PERBAIKAN: Cek Mode di dalam Database
                                     if (roomData.mode === "3d_survival") {
                                         // JIKA MODE 3D: Arahkan ke Arena 3D
-                                        dbGame.ref(`balap_rooms/${pinMasuk}/pemain/${myName}`).set({ posisi: "tengah", hp: 2 }).then(() => {
+                                        dbGame.ref(`balap_rooms/${pinMasuk}/pemain/${myName}`).set({ posisi: "tengah", hp: 1 }).then(() => {
                                             sessionStorage.setItem("active_3d_room", pinMasuk);
                                             sessionStorage.setItem("is_3d_host", "false");
                                             loadPage("arena-3d");
@@ -1273,7 +1273,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         if (publicRoomId) {
                             // JIKA ADA: Gabung ke room tersebut
-                            dbGame.ref(`balap_rooms/${publicRoomId}/pemain/${myName}`).set({ posisi: "tengah", hp: 2 }).then(() => {
+                            dbGame.ref(`balap_rooms/${publicRoomId}/pemain/${myName}`).set({ posisi: "tengah", hp: 1 }).then(() => {
                                 sessionStorage.setItem("active_3d_room", publicRoomId);
                                 sessionStorage.setItem("is_3d_host", "false"); // Pemain biasa (bukan shadow host)
                                 loadPage("arena-3d");
@@ -1307,7 +1307,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     daftar_soal: daftarSoal3D, indeks_soal: 0,
                                     mode: "3d_survival_public", status: "lobby",
                                     waktu_lobby: Date.now() + 30000, // Tunggu 30 Detik
-                                    pemain: { [myName]: { posisi: "tengah", hp: 2 } },
+                                    pemain: { [myName]: { posisi: "tengah", hp: 1 } },
                                     pemenang: ""
                                 }).then(() => {
                                     sessionStorage.setItem("active_3d_room", newRoomId);
@@ -3389,7 +3389,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-    // ==========================================
+// ==========================================
         // --- LOGIKA ARENA 3D SURVIVAL (LANTAI RUNTUH) ---
         // ==========================================
         if (page === "arena-3d") {
@@ -3400,10 +3400,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!pinRoom) { loadPage("edu-game"); return; }
             document.getElementById("survival-pin").innerText = pinRoom;
 
-            // --- 1. FUNGSI KELUAR ARENA (Siswa & Guru) ---
+            // --- 1. FUNGSI KELUAR ARENA ---
             window.keluarArena3D = function(force = false) {
                 if (force || confirm("Yakin ingin keluar dari Arena 3D?")) {
-                    // Bersihkan semua Timer agar tidak nyangkut di memori browser
                     if (window.autoHostInterval) clearInterval(window.autoHostInterval); 
                     if (window.publicTimerInterval) clearInterval(window.publicTimerInterval);
                     if (window.publicEndTimeout) clearTimeout(window.publicEndTimeout);
@@ -3442,7 +3441,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if(lbElemen) lbElemen.innerHTML = html || "<div style='text-align:center; color:#888;'>Belum ada juara</div>";
             });
 
-            // --- 3. KONTROL GURU (JIKA BUKAN MODE PUBLIK) ---
+            // --- 3. KONTROL GURU (OTORITAS MUTLAK) ---
             if (isHost && !sessionStorage.getItem("is_public_match")) {
                 document.getElementById("kontrol-guru-3d").style.display = "flex";
                 
@@ -3452,7 +3451,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         if(!current) return;
                         let multiUpdate = {};
                         Object.keys(current.pemain || {}).forEach(p => {
-                            multiUpdate[`pemain/${p}/hp`] = 2; 
+                            multiUpdate[`pemain/${p}/hp`] = 1; // 1 NYAWA SUDDEN DEATH
                             multiUpdate[`pemain/${p}/posisi`] = "tengah";
                         });
                         multiUpdate[`status`] = "playing";
@@ -3463,26 +3462,39 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
                 
                 document.getElementById("btn-ungkap-3d").onclick = () => {
-                    dbGame.ref(`balap_rooms/${pinRoom}`).update({ status: "revealing" });
-                    setTimeout(() => {
-                        dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snap => {
-                            let r = snap.val();
-                            if(r && r.status === "revealing") {
-                                let players = r.pemain || {};
-                                let aliveCount = 0; let winnerName = "";
-                                Object.keys(players).forEach(p => { if(players[p].hp > 0) { aliveCount++; winnerName = p; } });
-
-                                if(aliveCount <= 1 || r.indeks_soal >= (r.daftar_soal.length - 1)) {
-                                    dbGame.ref(`balap_rooms/${pinRoom}`).update({
-                                        status: "finished",
-                                        pemenang: aliveCount === 1 ? winnerName : (aliveCount === 0 ? "Tersetrum Semua" : "Bertahan Bersama")
-                                    });
-                                } else {
-                                    dbGame.ref(`balap_rooms/${pinRoom}`).update({ indeks_soal: r.indeks_soal + 1, status: "playing" });
-                                }
+                    dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snap => {
+                        let r = snap.val();
+                        if(!r) return;
+                        let ansBenar = r.daftar_soal[r.indeks_soal].jawaban_benar;
+                        let updates = { status: "revealing" };
+                        
+                        // GURU MEMBUNUH SEMUA YANG SALAH POSISI SECARA INSTAN
+                        Object.keys(r.pemain || {}).forEach(p => {
+                            if (r.pemain[p].hp > 0 && r.pemain[p].posisi !== ansBenar) {
+                                updates[`pemain/${p}/hp`] = 0; 
                             }
                         });
-                    }, 4000);
+
+                        dbGame.ref(`balap_rooms/${pinRoom}`).update(updates);
+                        
+                        setTimeout(() => {
+                            dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snap2 => {
+                                let r2 = snap2.val();
+                                if(r2 && r2.status === "revealing") {
+                                    let aliveCount = 0; let winnerName = "";
+                                    Object.keys(r2.pemain || {}).forEach(p => { if(r2.pemain[p].hp > 0) { aliveCount++; winnerName = p; } });
+
+                                    if(aliveCount <= 1 || r2.indeks_soal >= (r2.daftar_soal.length - 1)) {
+                                        dbGame.ref(`balap_rooms/${pinRoom}`).update({
+                                            status: "finished", pemenang: aliveCount === 1 ? winnerName : (aliveCount === 0 ? "Tersetrum Semua" : "Bertahan Bersama")
+                                        });
+                                    } else {
+                                        dbGame.ref(`balap_rooms/${pinRoom}`).update({ indeks_soal: r2.indeks_soal + 1, status: "playing" });
+                                    }
+                                }
+                            });
+                        }, 4000);
+                    });
                 };
 
                 document.getElementById("btn-stop-3d").onclick = () => {
@@ -3491,7 +3503,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         if(!current) return;
                         let multiUpdate = {};
                         Object.keys(current.pemain || {}).forEach(p => {
-                            multiUpdate[`pemain/${p}/hp`] = 2; multiUpdate[`pemain/${p}/posisi`] = "tengah";
+                            multiUpdate[`pemain/${p}/hp`] = 1; multiUpdate[`pemain/${p}/posisi`] = "tengah";
                         });
                         multiUpdate[`status`] = "lobby"; multiUpdate[`indeks_soal`] = 0; multiUpdate[`pemenang`] = "";
                         dbGame.ref(`balap_rooms/${pinRoom}`).update(multiUpdate);
@@ -3513,21 +3525,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     sessionStorage.setItem("is_public_match", "true");
                     document.getElementById("kontrol-guru-3d").style.display = "none";
                     
-                    // --- PERBAIKAN BUG: UI TIMER (Tidak Tumpang Tindih) ---
                     let timerUI = document.getElementById("public-timer-ui");
                     if (!timerUI) {
                         timerUI = document.createElement("div");
                         timerUI.id = "public-timer-ui";
-                        // Posisi ditaruh rapi di bawah header
                         timerUI.style.cssText = "position:absolute; top:75px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:white; font-size:18px; font-weight:bold; padding:8px 20px; border-radius:10px; border:2px solid gold; z-index:90; text-align:center;";
                         document.getElementById("wadah-3d-survival").appendChild(timerUI);
-
-                        // Turunkan box soal agar tidak menutupi timer
                         const qBox = document.querySelector(".question-wrapper");
                         if(qBox) qBox.style.top = "140px";
                     }
 
-                    // --- PERBAIKAN BUG: TIMER VISUAL YANG MULUS (LOKAL) ---
                     window.current3DRoomStatus = room.status;
                     let targetWaktuServer = room.status === "lobby" ? room.waktu_lobby : room.waktu_soal;
                     
@@ -3551,38 +3558,35 @@ document.addEventListener("DOMContentLoaded", () => {
                             } else {
                                 timerUI.style.display = "none";
                             }
-                        }, 200); // Hitung mundur lokal super mulus (200ms)
+                        }, 200); 
                     }
                 }
 
-                // --- TUGAS KHUSUS SHADOW HOST (BOT & TIMER SERVER) ---
                 if (isPublic && isHost && !window.autoHostInterval) {
                     window.autoHostInterval = setInterval(() => {
                         dbGame.ref('balap_rooms/' + pinRoom).once('value', checkSnap => {
                             let r = checkSnap.val();
                             if(!r) { clearInterval(window.autoHostInterval); return; }
-                            
                             let timeNow = Date.now();
                             
                             // A. LOBBY HABIS -> MASUKKAN BOT & MULAI
                             if (r.status === "lobby" && timeNow >= r.waktu_lobby && !window.isTrans) {
                                 window.isTrans = true;
                                 let bots = {};
-                                for (let i = 1; i <= 30; i++) { bots[`Bot_Pelajar_${i}`] = { posisi: "tengah", hp: 2, isBot: true }; }
+                                for (let i = 1; i <= 30; i++) { bots[`Bot_Pelajar_${i}`] = { posisi: "tengah", hp: 1, isBot: true }; }
                                 
                                 dbGame.ref(`balap_rooms/${pinRoom}/pemain`).update(bots).then(() => {
                                     dbGame.ref(`balap_rooms/${pinRoom}`).update({
-                                        status: "playing", waktu_soal: Date.now() + 8000 // Waktu jawab 8 detik
+                                        status: "playing", waktu_soal: Date.now() + 8000 
                                     }).then(() => { window.isTrans = false; });
                                 });
                             }
                             
-                            // B. SAAT BERMAIN (PERGERAKAN BOT NATURAL)
+                            // B. SAAT BERMAIN (PERGERAKAN BOT)
                             else if (r.status === "playing") {
                                 let sisaSoal = Math.ceil((r.waktu_soal - timeNow) / 1000);
-                                
-                                // Tick pergerakan setiap 1.2 detik agar terlihat natural galau
                                 let tickWaktu = Math.floor(timeNow / 1200); 
+                                
                                 if (window.lastBotTick !== tickWaktu) {
                                     window.lastBotTick = tickWaktu;
                                     let botUpdates = {};
@@ -3591,34 +3595,34 @@ document.addEventListener("DOMContentLoaded", () => {
                                     let hasUpdate = false;
                                     
                                     Object.keys(r.pemain).forEach(p => {
-                                        // PERBAIKAN BUG: Hanya bot yang masih hidup yang bisa mondar-mandir
                                         if (r.pemain[p].isBot && r.pemain[p].hp > 0) {
                                             let posBaru = "tengah";
-                                            
-                                            if (sisaSoal <= 2) {
-                                                // 2 Detik Terakhir: Mengunci pilihan (70% Benar, 30% Terjerumus)
-                                                posBaru = Math.random() < 0.7 ? ansBenar : ansSalah;
-                                            } else {
-                                                // Masih Awal: Lari kesana-kemari mencari jawaban
+                                            if (sisaSoal <= 2) { posBaru = Math.random() < 0.7 ? ansBenar : ansSalah; } 
+                                            else {
                                                 const pilihan = ["kiri", "kanan", "tengah"];
                                                 posBaru = pilihan[Math.floor(Math.random() * pilihan.length)];
                                             }
-
                                             if (r.pemain[p].posisi !== posBaru) {
-                                                botUpdates[`pemain/${p}/posisi`] = posBaru;
-                                                hasUpdate = true;
+                                                botUpdates[`pemain/${p}/posisi`] = posBaru; hasUpdate = true;
                                             }
                                         }
                                     });
                                     if (hasUpdate) dbGame.ref(`balap_rooms/${pinRoom}`).update(botUpdates);
                                 }
 
-                                // WAKTU HABIS -> RUNTUHKAN LANTAI!
+                                // WAKTU HABIS -> HOST MEMBUNUH YANG SALAH & LANTAI RUNTUH
                                 if (sisaSoal <= 0 && !window.isTrans) {
                                     window.isTrans = true;
-                                    dbGame.ref(`balap_rooms/${pinRoom}`).update({
-                                        status: "revealing", waktu_reveal: Date.now() + 4000 // 4 Detik terjun bebas
-                                    }).then(() => { window.isTrans = false; });
+                                    let updateData = { status: "revealing", waktu_reveal: Date.now() + 4000 };
+                                    let ansBenar = r.daftar_soal[r.indeks_soal].jawaban_benar;
+                                    
+                                    Object.keys(r.pemain).forEach(p => {
+                                        if (r.pemain[p].hp > 0 && r.pemain[p].posisi !== ansBenar) {
+                                            updateData[`pemain/${p}/hp`] = 0; // INSTANT KILL DI SERVER!
+                                        }
+                                    });
+
+                                    dbGame.ref(`balap_rooms/${pinRoom}`).update(updateData).then(() => { window.isTrans = false; });
                                 }
                             }
 
@@ -3633,14 +3637,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                         if (r.pemain[p].hp > 0) { aliveCount++; winnerName = p; }
                                     });
 
-                                    // Game Selesai Jika sisa 1 orang / 0 orang / soal habis
                                     if (aliveCount <= 1 || r.indeks_soal >= (r.daftar_soal.length - 1)) {
                                         dbGame.ref(`balap_rooms/${pinRoom}`).update({
-                                            status: "finished",
-                                            pemenang: aliveCount === 1 ? winnerName : "Tidak ada yang bertahan (Seri)"
+                                            status: "finished", pemenang: aliveCount === 1 ? winnerName : "Tidak ada yang bertahan"
                                         }).then(() => { window.isTrans = false; });
                                     } else {
-                                        // Lanjut Soal Berikutnya!
                                         dbGame.ref(`balap_rooms/${pinRoom}`).update({
                                             status: "playing", indeks_soal: r.indeks_soal + 1, waktu_soal: Date.now() + 8000
                                         }).then(() => { window.isTrans = false; });
@@ -4360,17 +4361,15 @@ function init3DArena(pinRoom, myName, isHost) {
             gsap.to(platKanan.position, { y: 0, duration: 1 });
             window.lastScoredRound = null;
 
-            // --- PERBAIKAN BUG: OTOMATIS KEMBALI KE LOBBY JIKA PUBLIC ---
             if (room.mode === "3d_survival_public") {
                 uiStatus.innerHTML += `<br><span style="font-size:18px; color:yellow; text-shadow: 1px 1px 2px #000;">Arena ditutup dalam 8 detik...</span>`;
                 if (!window.publicEndTimeout) {
                     window.publicEndTimeout = setTimeout(() => {
                         window.publicEndTimeout = null;
-                        if (typeof window.keluarArena3D === "function") window.keluarArena3D(true); // Keluar paksa
+                        if (typeof window.keluarArena3D === "function") window.keluarArena3D(true);
                     }, 8000);
                 }
             }
-
         } else if (soalAktif) {
             const elSoal = document.getElementById("ui-soal-3d");
             if(elSoal) elSoal.innerText = soalAktif.pertanyaan;
@@ -4388,7 +4387,7 @@ function init3DArena(pinRoom, myName, isHost) {
 
         daftarNama.forEach((nama) => {
             let data = players[nama];
-            let hp = data.hp !== undefined ? data.hp : 2; 
+            let hp = data.hp !== undefined ? data.hp : 1; // DEFAULT 1 NYAWA
             let posisiY = hp > 0 ? 0.9 : -100; 
             
             let hash = 0;
@@ -4433,16 +4432,10 @@ function init3DArena(pinRoom, myName, isHost) {
                 let jawabanBenar = soalAktif.jawaban_benar;
                 
                 if (data.posisi !== jawabanBenar) {
+                    // Animasi Jatuh Kematian (Client-side render)
                     gsap.to(pMesh.position, { y: -100, duration: 1.5, ease: "power2.in", overwrite: "auto" });
-                    if (hp > 0) {
-                        if (nama === myName) {
-                            setTimeout(() => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ hp: hp - 1, posisi: "tengah" }); }, 1500);
-                        }
-                    } else {
-                        gsap.to(pMesh.userData.matAsli.color, { r: 0.13, g: 0.13, b: 0.13, duration: 0.5, delay: 0.2 });
-                    }
+                    gsap.to(pMesh.userData.matAsli.color, { r: 0.13, g: 0.13, b: 0.13, duration: 0.5, delay: 0.2 });
                 } else {
-                    // --- SISTEM PENAMBAHAN SKOR OTOMATIS ---
                     if (nama === myName && hp > 0) {
                         let roundKey = room.indeks_soal;
                         if (window.lastScoredRound !== roundKey) {
