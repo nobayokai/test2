@@ -3289,32 +3289,81 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("survival-pin").innerText = pinRoom;
 
             // Kontrol Guru
+            // Kontrol Guru
             if (isHost) {
                 document.getElementById("kontrol-guru-3d").style.display = "flex";
                 
                 document.getElementById("btn-mulai-3d").onclick = () => {
-                    dbGame.ref(`balap_rooms/${pinRoom}`).update({ status: "playing" });
+                    // KUNCI 1: Sembuhkan Nyawa (HP) & kembalikan posisi ke tengah saat mulai ulang
+                    dbGame.ref(`balap_rooms/${pinRoom}`).once('value', (snap) => {
+                        let current = snap.val();
+                        if(!current) return;
+                        let multiUpdate = {};
+                        Object.keys(current.pemain || {}).forEach(p => {
+                            multiUpdate[`pemain/${p}/hp`] = 2; // Beri nyawa 2 lagi
+                            multiUpdate[`pemain/${p}/posisi`] = "tengah";
+                        });
+                        multiUpdate[`status`] = "playing";
+                        multiUpdate[`indeks_soal`] = 0;
+                        multiUpdate[`pemenang`] = "";
+                        dbGame.ref(`balap_rooms/${pinRoom}`).update(multiUpdate);
+                    });
                 };
                 
                 document.getElementById("btn-ungkap-3d").onclick = () => {
                     dbGame.ref(`balap_rooms/${pinRoom}`).update({ status: "revealing" });
                     
-                    // Setelah 4 detik lantai runtuh, lanjut ke soal berikutnya otomatis
+                    // Setelah 4 detik lantai runtuh, WASIT BEKERJA!
                     setTimeout(() => {
                         dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snap => {
                             let r = snap.val();
                             if(r && r.status === "revealing") {
-                                dbGame.ref(`balap_rooms/${pinRoom}`).update({ 
-                                    indeks_soal: r.indeks_soal + 1, 
-                                    status: "playing" 
+                                
+                                // Hitung berapa siswa yang masih hidup
+                                let players = r.pemain || {};
+                                let aliveCount = 0;
+                                let winnerName = "";
+
+                                Object.keys(players).forEach(p => {
+                                    if(players[p].hp > 0) {
+                                        aliveCount++;
+                                        winnerName = p;
+                                    }
                                 });
+
+                                // KUNCI 2: Jika sisa 1 orang, 0 orang, ATAU soal sudah habis -> GAME OVER!
+                                if(aliveCount <= 1 || r.indeks_soal >= (r.daftar_soal.length - 1)) {
+                                    dbGame.ref(`balap_rooms/${pinRoom}`).update({
+                                        status: "finished",
+                                        pemenang: aliveCount === 1 ? winnerName : (aliveCount === 0 ? "Tersetrum Semua (Seri)" : "Bertahan Bersama")
+                                    });
+                                } else {
+                                    // Masih banyak yang hidup, lanjut ke soal berikutnya
+                                    dbGame.ref(`balap_rooms/${pinRoom}`).update({ 
+                                        indeks_soal: r.indeks_soal + 1, 
+                                        status: "playing" 
+                                    });
+                                }
                             }
                         });
                     }, 4000);
                 };
 
                 document.getElementById("btn-stop-3d").onclick = () => {
-                    dbGame.ref(`balap_rooms/${pinRoom}`).update({ status: "lobby", indeks_soal: 0 });
+                    // Reset Nyawa (HP) juga saat Guru menghentikan game (Kembali ke Lobby)
+                    dbGame.ref(`balap_rooms/${pinRoom}`).once('value', (snap) => {
+                        let current = snap.val();
+                        if(!current) return;
+                        let multiUpdate = {};
+                        Object.keys(current.pemain || {}).forEach(p => {
+                            multiUpdate[`pemain/${p}/hp`] = 2;
+                            multiUpdate[`pemain/${p}/posisi`] = "tengah";
+                        });
+                        multiUpdate[`status`] = "lobby";
+                        multiUpdate[`indeks_soal`] = 0;
+                        multiUpdate[`pemenang`] = "";
+                        dbGame.ref(`balap_rooms/${pinRoom}`).update(multiUpdate);
+                    });
                 };
             }
 
