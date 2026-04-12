@@ -1,31 +1,41 @@
 <style>
+    /* KUNCI PERBAIKAN: Paksa susunan dari atas ke bawah (Column) dengan lebar 100% */
     .survival-wrapper {
-        max-width: 1200px; margin: auto; padding: 10px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 1200px; 
+        margin: 0 auto; 
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        gap: 15px; /* Memberi jarak otomatis antar kotak */
     }
     
     /* Header Premium */
     .header-3d {
         display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
         background: #fff; padding: 15px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
-        border-bottom: 4px solid #0d6efd; margin-bottom: 15px;
+        border-bottom: 4px solid #0d6efd; width: 100%; box-sizing: border-box;
     }
     .header-title { margin: 0; font-size: 1.5rem; color: #333; display: flex; align-items: center; gap: 10px; }
     .pin-badge { color: #0d6efd; background: #e9ecef; padding: 5px 15px; border-radius: 8px; font-weight: 900; }
     .btn-keluar { background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; box-shadow: 0 4px 0 #8b0000; cursor: pointer; transition: all 0.1s; }
     .btn-keluar:active { transform: translateY(4px); box-shadow: 0 0 0 #8b0000; }
 
-    /* Panel Guru */
+    /* Panel Guru (Sekarang dijamin melebar 100%) */
     .panel-guru {
-        display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; padding: 15px;
-        background: #fff3cd; border-radius: 15px; border: 2px dashed #ffc107; margin-bottom: 15px;
+        width: 100%; box-sizing: border-box;
+        display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; padding: 20px;
+        background: #fff3cd; border-radius: 15px; border: 2px dashed #ffc107;
     }
-    .btn-guru { border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.15); transition: transform 0.1s; color: white; }
+    .btn-guru { border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: transform 0.1s; color: white; font-size: 1.1rem; }
     .btn-guru:active { transform: scale(0.95); }
 
     /* Wadah Utama Arena */
     .arena-container {
         position: relative; width: 100%; height: 70vh; min-height: 500px; background: #87CEEB; 
         border-radius: 20px; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.2), 0 10px 20px rgba(0,0,0,0.3); border: 4px solid #333;
+        box-sizing: border-box;
     }
 
     /* HUD (Head-Up Display) - Skor & Leaderboard bertumpuk rapi */
@@ -44,13 +54,12 @@
     .skor-box { font-size: 1rem; font-weight: bold; border-left: 4px solid #0d6efd; display: flex; align-items: center; gap: 10px; }
     .angka-skor { color: gold; font-size: 1.5rem; text-shadow: 1px 1px 2px #000; }
     
-    .lb-box { width: 200px; border-top: 4px solid gold; }
+    .lb-box { width: 220px; border-top: 4px solid gold; }
     .lb-title { margin: 0 0 10px 0; font-size: 0.9rem; color: gold; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; }
-    .lb-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,0.1); }
     
     /* Teks Pertanyaan Mulus di Tengah */
     .question-wrapper {
-        position: absolute; top: 80px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 600px; text-align: center; z-index: 15; pointer-events: none;
+        position: absolute; top: 90px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 600px; text-align: center; z-index: 15; pointer-events: none;
     }
     .question-box {
         background: rgba(255,255,255,0.95); padding: 12px 25px; display: inline-block; border-radius: 20px;
@@ -81,7 +90,7 @@
     /* Game Over Text */
     #ui-status-3d {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; font-weight: 900; color: white;
-        text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; text-align: center; z-index: 40; line-height: 1.2;
+        text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; text-align: center; z-index: 40; line-height: 1.2; width: 100%;
     }
 
     /* === RESPONSIVE UNTUK HP KECIL === */
@@ -89,13 +98,14 @@
         .header-3d { flex-direction: column; text-align: center; }
         .hud-top { flex-direction: column; align-items: center; top: 10px; }
         .lb-box { width: 90%; max-width: 300px; padding: 10px; }
-        /* Turunkan kotak pertanyaan agar tidak tertutup HUD di HP */
-        .question-wrapper { top: 160px; }
+        .question-wrapper { top: 180px; }
         .question-box { font-size: 1rem; padding: 10px 15px; }
         .plang-opsi { top: 45%; font-size: 1rem; padding: 5px 10px; }
         .action-area { gap: 10px; bottom: 15px; }
         .btn-lari { font-size: 1rem; padding: 12px 5px; border-width: 2px; }
         #ui-status-3d { font-size: 2rem; width: 90%; }
+        .panel-guru { flex-direction: column; }
+        .btn-guru { width: 100%; }
     }
 </style>
 
@@ -111,7 +121,7 @@
     </div>
 
     <div id="kontrol-guru-3d" class="panel-guru" style="display: none;">
-        <div style="width: 100%; font-weight: bold; text-align: center; color: #856404;">Panel Kontrol Guru:</div>
+        <div style="width: 100%; font-weight: bold; text-align: center; color: #856404; font-size: 1.2rem;">Panel Kontrol Guru</div>
         <button id="btn-mulai-3d" class="btn-guru" style="background:#198754;"><i class="fa-solid fa-play"></i> Mulai Ronde</button>
         <button id="btn-ungkap-3d" class="btn-guru" style="background:#dc3545;"><i class="fa-solid fa-bolt"></i> Runtuhkan Lantai!</button>
         <button id="btn-stop-3d" class="btn-guru" style="background:#333;"><i class="fa-solid fa-rotate-left"></i> Reset ke Lobby</button>
