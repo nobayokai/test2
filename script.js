@@ -3961,6 +3961,50 @@ function init3DArena(pinRoom, myName, isHost) {
     const platKanan = new THREE.Mesh(platformGeo, new THREE.MeshStandardMaterial({ color: 0x0d6efd }));
     platKanan.position.set(7.5, 0, 0); platKanan.receiveShadow = true; scene.add(platKanan);
 
+    // --- 10. TAMBAHAN: AWAN DEKORATIF BERJALAN ---
+    const dekorasiAwanGroup = new THREE.Group();
+    scene.add(dekorasiAwanGroup);
+
+    function buatSatuAwanDekorasi() {
+        const groupAwan = new THREE.Group();
+        // Menggunakan kotak-kotak putih (Voxel style) agar senada dengan karakter hewan
+        const geoAwan = new THREE.BoxGeometry(4, 2, 4);
+        const matAwan = new THREE.MeshLambertMaterial({ 
+            color: 0xffffff, 
+            transparent: true, 
+            opacity: 0.6 
+        });
+
+        // Menyusun beberapa kotak menjadi satu gumpalan awan
+        for (let i = 0; i < 4; i++) {
+            const part = new THREE.Mesh(geoAwan, matAwan);
+            part.position.set(
+                (Math.random() - 0.5) * 4,
+                (Math.random() - 0.5) * 2,
+                (Math.random() - 0.5) * 4
+            );
+            part.scale.set(Math.random() + 0.5, Math.random() + 0.5, Math.random() + 0.5);
+            groupAwan.add(part);
+        }
+
+        // Sebar awan di posisi acak di sekitar arena
+        groupAwan.position.set(
+            (Math.random() - 0.5) * 100, // Sebaran horisontal
+            Math.random() * 10 + 5,      // Tinggi awan (di atas platform)
+            (Math.random() - 0.5) * 100  // Sebaran kedalaman
+        );
+
+        // Berikan kecepatan acak untuk efek alami
+        groupAwan.userData.speed = 0.02 + Math.random() * 0.05;
+        return groupAwan;
+    }
+
+    // Buat 15 gumpalan awan untuk background
+    for (let i = 0; i < 15; i++) {
+        dekorasiAwanGroup.add(buatSatuAwanDekorasi());
+    }
+
+    
     // Awan Petir di Bawah
     const cloudGeo = new THREE.PlaneGeometry(100, 100);
     const thunderCloud = new THREE.Mesh(cloudGeo, new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.8 }));
@@ -4231,9 +4275,24 @@ function init3DArena(pinRoom, myName, isHost) {
     document.getElementById("btn-pindah-kanan").onclick = () => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ posisi: "kanan" }); };
 
     // Loop Animasi
+    // Loop Animasi
     function animate() {
         requestAnimationFrame(animate);
-        thunderCloud.material.opacity = 0.5 + Math.random() * 0.4; // Efek petir
+        
+        // Efek petir pada awan bawah yang sudah ada
+        thunderCloud.material.opacity = 0.5 + Math.random() * 0.4; 
+
+        // --- GERAKKAN AWAN DEKORASI ---
+        dekorasiAwanGroup.children.forEach(awan => {
+            awan.position.x += awan.userData.speed;
+            
+            // Jika awan sudah terlalu jauh ke kanan, pindahkan kembali ke kiri (looping)
+            if (awan.position.x > 60) {
+                awan.position.x = -60;
+                awan.position.z = (Math.random() - 0.5) * 100; // Acak ulang jalur z-nya
+            }
+        });
+
         renderer.render(scene, camera);
     }
     animate();
