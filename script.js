@@ -4005,10 +4005,7 @@ function init3DArena(pinRoom, myName, isHost) {
     }
 
     
-    // Awan Petir di Bawah
-    const cloudGeo = new THREE.PlaneGeometry(100, 100);
-    const thunderCloud = new THREE.Mesh(cloudGeo, new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.8 }));
-    thunderCloud.rotation.x = -Math.PI / 2; thunderCloud.position.y = -15; scene.add(thunderCloud);
+
 
     let playerMeshes = {};
     // ==========================================
@@ -4173,7 +4170,7 @@ function init3DArena(pinRoom, myName, isHost) {
         daftarNama.forEach((nama) => {
             let data = players[nama];
             let hp = data.hp !== undefined ? data.hp : 2; 
-            let posisiY = hp > 0 ? 0.9 : -16; 
+            let posisiY = hp > 0 ? 0.9 : -100;
             
             // KUNCI 1: Tentukan jenis hewan (Hash)
             let hash = 0;
@@ -4229,40 +4226,39 @@ function init3DArena(pinRoom, myName, isHost) {
                 gsap.to(pMesh.userData.matAsli.color, { r: warnaOri.r, g: warnaOri.g, b: warnaOri.b, duration: 0.5 });
             }
             
-            // KUNCI 4: Logika Hukuman Jatuh & GOSONG
+            // KUNCI 4: Logika Hukuman Jatuh (Terjun Bebas Tanpa Batas)
             if (room.status === "revealing" && soalAktif) {
                 let jawabanBenar = soalAktif.jawaban_benar;
                 
                 if (data.posisi !== jawabanBenar) {
-                    // Animasi Jatuh
-                    gsap.to(pMesh.position, { y: -14, duration: 0.8, ease: "power2.in", overwrite: "auto" });
+                    // Animasi Jatuh Terus ke Bawah (Y: -100)
+                    gsap.to(pMesh.position, { y: -100, duration: 1.5, ease: "power2.in", overwrite: "auto" });
                     
                     if (hp > 0) {
-                        // Masih Punya Nyawa: Hanya berkedip kesetrum 
-                        gsap.to(pMesh.userData.matAsli.color, { r: 1, g: 1, b: 0, duration: 0.1, yoyo: true, repeat: 7 });
-                        
+                        // Masih Punya Nyawa: Jatuh hilang, lalu di-reset oleh Guru kembali ke atas
                         if (nama === myName) {
-                            setTimeout(() => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ hp: hp - 1, posisi: "tengah" }); }, 1000);
+                            // Jeda waktu dibuat lebih lama (1.5 detik) agar siswa puas melihat karakternya jatuh
+                            setTimeout(() => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ hp: hp - 1, posisi: "tengah" }); }, 1500);
                         }
                     } else {
-                        // MATI TOTAL: Berubah Hitam Gosong (0x222222)
-                        gsap.to(pMesh.userData.matAsli.color, { r: 0.13, g: 0.13, b: 0.13, duration: 0.5, delay: 0.5 });
+                        // MATI TOTAL: Tetap jadi hitam gosong sambil jatuh
+                        gsap.to(pMesh.userData.matAsli.color, { r: 0.13, g: 0.13, b: 0.13, duration: 0.5, delay: 0.2 });
                     }
                 }
             } else if (hp <= 0) {
-                // Pastikan siswa yang sudah mati tetap hitam dan berada di bawah (awan petir)
+                // Pastikan siswa yang sudah mati tetap hitam dan berada jauh di bawah layar (-100)
                 pMesh.userData.matAsli.color.setHex(0x222222);
-                pMesh.position.y = -16;
+                pMesh.position.y = -100;
             }
         });
 
-        // Animasi Lantai Runtuh
+        // Animasi Lantai Runtuh (Jatuhkan lebih dalam juga ke -50)
         if (room.status === "revealing" && soalAktif) {
             let jawabanBenar = soalAktif.jawaban_benar;
             if (jawabanBenar === "kiri") {
-                gsap.to(platKanan.position, { y: -25, duration: 0.8, ease: "power2.in" });
+                gsap.to(platKanan.position, { y: -50, duration: 1.5, ease: "power2.in" });
             } else {
-                gsap.to(platKiri.position, { y: -25, duration: 0.8, ease: "power2.in" });
+                gsap.to(platKiri.position, { y: -50, duration: 1.5, ease: "power2.in" });
             }
         } else if (room.status === "playing") {
             gsap.to(platKiri.position, { y: 0, duration: 1, ease: "bounce.out" });
@@ -4279,8 +4275,7 @@ function init3DArena(pinRoom, myName, isHost) {
     function animate() {
         requestAnimationFrame(animate);
         
-        // Efek petir pada awan bawah yang sudah ada
-        thunderCloud.material.opacity = 0.5 + Math.random() * 0.4; 
+        
 
         // --- GERAKKAN AWAN DEKORASI ---
         dekorasiAwanGroup.children.forEach(awan => {
