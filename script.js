@@ -3967,7 +3967,121 @@ function init3DArena(pinRoom, myName, isHost) {
     thunderCloud.rotation.x = -Math.PI / 2; thunderCloud.position.y = -15; scene.add(thunderCloud);
 
     let playerMeshes = {};
-    const warnaKarakter = [0xffff00, 0x00ff00, 0xff00ff, 0xffa500, 0xffffff];
+    // ==========================================
+    // --- 3D ZOO FACTORY (GAYA KOTAK CUTE) ---
+    // ==========================================
+    
+    // Bahan Baku Material (GSAP butuh warna yang bisa di-update)
+    function createMaterial(colorHex) {
+        return new THREE.MeshStandardMaterial({ color: colorHex, flatShading: true });
+    }
+
+    const matHitam = createMaterial(0x333333);
+    const matPutih = createMaterial(0xffffff);
+
+    // 1. PEMBUAT BABI CUTE (PINK)
+    function createBabiMesh() {
+        const group = new THREE.Group();
+        const matBody = createMaterial(0xffc0cb); // Pink
+        
+        // Badan
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2, 1.8, 2.5), matBody);
+        body.position.y = 0.9; body.castShadow = true; group.add(body);
+        
+        // Moncong
+        const snout = new THREE.Mesh(new THREE.BoxGeometry(1, 0.8, 0.4), createMaterial(0xffa0af));
+        snout.position.set(0, 0.8, 1.4); snout.castShadow = true; group.add(snout);
+        
+        // Mata (Kiri-Kanan)
+        const mataKiri = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.2), matHitam);
+        mataKiri.position.set(0.5, 1.3, 1.25); group.add(mataKiri);
+        const mataKanan = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.2), matHitam);
+        mataKanan.position.set(-0.5, 1.3, 1.25); group.add(mataKanan);
+        
+        // Kaki (4 Buah)
+        const kakiGeo = new THREE.BoxGeometry(0.5, 0.8, 0.5);
+        for(let i=0; i<4; i++){
+            const kaki = new THREE.Mesh(kakiGeo, createMaterial(0xff808f));
+            kaki.position.set((i<2?0.6:-0.6), -0.4, (i%2===0?0.8:-0.8));
+            kaki.castShadow = true; group.add(kaki);
+        }
+        
+        group.userData.matAsli = matBody; // Simpan untuk reset warna GSAP
+        return group;
+    }
+
+    // 2. PEMBUAT AYAM KOTAK (KUNING)
+    function createAyamMesh() {
+        const group = new THREE.Group();
+        const matBody = createMaterial(0xffff00); // Kuning
+        
+        // Badan
+        const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.2, 1.5), matBody);
+        body.position.y = 1.1; body.castShadow = true; group.add(body);
+        
+        // Paruh
+        const paruh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), createMaterial(0xffa500));
+        paruh.position.set(0, 1.3, 0.9); group.add(paruh);
+        
+        // Mata
+        const mataKiri = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.2), matHitam);
+        mataKiri.position.set(0.4, 1.8, 0.7); group.add(mataKiri);
+        const mataKanan = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.2), matHitam);
+        mataKanan.position.set(-0.4, 1.8, 0.7); group.add(mataKanan);
+        
+        // Sayap (Kiri-Kanan)
+        const sayap = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.2, 1.3), createMaterial(0xeeee00));
+        sayap.position.set(0.85, 1.0, 0); group.add(sayap);
+        const sayap2 = sayap.clone(); sayap2.position.x = -0.85; group.add(sayap2);
+        
+        // Kaki (2 Buah)
+        const kaki = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), createMaterial(0x8b4513));
+        kaki.position.set(0.4, -0.4, 0); group.add(kaki);
+        const kaki2 = kaki.clone(); kaki2.position.x = -0.4; group.add(kaki2);
+        
+        group.userData.matAsli = matBody;
+        return group;
+    }
+
+    // 3. PEMBUAT PANDA CUTE (HITAM PUTIH)
+    function createPandaMesh() {
+        const group = new THREE.Group();
+        
+        // Badan (Putih)
+        const matBody = createMaterial(0xffffff);
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2, 2.3, 2.2), matBody);
+        body.position.y = 1.15; body.castShadow = true; group.add(body);
+        
+        // Kepala (Putih)
+        const head = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.6), matBody);
+        head.position.set(0, 2.8, 0); head.castShadow = true; group.add(head);
+        
+        // Mata (Bercak Hitam ala Panda)
+        const mata = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.2), matHitam);
+        mata.position.set(0.5, 2.8, 0.8); group.add(mata);
+        const mata2 = mata.clone(); mata2.position.x = -0.5; group.add(mata2);
+        
+        // Pupil (Mata kecil di dalam bercak)
+        const pupil = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.25), matPutih);
+        pupil.position.set(0.5, 2.8, 0.8); group.add(pupil);
+        const pupil2 = pupil.clone(); pupil2.position.x = -0.5; group.add(pupil2);
+        
+        // Telinga (Hitam Kotak)
+        const telinga = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.3), matHitam);
+        telinga.position.set(0.7, 3.6, -0.1); group.add(telinga);
+        const telinga2 = telinga.clone(); telinga2.position.x = -0.7; group.add(telinga2);
+        
+        // Kaki Atas/Lengan (Hitam)
+        const lengan = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.7), matHitam);
+        lengan.position.set(0.8, 0.6, 0.9); lengan.castShadow = true; group.add(lengan);
+        const lengan2 = lengan.clone(); lengan2.position.x = -0.8; group.add(lengan22);
+        
+        group.userData.matAsli = matBody;
+        return group;
+    }
+
+    // Daftar Pabrik Hewan
+    const pabrikHewan = [createBabiMesh, createAyamMesh, createPandaMesh];
 
     // Sinkronisasi Firebase
     dbGame.ref('balap_rooms/' + pinRoom).on('value', (snap) => {
@@ -4006,18 +4120,26 @@ function init3DArena(pinRoom, myName, isHost) {
             document.getElementById("ui-opsi-kanan").innerText = soalAktif.kanan;
         }
 
-        // Render Pemain
+// Render Pemain
         Object.keys(players).forEach((nama, i) => {
             let data = players[nama];
             let hp = data.hp !== undefined ? data.hp : 2; 
-            let posisiY = hp > 0 ? 2 : -16; 
+            let posisiY = hp > 0 ? 0.9 : -16; // Hewan kotak berdiri di Y=0.9
             
+            // KUNCI PERBAIKAN: Buat MESH HEWAN ACAK jika belum ada
             if (!playerMeshes[nama]) {
-                let mesh = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 3, 16), new THREE.MeshStandardMaterial({ color: warnaKarakter[i % warnaKarakter.length] }));
-                mesh.castShadow = true;
                 
-                mesh.userData.offsetX = (Math.random() * 5) - 2.5;
-                mesh.userData.offsetZ = (Math.random() * 5) - 2.5;
+                // Gunakan nama untuk menentukan hewan permanen (Hash sederhana)
+                let hash = 0;
+                for (let k = 0; k < nama.length; k++) { hash += nama.charCodeAt(k); }
+                let indeksHewan = hash % pabrikHewan.length;
+                
+                // Panggil Pabrik Pembuat Hewan
+                let mesh = pabrikHewan[indeksHewan]();
+                
+                // Simpan posisi acak permanen agar tidak bergetar hebat saat timer jalan
+                mesh.userData.offsetX = (Math.random() * 6) - 3; // Sedikit lebih tersebar
+                mesh.userData.offsetZ = (Math.random() * 6) - 3;
                 
                 mesh.position.set(mesh.userData.offsetX, posisiY, mesh.userData.offsetZ); 
                 scene.add(mesh);
@@ -4025,28 +4147,38 @@ function init3DArena(pinRoom, myName, isHost) {
             }
 
             let pMesh = playerMeshes[nama];
-
-            // KUNCI 4: Karakter bisa bergerak ke atas platform jika statusnya 'finished' atau 'lobby' (Saat Nyawa di-reset Guru)
+            
+            // Gerakkan karakter hewan (Animasi Lompat ke Kiri/Kanan/Tengah)
             if ((room.status === "playing" || room.status === "lobby" || room.status === "finished") && hp > 0) {
-                let baseX = 0; 
-                // Karakter hanya memihak kiri/kanan jika game sedang main
+                
+                // Tentukan pijakan dasar
+                let baseX = 0; // Tengah (Saat di Lobby/Lantai Runtuh)
                 if (data.posisi === "kiri" && room.status === "playing") baseX = -7.5;
                 else if (data.posisi === "kanan" && room.status === "playing") baseX = 7.5;
                 
+                // Terapkan jarak aman antar siswa (userData acak permanen)
                 let targetX = baseX + pMesh.userData.offsetX;
                 let targetZ = pMesh.userData.offsetZ;
                 
-                gsap.to(pMesh.position, { x: targetX, z: targetZ, y: 2, duration: 0.5, ease: "power1.out", overwrite: "auto" });
-                pMesh.material.color.setHex(warnaKarakter[i % warnaKarakter.length]); 
+                // Gunakan overwrite: "auto" agar animasi tidak bertabrakan saat timer refresh
+                gsap.to(pMesh.position, { x: targetX, z: targetZ, y: 0.9, duration: 0.5, ease: "power1.out", overwrite: "auto" });
+                
+                // Reset warna badan hewan (karena bahan dasarnya sudah berwarna-warni)
+                pMesh.userData.matAsli.color.setHex(pMesh.userData.matAsli.color.getHex()); 
             }
             
-            // Logika Hukuman Jatuh Tersetrum
+            // Logika Hukuman Jatuh Tersetrum (HP 0)
             if (room.status === "revealing" && soalAktif) {
                 let jawabanBenar = soalAktif.jawaban_benar;
                 if (data.posisi !== jawabanBenar && hp > 0) {
-                    gsap.to(pMesh.position, { y: -14, duration: 0.8, ease: "power2.in", overwrite: "auto" });
-                    gsap.to(pMesh.material.color, { r: 1, g: 1, b: 0, duration: 0.1, yoyo: true, repeat: 10 });
                     
+                    // JATUH! (Kamera Menorot Y turun drastis)
+                    gsap.to(pMesh.position, { y: -14, duration: 0.8, ease: "power2.in", overwrite: "auto" });
+                    
+                    // Efek kedip kuning/putih (Tersetrum) - Menargetkan material utama badan hewan
+                    gsap.to(pMesh.userData.matAsli.color, { r: 1, g: 1, b: 0, duration: 0.1, yoyo: true, repeat: 10 });
+                    
+                    // Kurangi HP di database (Hanya sistem diri sendiri yang mengirim agar tidak ganda)
                     if (nama === myName) {
                         setTimeout(() => { dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).update({ hp: hp - 1, posisi: "tengah" }); }, 1000);
                     }
