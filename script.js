@@ -1117,7 +1117,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             }
 
                             // --- TAMBAHKAN LOGIKA BUAT ROOM 3D SURVIVAL DI SINI ---
-                            } else if (jenisGame === "lantai_runtuh") {
+                             else if (jenisGame === "lantai_runtuh") {
                                 
                                 // Kita ubah bank kata menjadi soal Kiri/Kanan
                                 let arrayPeluru = teksMentah.split(",").map(k => k.trim()).filter(k => k !== "");
