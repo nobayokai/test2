@@ -1249,6 +1249,81 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 });
             }
+
+            // --- 5. FUNGSI MABAR OTOMATIS (PUBLIC MATCHMAKING & BOTS) ---
+            const btnPublic3D = document.getElementById("btn-public-3d");
+            if (btnPublic3D) {
+                btnPublic3D.addEventListener("click", async () => {
+                    const myName = sessionStorage.getItem("userName");
+                    const teksAwal = btnPublic3D.innerHTML;
+                    btnPublic3D.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mencari Lawan...`;
+                    btnPublic3D.disabled = true;
+
+                    // Cari room publik yang sedang terbuka (Lobby)
+                    dbGame.ref('balap_rooms').once('value', async (snap) => {
+                        let rooms = snap.val() || {};
+                        let publicRoomId = null;
+
+                        for (let key in rooms) {
+                            // Cek jika ada room publik yang masih nunggu pemain
+                            if (rooms[key].mode === "3d_survival_public" && rooms[key].status === "lobby") {
+                                publicRoomId = key; break;
+                            }
+                        }
+
+                        if (publicRoomId) {
+                            // JIKA ADA: Gabung ke room tersebut
+                            dbGame.ref(`balap_rooms/${publicRoomId}/pemain/${myName}`).set({ posisi: "tengah", hp: 2 }).then(() => {
+                                sessionStorage.setItem("active_3d_room", publicRoomId);
+                                sessionStorage.setItem("is_3d_host", "false"); // Pemain biasa (bukan shadow host)
+                                loadPage("arena-3d");
+                            });
+                        } else {
+                            // JIKA TIDAK ADA: Buat room publik baru & jadikan siswa ini "Shadow Host"
+                            btnPublic3D.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Membangun Arena...`;
+                            try {
+                                const response = await fetch(SCRIPT_URL + "?action=getSoal3D");
+                                const data = await response.json();
+                                if (data.length === 0) {
+                                    alert("Bank soal 3D di Google Sheets kosong!");
+                                    btnPublic3D.innerHTML = teksAwal; btnPublic3D.disabled = false; return;
+                                }
+                                
+                                // Acak soal dan konversi format
+                                let soalAcak = data.sort(() => Math.random() - 0.5);
+                                let daftarSoal3D = soalAcak.map(item => {
+                                    let jwb = String(item.jawaban).trim().toUpperCase();
+                                    return {
+                                        pertanyaan: item.pertanyaan,
+                                        kiri: "SALAH", kanan: "BENAR",
+                                        jawaban_benar: (jwb === "B" || jwb === "BENAR") ? "kanan" : "kiri" 
+                                    };
+                                });
+
+                                const newRoomId = "PUB_" + Math.floor(Math.random() * 99999);
+                                dbGame.ref('balap_rooms/' + newRoomId).set({
+                                    host: myName, 
+                                    materi: "Public Auto-Match 🌍",
+                                    daftar_soal: daftarSoal3D, indeks_soal: 0,
+                                    mode: "3d_survival_public", status: "lobby",
+                                    waktu_lobby: Date.now() + 30000, // Tunggu 30 Detik
+                                    pemain: { [myName]: { posisi: "tengah", hp: 2 } },
+                                    pemenang: ""
+                                }).then(() => {
+                                    sessionStorage.setItem("active_3d_room", newRoomId);
+                                    // KUNCI: Dia jadi host agar device-nya menjalankan timer dan men-spawn Bot
+                                    sessionStorage.setItem("is_3d_host", "true"); 
+                                    loadPage("arena-3d");
+                                });
+                            } catch (e) {
+                                alert("Gagal terhubung ke Database Bank_Soal_3D.");
+                                btnPublic3D.innerHTML = teksAwal; btnPublic3D.disabled = false;
+                            }
+                        }
+                    });
+                });
+            }
+            
         }
         
         //--------------------------hapus sampai sini------------------------------------------------------
@@ -3328,10 +3403,13 @@ document.addEventListener("DOMContentLoaded", () => {
             // --- 1. FUNGSI KELUAR ARENA (Siswa & Guru) ---
             document.getElementById("btn-keluar-3d").onclick = () => {
                 if (confirm("Yakin ingin keluar dari Arena 3D?")) {
+                    // -> TAMBAHKAN BARIS INI:
+                    if (window.autoHostInterval) clearInterval(window.autoHostInterval); 
+                    
                     if (isHost) dbGame.ref('balap_rooms/' + pinRoom).remove();
                     else dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).remove();
                     sessionStorage.removeItem("active_3d_room");
-                    dbGame.ref('global_scores_3d').off(); // Matikan sensor skor
+                    dbGame.ref('global_scores_3d').off();
                     loadPage("edu-game");
                 }
             };
@@ -3425,6 +3503,125 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 };
             }
+
+            // --- 4. OTAK AUTO-MATCH (HANYA AKTIF JIKA MODE PUBLIK) ---
+            dbGame.ref('balap_rooms/' + pinRoom).on('value', snap => {
+                let room = snap.val();
+                if (!room) return;
+
+                let isPublic = room.mode === "3d_survival_public";
+                
+                // Jika ini mode publik, sembunyikan panel guru secara paksa
+                if (isPublic) {
+                    document.getElementById("kontrol-guru-3d").style.display = "none";
+                    
+                    // Buat UI Timer di Layar Tengah Atas
+                    let timerUI = document.getElementById("public-timer-ui");
+                    if (!timerUI) {
+                        timerUI = document.createElement("div");
+                        timerUI.id = "public-timer-ui";
+                        timerUI.style.cssText = "position:absolute; top:85px; left: 50%; transform: translateX(-50%); background:rgba(0,0,0,0.8); color:white; font-size:20px; font-weight:bold; padding:8px 20px; border-radius:10px; border: 2px solid gold; z-index:90; text-align:center;";
+                        document.getElementById("wadah-3d-survival").appendChild(timerUI);
+                    }
+
+                    // Tampilkan Teks Timer
+                    let now = Date.now();
+                    if (room.status === "lobby") {
+                        let sisa = Math.max(0, Math.ceil((room.waktu_lobby - now) / 1000));
+                        timerUI.innerHTML = `Mulai dalam: <span style="color:yellow;">${sisa}</span> detik<br><small style="font-size:12px;">Menunggu pemain lain masuk...</small>`;
+                    } else if (room.status === "playing") {
+                        let sisa = Math.max(0, Math.ceil((room.waktu_soal - now) / 1000));
+                        timerUI.innerHTML = `Waktu Menjawab: <span style="color:${sisa <= 3 ? '#dc3545' : '#00ff00'}; font-size:26px;">${sisa}</span>`;
+                    } else if (room.status === "revealing") {
+                        timerUI.innerHTML = `💥 AWAS LANTAI RUNTUH! 💥`;
+                    } else {
+                        timerUI.style.display = "none";
+                    }
+                }
+
+                // --- TUGAS KHUSUS SHADOW HOST (BOT & TIMER) ---
+                if (isPublic && isHost && !window.autoHostInterval) {
+                    // Jalankan detak jantung server setiap 500ms
+                    window.autoHostInterval = setInterval(() => {
+                        dbGame.ref('balap_rooms/' + pinRoom).once('value', checkSnap => {
+                            let r = checkSnap.val();
+                            if(!r) { clearInterval(window.autoHostInterval); return; }
+                            
+                            let timeNow = Date.now();
+                            
+                            // A. LOBBY HABIS -> MASUKKAN BOT & MULAI
+                            if (r.status === "lobby" && timeNow >= r.waktu_lobby && !window.isTrans) {
+                                window.isTrans = true;
+                                let bots = {};
+                                // Ciptakan 30 Bot!
+                                for (let i = 1; i <= 30; i++) { bots[`Bot_Pelajar_${i}`] = { posisi: "tengah", hp: 2, isBot: true }; }
+                                
+                                dbGame.ref(`balap_rooms/${pinRoom}/pemain`).update(bots).then(() => {
+                                    dbGame.ref(`balap_rooms/${pinRoom}`).update({
+                                        status: "playing", waktu_soal: Date.now() + 8000 // Beri 8 Detik!
+                                    }).then(() => { window.isTrans = false; });
+                                });
+                            }
+                            
+                            // B. SAAT BERMAIN
+                            else if (r.status === "playing") {
+                                let sisaSoal = Math.ceil((r.waktu_soal - timeNow) / 1000);
+                                
+                                // Jika sisa 4 detik, BOT mulai bergerak mengambil keputusan!
+                                if (sisaSoal === 4 && window.botMoveRound !== r.indeks_soal) {
+                                    window.botMoveRound = r.indeks_soal;
+                                    let botUpdates = {};
+                                    let ansBenar = r.daftar_soal[r.indeks_soal].jawaban_benar;
+                                    let ansSalah = ansBenar === "kiri" ? "kanan" : "kiri";
+                                    
+                                    Object.keys(r.pemain).forEach(p => {
+                                        if (r.pemain[p].isBot && r.pemain[p].hp > 0) {
+                                            // Bot punya kecerdasan 50% benar, 50% ikut-ikutan salah
+                                            let pilihBenar = Math.random() < 0.5; 
+                                            botUpdates[`pemain/${p}/posisi`] = pilihBenar ? ansBenar : ansSalah;
+                                        }
+                                    });
+                                    dbGame.ref(`balap_rooms/${pinRoom}`).update(botUpdates);
+                                }
+
+                                // WAKTU HABIS -> RUNTUHKAN LANTAI!
+                                if (sisaSoal <= 0 && !window.isTrans) {
+                                    window.isTrans = true;
+                                    dbGame.ref(`balap_rooms/${pinRoom}`).update({
+                                        status: "revealing", waktu_reveal: Date.now() + 4000 // 4 Detik jatuh
+                                    }).then(() => { window.isTrans = false; });
+                                }
+                            }
+
+                            // C. SAAT LANTAI RUNTUH (EVALUASI)
+                            else if (r.status === "revealing") {
+                                let sisaReveal = Math.ceil((r.waktu_reveal - timeNow) / 1000);
+                                if (sisaReveal <= 0 && !window.isTrans) {
+                                    window.isTrans = true;
+                                    let aliveCount = 0; let winnerName = "";
+                                    
+                                    Object.keys(r.pemain).forEach(p => {
+                                        if (r.pemain[p].hp > 0) { aliveCount++; winnerName = p; }
+                                    });
+
+                                    // Jika sisa 1 orang, atau soal habis
+                                    if (aliveCount <= 1 || r.indeks_soal >= (r.daftar_soal.length - 1)) {
+                                        dbGame.ref(`balap_rooms/${pinRoom}`).update({
+                                            status: "finished",
+                                            pemenang: aliveCount === 1 ? winnerName : "Tidak ada yang bertahan (Seri)"
+                                        }).then(() => { window.isTrans = false; });
+                                    } else {
+                                        // Lanjut Soal Berikutnya!
+                                        dbGame.ref(`balap_rooms/${pinRoom}`).update({
+                                            status: "playing", indeks_soal: r.indeks_soal + 1, waktu_soal: Date.now() + 8000
+                                        }).then(() => { window.isTrans = false; });
+                                    }
+                                }
+                            }
+                        });
+                    }, 500); // Mengecek waktu setiap 0.5 detik
+                }
+            });
 
             // Panggil Mesin 3D
             if (typeof init3DArena === "function") { init3DArena(pinRoom, myName, isHost); } 
