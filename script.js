@@ -1159,7 +1159,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
 
-            // 4. FUNGSI SISWA GABUNG CERDAS (SMART JOIN)
+            
+            // 4. FUNGSI SISWA GABUNG CERDAS (SMART JOIN) - VERSI FIXED
             const btnGabung = document.getElementById("btn-gabung-game");
             if (btnGabung) {
                 btnGabung.addEventListener("click", () => {
@@ -1169,27 +1170,41 @@ document.addEventListener("DOMContentLoaded", () => {
                     btnGabung.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mendeteksi...`;
                     const myName = sessionStorage.getItem("userName");
 
-                    // Cek di jalur Tebak Kata dulu
+                    // 1. Cek di jalur Tebak Kata
                     dbGame.ref('rooms/' + pinMasuk).once('value', (snapTK) => {
                         if (snapTK.exists()) {
-                            // PIN ditemukan di Tebak Kata!
                             dbGame.ref(`rooms/${pinMasuk}/pemain/${myName}`).set({ skor: 0, status: "menunggu" }).then(() => {
                                 sessionStorage.setItem("active_game_room", pinMasuk);
                                 sessionStorage.setItem("is_game_host", "false");
                                 loadPage("arena-bermain");
                             });
                         } else {
-                            // Jika tidak ada, cek di jalur Balap Ketik
+                            // 2. Cek di jalur Balap Rooms (Bisa Balap Ketik, Battle, atau 3D Survival)
                             dbGame.ref('balap_rooms/' + pinMasuk).once('value', (snapBK) => {
                                 if (snapBK.exists()) {
-                                    // PIN ditemukan di Balap Ketik!
-                                    dbGame.ref(`balap_rooms/${pinMasuk}/pemain/${myName}`).set({ progress: 0, nitro: false }).then(() => {
-                                        sessionStorage.setItem("active_balap_room", pinMasuk);
-                                        sessionStorage.setItem("is_balap_host", "false");
-                                        loadPage("arena-balap");
-                                    });
+                                    const roomData = snapBK.val();
+                                    
+                                    // KUNCI PERBAIKAN: Cek Mode di dalam Database
+                                    if (roomData.mode === "3d_survival") {
+                                        // JIKA MODE 3D: Arahkan ke Arena 3D
+                                        dbGame.ref(`balap_rooms/${pinMasuk}/pemain/${myName}`).set({ posisi: "tengah", hp: 2 }).then(() => {
+                                            sessionStorage.setItem("active_3d_room", pinMasuk);
+                                            sessionStorage.setItem("is_3d_host", "false");
+                                            loadPage("arena-3d");
+                                        });
+                                    } else {
+                                        // JIKA MODE BALAP/BATTLE: Arahkan ke Arena Balap
+                                        let dataAwal = { progress: 0, nitro: false };
+                                        if(roomData.mode === "battle") { dataAwal.hp = 100; dataAwal.isAttacking = false; }
+                                        
+                                        dbGame.ref(`balap_rooms/${pinMasuk}/pemain/${myName}`).set(dataAwal).then(() => {
+                                            sessionStorage.setItem("active_balap_room", pinMasuk);
+                                            sessionStorage.setItem("is_balap_host", "false");
+                                            loadPage("arena-balap");
+                                        });
+                                    }
                                 } else {
-                                    alert("PIN Room tidak ditemukan di permainan apapun!");
+                                    alert("PIN Room tidak ditemukan!");
                                     btnGabung.innerHTML = `<i class="fa-solid fa-play"></i> MASUK ROOM`;
                                 }
                             });
