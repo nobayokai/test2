@@ -2902,61 +2902,49 @@ document.addEventListener("DOMContentLoaded", () => {
                         btnStop.style.display = "none";
                     }
                 } 
-                else if (roomData.status === "playing") {
-                    let aliveCount = 0;
-                    let lastManStanding = "";
-                    let pemainKu = roomData.pemain ? roomData.pemain[myName] : null; // Cek apakah user ikut bermain
-                    let totalPlayers = Object.keys(roomData.pemain || {}).length;
+// --- CARI BAGIAN INI DAN SESUAIKAN ---
+else if (roomData.status === "playing") {
+    let aliveCount = 0;
+    let pemainKu = roomData.pemain ? roomData.pemain[myName] : null;
+    let totalPlayers = Object.keys(roomData.pemain || {}).length;
 
-                    if (isBattle) {
-                        Object.keys(roomData.pemain || {}).forEach(nama => {
-                            if (roomData.pemain[nama].hp > 0) { aliveCount++; lastManStanding = nama; }
-                        });
-                        
-                        let isGameOver = (targetTeksUtuh === "SELESAI") || (totalPlayers > 1 && aliveCount <= 1) || (totalPlayers === 1 && aliveCount === 0);
+    if (isBattle) {
+        Object.keys(roomData.pemain || {}).forEach(nama => {
+            if (roomData.pemain[nama].hp > 0) { aliveCount++; }
+        });
+        
+        // PERBAIKAN: Pastikan pengecekan Game Over tidak memblokir input saat baru mulai
+        let isGameOver = (targetTeksUtuh === "SELESAI") || (totalPlayers > 1 && aliveCount <= 1);
 
-                        // Gunakan Kunci Anti-Nyangkut di sini
-                        if (isGameOver && !window.isRestartingHost) {
-                            if (isHost && window.currentBalapStatus !== "finished") dbGame.ref(`balap_rooms/${pinRoom}/status`).set("finished");
-                        } else {
-                            statusTeks.innerText = "KETIK KATA INI UNTUK MENYERANG!";
-                            statusTeks.style.color = "#dc3545";
-                        }
-                    } else {
-                        statusTeks.innerText = "BALAPAN DIMULAI! AYO KETIK CEPAT!";
-                        statusTeks.style.color = "#198754";
-                    }
-                    
-                    if (isHost) {
-                        pengaturanWaktu.style.display = "none";
-                        btnMulai.style.display = "none";
-                        btnStop.style.display = "inline-block";
-                    }
+        if (isGameOver && !window.isRestartingHost) {
+            if (isHost && window.currentBalapStatus !== "finished") {
+                dbGame.ref(`balap_rooms/${pinRoom}/status`).set("finished");
+                return; // Hentikan proses agar tidak membuka input
+            }
+        }
+    }
 
-                    let activeInput = isFreeMode ? inputBebas : inputKetik;
-                    let isDead = isBattle && pemainKu && pemainKu.hp <= 0;
-                    let isDone = pemainKu && pemainKu.selesai;
+    let activeInput = isFreeMode ? inputBebas : inputKetik;
+    let isDead = isBattle && pemainKu && pemainKu.hp <= 0;
+    let isDone = pemainKu && pemainKu.selesai;
 
-                    // Buka kotak ketik hanya untuk pemain yang masih hidup (termasuk Guru jika dia ikut join)
-                    if (pemainKu && activeInput && activeInput.disabled && !isDone && !isDead) {
-                        activeInput.disabled = false;
-                        activeInput.value = ""; 
-                        activeInput.focus();
-                        startTime = Date.now(); 
-                    }
-                    
-                    // Refresh tampilan kata jika kata target berubah (khusus PVP)
-                    if (!isFreeMode && !isDead && !isDone) {
-                        if (window.lastKataTarget !== targetTeksUtuh) {
-                            window.lastKataTarget = targetTeksUtuh;
-                            if (activeInput) activeInput.value = ""; 
-                            updateTeksBerjalan("", "", targetTeksUtuh[0] || "", targetTeksUtuh.substring(1) || "");
-                            const wadahUtama = document.getElementById("wadah-utama-balap");
-                            if (wadahUtama) wadahUtama.style.borderColor = "#0d6efd";
-                        } else if (activeInput && activeInput.value === "") {
-                            updateTeksBerjalan("", "", targetTeksUtuh[0] || "", targetTeksUtuh.substring(1) || "");
-                        }
-                    }
+    // KUNCI PERBAIKAN: Paksa buka disabled jika pemain masih hidup
+    if (pemainKu && !isDead && !isDone) {
+        if (activeInput.disabled) {
+            activeInput.disabled = false;
+            activeInput.focus();
+            if (!startTime) startTime = Date.now();
+        }
+    }
+    
+    // Logika sinkronisasi kata (Target teks untuk diketik)
+    if (!isFreeMode && !isDead && !isDone) {
+        if (window.lastKataTarget !== targetTeksUtuh && targetTeksUtuh !== "SELESAI") {
+            window.lastKataTarget = targetTeksUtuh;
+            activeInput.value = ""; // Kosongkan hanya saat kata benar-benar berubah
+            updateTeksBerjalan("", "", targetTeksUtuh[0] || "", targetTeksUtuh.substring(1) || "");
+        }
+    }
 
                     if (isDead && activeInput && !activeInput.disabled) {
                         activeInput.disabled = true;
