@@ -3239,6 +3239,50 @@ document.addEventListener("DOMContentLoaded", () => {
                             window.buatMobilBaru(nama, idx, lajurX);
                         }
                     });
+
+                    // --- FITUR LEADERBOARD MINI 3D (LIVE RANKING) ---
+                    let playerList = [];
+                    Object.keys(players).forEach(nama => {
+                        playerList.push({
+                            nama: nama,
+                            progress: players[nama].progress || 0,
+                            selesai: players[nama].selesai || false,
+                            peringkat: players[nama].peringkat || 999
+                        });
+                    });
+
+                    // Urutkan: Yang selesai duluan di atas, lalu yang ketikannya paling jauh (progress)
+                    playerList.sort((a, b) => {
+                        if (a.selesai && !b.selesai) return -1;
+                        if (!a.selesai && b.selesai) return 1;
+                        if (a.selesai && b.selesai) return a.peringkat - b.peringkat;
+                        return b.progress - a.progress;
+                    });
+
+                    let htmlLeaderboard = "";
+                    playerList.forEach((p, idx) => {
+                        let isMe = (p.nama === myName);
+                        let rank = idx + 1;
+                        // Warna: Emas untuk diri sendiri, Hijau untuk Juara 1, Putih untuk sisanya
+                        let color = isMe ? "gold" : (rank === 1 ? "#00ff00" : "white");
+                        let weight = isMe ? "bold" : "normal";
+                        
+                        // Tampilkan HANYA Top 3 dan posisi diri sendiri (agar kotak tidak kepanjangan menutupi jalan)
+                        if (rank <= 3 || isMe) {
+                            htmlLeaderboard += `<div style="display: flex; justify-content: space-between; color: ${color}; font-weight: ${weight}; margin-bottom: 3px; font-size: 12px;">
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90px;">${rank}. ${p.nama}</span>
+                                <span>${p.progress}</span>
+                            </div>`;
+                        }
+                        
+                        // Beri titik-titik pemisah jika posisi kita jauh di bawah Top 3
+                        if (rank === 3 && !isMe && playerList.findIndex(x => x.nama === myName) > 3) {
+                            htmlLeaderboard += `<div style="text-align: center; color: #888; font-size: 10px; margin: 2px 0;">...</div>`;
+                        }
+                    });
+
+                    const lbElement = document.getElementById("list-posisi-balap");
+                    if (lbElement) lbElement.innerHTML = htmlLeaderboard;
                 }
             });
 
