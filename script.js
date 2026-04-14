@@ -3187,29 +3187,55 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
 
                 } 
-                // JIKA MODE BALAPAN BIASA (Kode Asli Anda)
+                // JIKA MODE BALAPAN BIASA ATAU FREE (MODE 3D SIRKUIT)
                 else {
-                    let htmlTrack = "";
-                    const colors = ["#dc3545", "#0d6efd", "#ffc107", "#198754", "#e83e8c", "#0dcaf0"];
+                    // Sembunyikan track 2D lama, tampilkan Layar Sirkuit 3D
+                    if(document.getElementById("daftar-pemain-track")) document.getElementById("daftar-pemain-track").parentElement.style.display = "none";
+                    const wadah3DSirkuit = document.getElementById("wadah-3d-sirkuit");
+                    if(wadah3DSirkuit) wadah3DSirkuit.style.display = "block";
+
+                    // Panggil Mesin 3D jika belum menyala
+                    if (typeof init3DBalapMobil === "function" && !window.engine3DBalapReady) {
+                        init3DBalapMobil(pinRoom, myName);
+                        window.engine3DBalapReady = true;
+                    }
+
+                    // Sinkronisasi Pergerakan Mobil 3D ke Garis Finish (Z = -600)
+                    const panjangLintasan = -600; 
+
                     Object.keys(players).forEach((nama, idx) => {
                         let prog = players[nama].progress || 0;
-                        let persen = Math.min((prog / totalKarakter) * 100, 100);
-                        let warnaMobil = colors[idx % colors.length];
-                        let ikonNama = (nama === roomData.host) ? '<i class="fa-solid fa-crown" style="color: gold;"></i>' : '<i class="fa-solid fa-car"></i>';
-                        let badgeJuara = players[nama].selesai ? `<span style="background: gold; color: black; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px;">🏆 Ke-${players[nama].peringkat}</span>` : "";
+                        let persen = Math.min((prog / totalKarakter), 1);
+                        let targetZ = persen * panjangLintasan; // Posisi melaju ke depan
+                        
+                        // Posisi Jalur Kiri-Kanan (Agar tidak tabrakan)
+                        // Maksimal 6 jalur, jika lebih akan bertumpuk rapi
+                        let lajurX = ((idx % 6) * 3.5) - 8.75; 
 
-                        htmlTrack += `
-                            <div style="position: relative; height: 65px; border-bottom: 2px dashed #555; display: flex; align-items: center; background: rgba(255,255,255,0.05); margin-bottom: -2px;">
-                                <div style="position: absolute; left: 10px; background: #f8f9fa; color: #333; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; z-index: 3; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px;">
-                                    ${ikonNama} ${nama} ${badgeJuara}
-                                </div>
-                                <div style="position: absolute; left: ${persen}%; transform: translateX(-${persen}%); transition: left 0.8s linear; font-size: 40px; color: ${warnaMobil}; z-index: 4; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">
-                                    <i class="fa-solid fa-car-side"></i>
-                                </div>
-                            </div>
-                        `;
+                        // Jika mobil untuk player ini sudah ada di mesin 3D
+                        if (window.racingCars3D && window.racingCars3D[nama]) {
+                            let carMesh = window.racingCars3D[nama];
+                            
+                            // Gunakan GSAP agar mobil melaju mulus
+                            gsap.to(carMesh.position, { z: targetZ, x: lajurX, duration: 0.8, ease: "power1.out", overwrite: "auto" });
+                            
+                            // Efek Roda Berputar jika sedang maju
+                            carMesh.userData.roda.forEach(roda => {
+                                gsap.to(roda.rotation, { x: "-=" + (prog * 0.1), duration: 0.8, overwrite: "auto" });
+                            });
+
+                            // Efek Api Nitro jika WPM tinggi
+                            if (players[nama].nitro) {
+                                carMesh.userData.api.visible = true;
+                                carMesh.userData.api.scale.set(1 + Math.random(), 1 + Math.random(), 1 + Math.random());
+                            } else {
+                                carMesh.userData.api.visible = false;
+                            }
+                        } else if (window.buatMobilBaru) {
+                            // Jika belum ada, cetak mobil baru!
+                            window.buatMobilBaru(nama, idx, lajurX);
+                        }
                     });
-                    tbodyTrack.innerHTML = htmlTrack === "" ? `<div style="text-align:center; color:#888; margin-top: 50px;">Menunggu pemain...</div>` : htmlTrack;
                 }
             });
 
@@ -3382,6 +3408,7 @@ document.addEventListener("DOMContentLoaded", () => {
             window.keluarBalap = function() {
                 if (isHost) dbGame.ref('balap_rooms/' + pinRoom).remove();
                 else dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).remove();
+                window.engine3DBalapReady = false;
                 sessionStorage.removeItem("active_balap_room");
                 loadPage("edu-game");
             };
@@ -4479,6 +4506,158 @@ function init3DArena(pinRoom, myName, isHost) {
                 awan.position.z = (Math.random() - 0.5) * 100; 
             }
         });
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+}
+
+    // ====================================================
+// ENGINE THREE.JS: SIRKUIT BALAP KETIK 3D (POV)
+// ====================================================
+function init3DBalapMobil(pinRoom, myName) {
+    const container = document.getElementById("canvas-sirkuit-3d");
+    if (!container || container.innerHTML !== "") return; 
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB); 
+    scene.fog = new THREE.Fog(0x87CEEB, 20, 150); // Kabut tebal di ujung jalan agar realistis
+
+    // KAMERA POV (Akan mengikuti mobil pemain)
+    const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    // Pencahayaan
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(20, 40, 20);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    // 1. BANGUN JALAN RAYA (ASPAL)
+    const roadGeo = new THREE.PlaneGeometry(30, 1500);
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8 });
+    const road = new THREE.Mesh(roadGeo, roadMat);
+    road.rotation.x = -Math.PI / 2;
+    road.position.z = -300; 
+    road.receiveShadow = true;
+    scene.add(road);
+
+    // Garis Putih Putus-putus di tengah jalan
+    for(let i=0; i<100; i++) {
+        let line = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 5), new THREE.MeshBasicMaterial({color: 0xffffff}));
+        line.rotation.x = -Math.PI / 2;
+        line.position.set(0, 0.1, -i * 10);
+        scene.add(line);
+    }
+
+    // 2. BANGUN PEMANDANGAN (POHON & TIANG)
+    const sceneryGroup = new THREE.Group();
+    scene.add(sceneryGroup);
+    
+    const treeGeo = new THREE.BoxGeometry(2, 6, 2);
+    const treeMat = new THREE.MeshStandardMaterial({ color: 0x228b22 });
+    const trunkGeo = new THREE.CylinderGeometry(0.5, 0.5, 3);
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
+
+    for(let i=0; i<60; i++) {
+        const tree = new THREE.Group();
+        const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+        trunk.position.y = 1.5;
+        const leaves = new THREE.Mesh(treeGeo, treeMat);
+        leaves.position.y = 5; leaves.castShadow = true;
+        tree.add(trunk); tree.add(leaves);
+        
+        // Taruh di pinggir jalan (kiri atau kanan acak)
+        tree.position.set(Math.random() > 0.5 ? 18 + Math.random()*5 : -18 - Math.random()*5, 0, -i * 15);
+        sceneryGroup.add(tree);
+    }
+
+    // Garis Finish
+    const finishGeo = new THREE.BoxGeometry(30, 2, 2);
+    const finishMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const finishLine = new THREE.Mesh(finishGeo, finishMat);
+    finishLine.position.set(0, 5, -600); // Z = -600 adalah target 100% karakter
+    scene.add(finishLine);
+
+    // 3. PABRIK MOBIL VOXEL
+    window.racingCars3D = {};
+    const paletWarnaMobil = [0xdc3545, 0x0d6efd, 0xffc107, 0x198754, 0x8a2be2, 0xff8c00];
+
+    window.buatMobilBaru = function(namaPemilik, indexWarna, lajurX) {
+        const carGroup = new THREE.Group();
+        let hexColor = paletWarnaMobil[indexWarna % paletWarnaMobil.length];
+
+        // Body Mobil
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1, 4.5), new THREE.MeshStandardMaterial({ color: hexColor }));
+        body.position.y = 0.8; body.castShadow = true; carGroup.add(body);
+        
+        // Kabin/Kaca
+        const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 2.5), new THREE.MeshStandardMaterial({ color: 0x88ccff, transparent: true, opacity: 0.8 }));
+        cabin.position.set(0, 1.6, -0.2); carGroup.add(cabin);
+
+        // Roda (Disimpan di array agar bisa diputar)
+        let daftarRoda = [];
+        const wheelGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 16);
+        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+        
+        for(let i=0; i<4; i++) {
+            let w = new THREE.Mesh(wheelGeo, wheelMat);
+            w.rotation.z = Math.PI / 2;
+            w.position.set(i<2 ? 1.4 : -1.4, 0.5, i%2===0 ? 1.5 : -1.5);
+            carGroup.add(w);
+            daftarRoda.push(w);
+        }
+
+        // Api Nitro (Disembunyikan default)
+        const api = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2, 8), new THREE.MeshBasicMaterial({ color: 0xff4500 }));
+        api.rotation.x = -Math.PI / 2;
+        api.position.set(0, 0.8, 3);
+        api.visible = false;
+        carGroup.add(api);
+
+        carGroup.position.set(lajurX, 0, 0); // Start dari Z=0
+        scene.add(carGroup);
+
+        // Simpan data khusus di dalam mobil
+        carGroup.userData = { roda: daftarRoda, api: api, nama: namaPemilik };
+        window.racingCars3D[namaPemilik] = carGroup;
+    };
+
+    // 4. RENDER LOOP & POV KAMERA
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Kamera Dinamis (POV Pribadi)
+        if (window.racingCars3D && window.racingCars3D[myName]) {
+            let myCar = window.racingCars3D[myName];
+            
+            // Kamera selalu mengekor 15 meter di belakang mobil kita, dan 6 meter di atasnya
+            let targetCamZ = myCar.position.z + 15;
+            let targetCamY = 6;
+            
+            // Gerakkan kamera secara mulus mendekati posisi target
+            camera.position.x += (myCar.position.x - camera.position.x) * 0.1;
+            camera.position.y += (targetCamY - camera.position.y) * 0.1;
+            camera.position.z += (targetCamZ - camera.position.z) * 0.1;
+            
+            // Kamera selalu menatap tajam ke arah depan mobil kita
+            camera.lookAt(myCar.position.x, myCar.position.y, myCar.position.z - 20);
+        } else {
+            // Jika mobil kita belum masuk arena, kamera muter-muter di garis start (Lobby)
+            camera.position.set(0, 10, 10);
+            camera.lookAt(0, 0, -20);
+        }
+
         renderer.render(scene, camera);
     }
     animate();
