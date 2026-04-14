@@ -3189,8 +3189,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 } 
                 // JIKA MODE BALAPAN BIASA ATAU FREE (MODE 3D SIRKUIT)
                 else {
-                    // Sembunyikan track 2D lama, tampilkan Layar Sirkuit 3D
-                    if(document.getElementById("daftar-pemain-track")) document.getElementById("daftar-pemain-track").parentElement.style.display = "none";
+                    // Sembunyikan HANYA track 2D dan garis finish lama (Bukan Parent-nya!)
+                    if(document.getElementById("daftar-pemain-track")) document.getElementById("daftar-pemain-track").style.display = "none";
+                    if(document.getElementById("garis-finish")) document.getElementById("garis-finish").style.display = "none";
+                    
+                    // Munculkan Layar Sirkuit 3D
                     const wadah3DSirkuit = document.getElementById("wadah-3d-sirkuit");
                     if(wadah3DSirkuit) wadah3DSirkuit.style.display = "block";
 
