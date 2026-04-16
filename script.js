@@ -3480,7 +3480,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (window.autoHostInterval) clearInterval(window.autoHostInterval); 
                     if (window.publicTimerInterval) clearInterval(window.publicTimerInterval);
                     if (window.publicEndTimeout) clearTimeout(window.publicEndTimeout);
-                    
+                    if (window.guruBotInterval) clearInterval(window.guruBotInterval); // <--- TAMBAHKAN BARIS INI
+
                     if (isHost) dbGame.ref('balap_rooms/' + pinRoom).remove();
                     else dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).remove();
                     
@@ -3518,16 +3519,55 @@ document.addEventListener("DOMContentLoaded", () => {
             // --- 3. KONTROL GURU (OTORITAS MUTLAK) ---
             if (isHost && !sessionStorage.getItem("is_public_match")) {
                 document.getElementById("kontrol-guru-3d").style.display = "flex";
+
+                // --- OTAK BOT KHUSUS MODE GURU ---
+                if (!window.guruBotInterval) {
+                    window.guruBotInterval = setInterval(() => {
+                        dbGame.ref('balap_rooms/' + pinRoom).once('value', snap => {
+                            let r = snap.val();
+                            // Pastikan game sedang berjalan agar bot bergerak
+                            if (!r || r.status !== "playing") return; 
+
+                            let ansBenar = r.daftar_soal[r.indeks_soal].jawaban_benar;
+                            let botUpdates = {};
+                            let hasUpdate = false;
+
+                            Object.keys(r.pemain || {}).forEach(p => {
+                                if (r.pemain[p].isBot && r.pemain[p].hp > 0) {
+                                    // Bot mondar-mandir natural (Agak condong ke jawaban benar)
+                                    const pilihan = ["kiri", "kanan", "tengah", ansBenar, ansBenar]; 
+                                    let posBaru = pilihan[Math.floor(Math.random() * pilihan.length)];
+
+                                    if (r.pemain[p].posisi !== posBaru) {
+                                        botUpdates[`pemain/${p}/posisi`] = posBaru;
+                                        hasUpdate = true;
+                                    }
+                                }
+                            });
+                            if (hasUpdate) dbGame.ref(`balap_rooms/${pinRoom}`).update(botUpdates);
+                        });
+                    }, 1500); // Berpindah setiap 1.5 detik agar terlihat panik/bingung
+                }
                 
                 document.getElementById("btn-mulai-3d").onclick = () => {
                     dbGame.ref(`balap_rooms/${pinRoom}`).once('value', (snap) => {
                         let current = snap.val();
                         if(!current) return;
                         let multiUpdate = {};
+                        
+                        // Reset posisi dan nyawa pemain asli (Manusia)
                         Object.keys(current.pemain || {}).forEach(p => {
                             multiUpdate[`pemain/${p}/hp`] = 1; // 1 NYAWA SUDDEN DEATH
                             multiUpdate[`pemain/${p}/posisi`] = "tengah";
                         });
+
+                        // SUNTIKAN 10 BOT PINTAR!
+                        for (let i = 1; i <= 10; i++) {
+                            multiUpdate[`pemain/Bot_Pintar_${i}/hp`] = 1;
+                            multiUpdate[`pemain/Bot_Pintar_${i}/posisi`] = "tengah";
+                            multiUpdate[`pemain/Bot_Pintar_${i}/isBot`] = true;
+                        }
+
                         multiUpdate[`status`] = "playing";
                         multiUpdate[`indeks_soal`] = 0;
                         multiUpdate[`pemenang`] = "";
@@ -3540,17 +3580,31 @@ document.addEventListener("DOMContentLoaded", () => {
                         let r = snap.val();
                         if(!r) return;
                         let ansBenar = r.daftar_soal[r.indeks_soal].jawaban_benar;
+                        let ansSalah = ansBenar === "kiri" ? "kanan" : "kiri";
                         let updates = { status: "revealing" };
                         
                         // GURU MEMBUNUH SEMUA YANG SALAH POSISI SECARA INSTAN
                         Object.keys(r.pemain || {}).forEach(p => {
-                            if (r.pemain[p].hp > 0 && r.pemain[p].posisi !== ansBenar) {
-                                updates[`pemain/${p}/hp`] = 0; 
+                            if (r.pemain[p].hp > 0) {
+                                
+                                if (r.pemain[p].isBot) {
+                                    // KECERDASAN BOT: Tepat sebelum jatuh, mereka mengunci jawaban!
+                                    let finalPos = Math.random() < 0.7 ? ansBenar : ansSalah; // 70% Peluang Benar
+                                    updates[`pemain/${p}/posisi`] = finalPos;
+                                    
+                                    if (finalPos !== ansBenar) updates[`pemain/${p}/hp`] = 0; // Bot mati jika salah
+                                } else {
+                                    // Evaluasi Siswa (Manusia)
+                                    if (r.pemain[p].posisi !== ansBenar) {
+                                        updates[`pemain/${p}/hp`] = 0; 
+                                    }
+                                }
                             }
                         });
 
                         dbGame.ref(`balap_rooms/${pinRoom}`).update(updates);
                         
+                        // Jeda 4 detik untuk melihat animasi jatuh sebelum pindah soal
                         setTimeout(() => {
                             dbGame.ref(`balap_rooms/${pinRoom}`).once('value', snap2 => {
                                 let r2 = snap2.val();
