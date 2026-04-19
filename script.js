@@ -529,14 +529,30 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
                 
+                // --- KUNCI FITUR: TANYAKAN JUMLAH KOLOM DAN BARIS UNTUK DENAH ---
+                let jmlKolom = 4;
+                let jmlBaris = 5;
+                
+                if (jenis === 'denah') {
+                    let inputKolom = prompt("Berapa jumlah KOLOM meja menyamping? (Standar: 4)", "4");
+                    if (inputKolom === null) return; // Jika guru klik 'Batal'
+                    
+                    let inputBaris = prompt("Berapa jumlah BARIS meja ke belakang? (Standar: 5)", "5");
+                    if (inputBaris === null) return;
+                    
+                    jmlKolom = parseInt(inputKolom) || 4;
+                    jmlBaris = parseInt(inputBaris) || 5;
+                }
+                // -----------------------------------------------------------------
+
                 document.getElementById("dashboard-kartu").style.display = "none";
                 document.getElementById("print-view").style.display = "block";
                 const container = document.getElementById("print-container");
                 container.innerHTML = "";
 
-                // Lempar data yang SUDAH DIFILTER (dataCetak) ke dalam fungsi pembuat kartu/denah
+                // Lempar data yang SUDAH DIFILTER ke pembuat kartu/denah
                 if (jenis === 'kartu') renderKartuPeserta(container, dataCetak);
-                else if (jenis === 'denah') renderDenahRuangan(container, dataCetak);
+                else if (jenis === 'denah') renderDenahRuangan(container, dataCetak, jmlKolom, jmlBaris); 
             };
 
             window.tutupModePrint = function() {
@@ -652,8 +668,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // 2. RENDER DENAH TEMPAT DUDUK (Menerima parameter dataSiswa)
-            function renderDenahRuangan(container, dataSiswa) {
+            // 2. RENDER DENAH TEMPAT DUDUK (Formasi Dinamis)
+            function renderDenahRuangan(container, dataSiswa, jmlKolom, jmlBaris) {
+                
+                // Hitung total kapasitas kursi di ruangan
+                let maxKursi = jmlKolom * jmlBaris; 
+                
                 // Kelompokkan siswa yang SUDAH DIFILTER berdasarkan Ruang
                 const siswaPerRuang = {};
                 dataSiswa.forEach(s => {
@@ -662,7 +682,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 Object.keys(siswaPerRuang).forEach(ruang => {
-                    const siswaDiRuang = siswaPerRuang[ruang].slice(0, 20); // Maks 20 kursi per kertas
+                    const siswaDiRuang = siswaPerRuang[ruang].slice(0, maxKursi); // Batasi siswa sesuai total kursi
                     
                     const page = document.createElement("div");
                     page.className = "page-sheet";
@@ -679,7 +699,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <div style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px;">Pengawas 1</div>
                                 <div style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px;">Pengawas 2</div>
                             </div>
-                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 100%; max-width: 600px; margin-top: 10px;" id="grid-denah-${ruang}">
+                            
+                            <div style="display: grid; grid-template-columns: repeat(${jmlKolom}, 1fr); gap: 15px; width: 100%; max-width: 700px; margin-top: 10px;" id="grid-denah-${ruang}">
                             </div>
                         </div>
                     `;
@@ -687,7 +708,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     container.appendChild(page);
                     
                     const gridTarget = document.getElementById(`grid-denah-${ruang}`);
-                    for (let i = 0; i < 20; i++) {
+                    for (let i = 0; i < maxKursi; i++) {
                         const s = siswaDiRuang[i];
                         if (s) {
                             const linkFoto = formatDriveImage(s.foto);
