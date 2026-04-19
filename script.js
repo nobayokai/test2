@@ -668,13 +668,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // 2. RENDER DENAH TEMPAT DUDUK (Formasi Dinamis)
+            // 2. RENDER DENAH TEMPAT DUDUK (Interaktif: Editable & Drag-Drop)
             function renderDenahRuangan(container, dataSiswa, jmlKolom, jmlBaris) {
                 
-                // Hitung total kapasitas kursi di ruangan
+                // Tambahkan CSS khusus untuk efek hover edit dan animasi drag
+                if (!document.getElementById("css-denah-interaktif")) {
+                    const style = document.createElement('style');
+                    style.id = "css-denah-interaktif";
+                    style.innerHTML = `
+                        [contenteditable="true"] { transition: all 0.2s; border-radius: 3px; }
+                        [contenteditable="true"]:hover { outline: 2px dashed #ffc107 !important; background-color: rgba(255,193,7,0.1); cursor: text; }
+                        [contenteditable="true"]:focus { outline: 2px solid #0d6efd !important; background-color: #fff; color: #000; }
+                        .seat-box { transition: transform 0.2s; }
+                        .seat-box:hover { transform: scale(1.02); box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 10; }
+                    `;
+                    document.head.appendChild(style);
+                }
+
                 let maxKursi = jmlKolom * jmlBaris; 
-                
-                // Kelompokkan siswa yang SUDAH DIFILTER berdasarkan Ruang
                 const siswaPerRuang = {};
                 dataSiswa.forEach(s => {
                     if (!siswaPerRuang[s.ruang]) siswaPerRuang[s.ruang] = [];
@@ -682,29 +693,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 Object.keys(siswaPerRuang).forEach(ruang => {
-                    const siswaDiRuang = siswaPerRuang[ruang].slice(0, maxKursi); // Batasi siswa sesuai total kursi
+                    const siswaDiRuang = siswaPerRuang[ruang].slice(0, maxKursi); 
                     
                     const page = document.createElement("div");
                     page.className = "page-sheet";
                     page.style.cssText = "background: white; width: 215mm; height: 330mm; padding: 10mm; box-sizing: border-box; font-family: Arial, sans-serif;";
 
-                    // Header Denah
+                    // Header Denah (Sekarang Editable)
                     page.innerHTML = `
                         <div style="text-align: center; margin-bottom: 25px;">
-                            <h2 style="margin:0; background: #0d6efd; color: white; padding: 5px; border: 2px solid black; border-bottom: none;">DENAH KURSI RUANG UJIAN ${ruang}</h2>
-                            <h3 style="margin:0; background: #f8f9fa; padding: 5px; border: 2px solid black;">${configKartu.sekolah} - ${configKartu.judul} ${configKartu.tahun}</h3>
+                            <h2 contenteditable="true" spellcheck="false" title="Klik untuk mengedit" style="margin:0; background: #0d6efd; color: white; padding: 5px; border: 2px solid black; border-bottom: none; outline:none;">DENAH KURSI RUANG UJIAN ${ruang}</h2>
+                            <h3 contenteditable="true" spellcheck="false" title="Klik untuk mengedit" style="margin:0; background: #f8f9fa; padding: 5px; border: 2px solid black; outline:none;">${configKartu.sekolah} - ${configKartu.judul} ${configKartu.tahun}</h3>
                         </div>
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                            
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 500px; padding: 0 50px; box-sizing: border-box;">
-                                <div style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px;">Pengawas 1</div>
-                                <div style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px;">Pengawas 2</div>
+                                <div class="seat-box" draggable="true" style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px; cursor: grab;">
+                                    <div contenteditable="true" spellcheck="false" style="outline:none;" title="Klik untuk ubah nama pengawas">Pengawas 1</div>
+                                </div>
+                                <div class="seat-box" draggable="true" style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px; cursor: grab;">
+                                    <div contenteditable="true" spellcheck="false" style="outline:none;" title="Klik untuk ubah nama pengawas">Pengawas 2</div>
+                                </div>
                             </div>
                             
                             <div style="display: grid; grid-template-columns: repeat(${jmlKolom}, 1fr); gap: 15px; width: 100%; max-width: 700px; margin-top: 10px;" id="grid-denah-${ruang}">
                             </div>
                         </div>
                     `;
-                    
                     container.appendChild(page);
                     
                     const gridTarget = document.getElementById(`grid-denah-${ruang}`);
@@ -712,19 +727,20 @@ document.addEventListener("DOMContentLoaded", () => {
                         const s = siswaDiRuang[i];
                         if (s) {
                             const linkFoto = formatDriveImage(s.foto);
-                            const fotoSiswa = linkFoto ? `<img src="${linkFoto}" style="width:55px; height:75px; object-fit:cover; border:1px solid #ccc; margin-bottom:5px;">` : `<div style="width:55px; height:75px; background:#eee; display:flex; align-items:center; justify-content:center; font-size:8px; color:#999; margin-bottom:5px;">No Foto</div>`;
+                            // Catatan: Gambar diberi draggable="false" agar browser murni menarik kotaknya, bukan mengunduh gambarnya
+                            const fotoSiswa = linkFoto ? `<img src="${linkFoto}" draggable="false" style="width:55px; height:75px; object-fit:cover; border:1px solid #ccc; margin-bottom:5px; pointer-events: none;">` : `<div style="width:55px; height:75px; background:#eee; display:flex; align-items:center; justify-content:center; font-size:8px; color:#999; margin-bottom:5px; pointer-events:none;">No Foto</div>`;
                             
                             gridTarget.innerHTML += `
-                                <div style="border: 2px solid black; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 130px; background: white;">
+                                <div class="seat-box" draggable="true" style="border: 2px solid black; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 130px; background: white; cursor: grab;">
                                     ${fotoSiswa}
-                                    <div style="font-size: 10px; font-weight: bold; font-family: monospace;">${s.noPeserta}</div>
-                                    <div style="font-size: 9px; font-weight: bold; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${s.nama}</div>
+                                    <div contenteditable="true" spellcheck="false" title="Klik untuk edit" style="font-size: 10px; font-weight: bold; font-family: monospace; outline:none; width: 100%;">${s.noPeserta}</div>
+                                    <div contenteditable="true" spellcheck="false" title="Klik untuk edit" style="font-size: 9px; font-weight: bold; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; outline:none;">${s.nama}</div>
                                 </div>
                             `;
                         } else {
                             gridTarget.innerHTML += `
-                                <div style="border: 2px dashed #999; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 130px; background: #f9f9f9;">
-                                    <div style="font-size: 14px; font-weight: bold; color: #ccc;">KOSONG</div>
+                                <div class="seat-box" draggable="true" style="border: 2px dashed #999; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 130px; background: #f9f9f9; cursor: grab;">
+                                    <div contenteditable="true" spellcheck="false" style="font-size: 14px; font-weight: bold; color: #ccc; outline:none; width:100%;">KOSONG</div>
                                 </div>
                             `;
                         }
@@ -4790,5 +4806,81 @@ function init3DBalapMobil(pinRoom, myName) {
         renderer.setSize(container.clientWidth, container.clientHeight);
     });
 }
+
+    
+        // ====================================================
+    // --- FITUR DRAG AND DROP KOTAK MEJA (DENAH UJIAN) ---
+    // ====================================================
+    let draggedSeat = null;
+
+    // 1. Saat kotak mulai ditarik
+    document.addEventListener('dragstart', function(e) {
+        const seat = e.target.closest('.seat-box');
+        if (seat) {
+            draggedSeat = seat;
+            setTimeout(() => seat.style.opacity = '0.4', 0); // Buat semi-transparan
+        }
+    });
+
+    // 2. Saat tarikan selesai (dilepas)
+    document.addEventListener('dragend', function(e) {
+        const seat = e.target.closest('.seat-box');
+        if (seat) {
+            seat.style.opacity = '1';
+            draggedSeat = null;
+            document.querySelectorAll('.seat-box').forEach(el => {
+                el.style.border = el.getAttribute('data-original-border') || el.style.border;
+            });
+        }
+    });
+
+    // 3. Saat kotak melayang di atas kotak lain (Efek visual)
+    document.addEventListener('dragover', function(e) {
+        e.preventDefault(); // Wajib agar bisa di-drop
+        const seat = e.target.closest('.seat-box');
+        if (seat && seat !== draggedSeat) {
+            if (!seat.getAttribute('data-original-border')) {
+                seat.setAttribute('data-original-border', seat.style.border);
+            }
+            seat.style.border = '3px dashed #0d6efd'; // Beri garis biru penanda target
+        }
+    });
+
+    // 4. Saat kotak keluar dari area target (Hapus efek)
+    document.addEventListener('dragleave', function(e) {
+        const seat = e.target.closest('.seat-box');
+        if (seat && seat !== draggedSeat) {
+            seat.style.border = seat.getAttribute('data-original-border') || '';
+        }
+    });
+
+    // 5. SAAT DILEPASKAN DI TARGET (PROSES TUKAR ISI)
+    document.addEventListener('drop', function(e) {
+        e.preventDefault();
+        const targetSeat = e.target.closest('.seat-box');
         
+        if (targetSeat && draggedSeat && targetSeat !== draggedSeat) {
+            // Hapus efek visual target
+            targetSeat.style.border = targetSeat.getAttribute('data-original-border') || '';
+
+            // TUKAR ISI HTML (Foto, Nama, Nomor)
+            const tempHTML = targetSeat.innerHTML;
+            targetSeat.innerHTML = draggedSeat.innerHTML;
+            draggedSeat.innerHTML = tempHTML;
+
+            // TUKAR DESAIN BACKGROUND & BORDER (Agar kursi 'Kosong' tetap terlihat kosong)
+            const tempBg = targetSeat.style.background;
+            const tempBorder = targetSeat.style.border;
+            
+            targetSeat.style.background = draggedSeat.style.background;
+            targetSeat.style.border = draggedSeat.style.border;
+            
+            draggedSeat.style.background = tempBg;
+            draggedSeat.style.border = tempBorder;
+            
+            // Perbarui memori border asli
+            targetSeat.setAttribute('data-original-border', targetSeat.style.border);
+            draggedSeat.setAttribute('data-original-border', draggedSeat.style.border);
+        }
+    });
 });
