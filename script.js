@@ -2533,6 +2533,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!pinRoom) { alert("Sesi game hilang!"); loadPage("tebak-kata"); return; }
 
             document.getElementById("arena-pin").innerText = pinRoom;
+            // FITUR PENGHAPUS OTOMATIS (Jika tab browser ditutup paksa)
+            if (isHost) {
+                dbGame.ref('rooms/' + pinRoom).onDisconnect().remove();
+            } else {
+                dbGame.ref(`rooms/${pinRoom}/pemain/${myName}`).onDisconnect().remove();
+            }
             
             const roomRef = dbGame.ref('rooms/' + pinRoom);
             let roomData = null;
@@ -2966,6 +2972,12 @@ document.addEventListener("DOMContentLoaded", () => {
             
             if (!pinRoom) { loadPage("edu-game"); return; }
             document.getElementById("balap-pin").innerText = pinRoom;
+            // FITUR PENGHAPUS OTOMATIS (Jika tab browser ditutup paksa)
+            if (isHost) {
+                dbGame.ref('balap_rooms/' + pinRoom).onDisconnect().remove();
+            } else {
+                dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).onDisconnect().remove();
+            }
 
             const inputKetik = document.getElementById("input-balap-ketik");
             const inputBebas = document.getElementById("input-balap-bebas");
@@ -3510,6 +3522,12 @@ document.addEventListener("DOMContentLoaded", () => {
             
             if (!pinRoom) { loadPage("edu-game"); return; }
             document.getElementById("survival-pin").innerText = pinRoom;
+            // FITUR PENGHAPUS OTOMATIS (Jika tab browser ditutup paksa)
+            if (isHost) {
+                dbGame.ref('balap_rooms/' + pinRoom).onDisconnect().remove();
+            } else {
+                dbGame.ref(`balap_rooms/${pinRoom}/pemain/${myName}`).onDisconnect().remove();
+            }
 
             // --- 1. FUNGSI KELUAR ARENA ---
             window.keluarArena3D = function(force = false) {
