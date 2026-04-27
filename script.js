@@ -83,7 +83,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- TAMBAHKAN KODE INI UNTUK CEK SESI SAAT REFRESH ---
     const savedRole = sessionStorage.getItem("userRole");
     const savedName = sessionStorage.getItem("userName");
-    if (savedRole) {
+    // KUNCI: Abaikan status 'tamu' agar mereka tidak mendapat akses Dashboard penuh
+    if (savedRole && savedRole !== "tamu") {
         // --- MUNCULKAN SAPAAN NAMA ---
         const greetingElem = document.getElementById("user-greeting");
         const namaElem = document.getElementById("nama-pengguna-aktif");
@@ -1410,8 +1411,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const menuGame = document.getElementById("menu-edu-game");
             if (menuGame) menuGame.style.display = "none";
             
-            const menuLatihan = document.getElementById("menu-latihan");
-            if (menuLatihan) menuLatihan.style.display = "none"; 
             
             // 3. Munculkan Kembali Menu Publik (Visi Misi & Profil)
             const menuVisiMisi = document.querySelector('[data-page="visi-misi"]');
@@ -1520,41 +1519,77 @@ document.addEventListener("DOMContentLoaded", () => {
                 // -------------------------------
             }
 
-            // ALUR 1: Cek Kode (Dengan Pengecekan Status Ujian)
+            // --- INJEKSI FORM TAMU (GUEST) ---
+            let modalTamu = document.getElementById("modal-tamu-latihan");
+            if (!modalTamu) {
+                modalTamu = document.createElement("div");
+                modalTamu.id = "modal-tamu-latihan";
+                modalTamu.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:99999; display:none; justify-content:center; align-items:center;";
+                modalTamu.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        <i class="fa-solid fa-user-graduate" style="font-size: 50px; color: #0d6efd; margin-bottom: 15px;"></i>
+                        <h3 style="margin: 0 0 10px 0; color: #333;">Data Peserta Ujian</h3>
+                        <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Silakan masukkan identitas Anda sebelum memulai.</p>
+                        <input type="text" id="tamu-nama" placeholder="Nama Lengkap" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px;">
+                        <input type="text" id="tamu-kelas" placeholder="Kelas (Contoh: 6A)" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px;">
+                        <div style="display: flex; gap: 10px;">
+                            <button id="btn-batal-tamu" style="flex: 1; padding: 12px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Batal</button>
+                            <button id="btn-lanjut-tamu" style="flex: 1; padding: 12px; background: #198754; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Mulai Ujian</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modalTamu);
+
+                // Tombol Batal Tamu
+                document.getElementById("btn-batal-tamu").onclick = () => { modalTamu.style.display = "none"; };
+
+                // Tombol Lanjut Tamu
+                document.getElementById("btn-lanjut-tamu").onclick = async () => {
+                    const nama = document.getElementById("tamu-nama").value.trim().toUpperCase();
+                    const kelas = document.getElementById("tamu-kelas").value.trim().toUpperCase();
+                    if (!nama || !kelas) { alert("Harap isi Nama dan Kelas!"); return; }
+
+                    const namaGuest = `${nama} (${kelas})`; // Format: BUDI SANTOSO (6A)
+                    const btn = document.getElementById("btn-lanjut-tamu");
+                    btn.innerText = "Memeriksa..."; btn.disabled = true;
+
+                    try {
+                        const checkResponse = await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify({ action: "cek_status_ujian", nama_siswa: namaGuest, kode_soal: currentExamCode })
+                        });
+                        const checkResult = await checkResponse.json();
+
+                        if (checkResult.status === "sudah") {
+                            alert("Maaf, nama tersebut sudah pernah menyelesaikan ujian ini!");
+                        } else {
+                            // Beri identitas tamu sementara
+                            sessionStorage.setItem("userName", namaGuest);
+                            sessionStorage.setItem("userRole", "tamu");
+                            modalTamu.style.display = "none";
+                            document.getElementById("modal-konfirmasi").style.display = "flex";
+                        }
+                    } catch (e) {
+                        alert("Terjadi kesalahan jaringan.");
+                    } finally {
+                        btn.innerText = "Mulai Ujian"; btn.disabled = false;
+                    }
+                };
+            }
+
+            // ALUR 1: Cek Kode (Mendukung Login Resmi & Tamu)
             if (btnLanjut && !savedSession) {
                 btnLanjut.addEventListener("click", async () => {
                     const kodeDiminta = inputKode.value.trim().toUpperCase();
                     if(!kodeDiminta) return;
                     
-                    btnLanjut.innerText = "Memeriksa Kelayakan...";
+                    btnLanjut.innerText = "Memeriksa Kode...";
                     btnLanjut.disabled = true;
                     const errorElemen = document.getElementById("error-kode");
-                    errorElemen.style.display = "none"; // Sembunyikan error sebelumnya
+                    errorElemen.style.display = "none";
 
                     try {
-                        // 1. CEK KE SERVER APAKAH SISWA SUDAH MENGERJAKAN?
-                        const checkPayload = {
-                            action: "cek_status_ujian",
-                            nama_siswa: sessionStorage.getItem("userName"),
-                            kode_soal: kodeDiminta
-                        };
-
-                        const checkResponse = await fetch(SCRIPT_URL, {
-                            method: "POST",
-                            body: JSON.stringify(checkPayload)
-                        });
-                        const checkResult = await checkResponse.json();
-
-                        // Jika balasan server mengatakan "sudah"
-                        if (checkResult.status === "sudah") {
-                            errorElemen.innerText = "⛔ Maaf, Anda sudah pernah menyelesaikan ujian ini!";
-                            errorElemen.style.display = "block";
-                            btnLanjut.innerText = "Lanjut";
-                            btnLanjut.disabled = false;
-                            return; // Hentikan eksekusi di sini!
-                        }
-
-                        // 2. JIKA BELUM MENGERJAKAN, TARIK SOALNYA
+                        // 1. Tarik soal untuk memastikan kode valid
                         const response = await fetch(SCRIPT_URL);
                         const semuaSoal = await response.json();
                         let soalSesuaiKode = semuaSoal.filter(soal => soal.kode.toUpperCase() === kodeDiminta);
@@ -1562,12 +1597,37 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (soalSesuaiKode.length === 0) {
                             errorElemen.innerText = "Kode Ujian tidak ditemukan!";
                             errorElemen.style.display = "block";
+                            btnLanjut.innerText = "Lanjut";
+                            btnLanjut.disabled = false;
+                            return;
+                        }
+
+                        currentExamCode = kodeDiminta; 
+                        document.getElementById("label-kode-ujian").innerText = kodeDiminta; 
+                        loadedQuestions = acakUrutan(soalSesuaiKode); 
+
+                        // 2. Cek apakah yang memasukkan kode adalah Siswa Resmi (Login) atau Publik
+                        const userName = sessionStorage.getItem("userName");
+                        const userRole = sessionStorage.getItem("userRole");
+                        
+                        if (userName && userRole !== "tamu") {
+                            // JIKA SISWA RESMI: Langsung cek status ke server
+                            btnLanjut.innerText = "Memeriksa Kelayakan...";
+                            const checkResponse = await fetch(SCRIPT_URL, {
+                                method: "POST",
+                                body: JSON.stringify({ action: "cek_status_ujian", nama_siswa: userName, kode_soal: kodeDiminta })
+                            });
+                            const checkResult = await checkResponse.json();
+
+                            if (checkResult.status === "sudah") {
+                                errorElemen.innerText = "⛔ Maaf, Anda sudah pernah menyelesaikan ujian ini!";
+                                errorElemen.style.display = "block";
+                            } else {
+                                modalKonfirmasi.style.display = "flex"; 
+                            }
                         } else {
-                            currentExamCode = kodeDiminta; 
-                            document.getElementById("label-kode-ujian").innerText = kodeDiminta; 
-                            modalKonfirmasi.style.display = "flex"; 
-                            // Acak soal dan simpan ke memory
-                            loadedQuestions = acakUrutan(soalSesuaiKode); 
+                            // JIKA TAMU (PUBLIK): Munculkan form minta Nama & Kelas
+                            document.getElementById("modal-tamu-latihan").style.display = "flex";
                         }
                     } catch (error) {
                         alert("Gagal terhubung ke server. Pastikan internet Anda stabil.");
@@ -1577,7 +1637,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 });
             }
-
             if (document.getElementById("btn-batal-mulai")) {
                 document.getElementById("btn-batal-mulai").addEventListener("click", () => {
                     modalKonfirmasi.style.display = "none";
@@ -4116,6 +4175,11 @@ document.addEventListener("DOMContentLoaded", () => {
             
             if(result.status === "sukses") {
                 clearExamSession(); // HAPUS SESI UJIAN KARENA SUDAH SELESAI
+                // Bersihkan memori identitas tamu agar web kembali menjadi mode publik murni
+                if(sessionStorage.getItem("userRole") === "tamu") {
+                    sessionStorage.removeItem("userRole");
+                    sessionStorage.removeItem("userName");
+                }
 
                 // --- MATIKAN LAYAR LOADING & RESET SAKLAR ---
                 if (document.getElementById("loading-submit-ujian")) {
