@@ -669,10 +669,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // 2. RENDER DENAH TEMPAT DUDUK (Interaktif: Editable & Drag-Drop)
+            // 2. RENDER DENAH TEMPAT DUDUK (Interaktif: Editable, Drag-Drop, & Hapus)
             function renderDenahRuangan(container, dataSiswa, jmlKolom, jmlBaris) {
                 
-                // Tambahkan CSS khusus untuk efek hover edit dan animasi drag
+                // Tambahkan CSS khusus (Sekarang ada CSS Tombol Hapus)
                 if (!document.getElementById("css-denah-interaktif")) {
                     const style = document.createElement('style');
                     style.id = "css-denah-interaktif";
@@ -680,11 +680,26 @@ document.addEventListener("DOMContentLoaded", () => {
                         [contenteditable="true"] { transition: all 0.2s; border-radius: 3px; }
                         [contenteditable="true"]:hover { outline: 2px dashed #ffc107 !important; background-color: rgba(255,193,7,0.1); cursor: text; }
                         [contenteditable="true"]:focus { outline: 2px solid #0d6efd !important; background-color: #fff; color: #000; }
-                        .seat-box { transition: transform 0.2s; }
+                        .seat-box { transition: transform 0.2s; position: relative; } /* Kunci untuk posisi tombol X */
                         .seat-box:hover { transform: scale(1.02); box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 10; }
+                        
+                        /* Tombol Hapus Merah (Muncul saat diarahkan mouse) */
+                        .btn-hapus-kursi { position: absolute; top: -10px; right: -10px; background: #dc3545; color: white; border: 2px solid white; border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-weight: bold; cursor: pointer; display: none; justify-content: center; align-items: center; z-index: 20; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+                        .seat-box:hover .btn-hapus-kursi { display: flex; }
                     `;
                     document.head.appendChild(style);
                 }
+
+                // FUNGSI MENGHAPUS KURSI PERMANEN (Sembunyikan dari kertas)
+                window.hapusKursiPermanen = function(btn) {
+                    let box = btn.closest('.seat-box');
+                    box.innerHTML = ''; // Kosongkan isinya
+                    box.style.background = 'transparent'; // Buat tembus pandang
+                    box.style.border = 'none'; // Hilangkan garis
+                    box.style.boxShadow = 'none';
+                    box.setAttribute('draggable', 'false'); // Matikan fungsi drag
+                    box.style.cursor = 'default';
+                };
 
                 let maxKursi = jmlKolom * jmlBaris; 
                 const siswaPerRuang = {};
@@ -700,7 +715,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     page.className = "page-sheet";
                     page.style.cssText = "background: white; width: 215mm; height: 330mm; padding: 10mm; box-sizing: border-box; font-family: Arial, sans-serif;";
 
-                    // Header Denah (Sekarang Editable)
+                    // Header Denah
                     page.innerHTML = `
                         <div style="text-align: center; margin-bottom: 25px;">
                             <h2 contenteditable="true" spellcheck="false" title="Klik untuk mengedit" style="margin:0; background: #0d6efd; color: white; padding: 5px; border: 2px solid black; border-bottom: none; outline:none;">DENAH KURSI RUANG UJIAN ${ruang}</h2>
@@ -710,10 +725,12 @@ document.addEventListener("DOMContentLoaded", () => {
                             
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 500px; padding: 0 50px; box-sizing: border-box;">
                                 <div class="seat-box" draggable="true" style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px; cursor: grab;">
-                                    <div contenteditable="true" spellcheck="false" style="outline:none;" title="Klik untuk ubah nama pengawas">Pengawas 1</div>
+                                    <button class="btn-hapus-kursi" onclick="hapusKursiPermanen(this)" title="Hapus Kotak">✖</button>
+                                    <div contenteditable="true" spellcheck="false" style="outline:none;" title="Klik untuk ubah">Pengawas 1</div>
                                 </div>
                                 <div class="seat-box" draggable="true" style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px; cursor: grab;">
-                                    <div contenteditable="true" spellcheck="false" style="outline:none;" title="Klik untuk ubah nama pengawas">Pengawas 2</div>
+                                    <button class="btn-hapus-kursi" onclick="hapusKursiPermanen(this)" title="Hapus Kotak">✖</button>
+                                    <div contenteditable="true" spellcheck="false" style="outline:none;" title="Klik untuk ubah">Pengawas 2</div>
                                 </div>
                             </div>
                             
@@ -728,11 +745,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         const s = siswaDiRuang[i];
                         if (s) {
                             const linkFoto = formatDriveImage(s.foto);
-                            // Catatan: Gambar diberi draggable="false" agar browser murni menarik kotaknya, bukan mengunduh gambarnya
                             const fotoSiswa = linkFoto ? `<img src="${linkFoto}" draggable="false" style="width:55px; height:75px; object-fit:cover; border:1px solid #ccc; margin-bottom:5px; pointer-events: none;">` : `<div style="width:55px; height:75px; background:#eee; display:flex; align-items:center; justify-content:center; font-size:8px; color:#999; margin-bottom:5px; pointer-events:none;">No Foto</div>`;
                             
                             gridTarget.innerHTML += `
                                 <div class="seat-box" draggable="true" style="border: 2px solid black; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 130px; background: white; cursor: grab;">
+                                    <button class="btn-hapus-kursi" onclick="hapusKursiPermanen(this)" title="Hapus Kotak">✖</button>
                                     ${fotoSiswa}
                                     <div contenteditable="true" spellcheck="false" title="Klik untuk edit" style="font-size: 10px; font-weight: bold; font-family: monospace; outline:none; width: 100%;">${s.noPeserta}</div>
                                     <div contenteditable="true" spellcheck="false" title="Klik untuk edit" style="font-size: 9px; font-weight: bold; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; outline:none;">${s.nama}</div>
@@ -741,6 +758,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         } else {
                             gridTarget.innerHTML += `
                                 <div class="seat-box" draggable="true" style="border: 2px dashed #999; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 130px; background: #f9f9f9; cursor: grab;">
+                                    <button class="btn-hapus-kursi" onclick="hapusKursiPermanen(this)" title="Hapus Kotak">✖</button>
                                     <div contenteditable="true" spellcheck="false" style="font-size: 14px; font-weight: bold; color: #ccc; outline:none; width:100%;">KOSONG</div>
                                 </div>
                             `;
