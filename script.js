@@ -669,10 +669,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // 2. RENDER DENAH TEMPAT DUDUK (Interaktif: Editable, Drag-Drop, & Hapus)
+            // 2. RENDER DENAH TEMPAT DUDUK (Fleksibel: Pengawas Melayang & Drag-Drop Siswa)
             function renderDenahRuangan(container, dataSiswa, jmlKolom, jmlBaris) {
                 
-                // Tambahkan CSS khusus (Sekarang ada CSS Tombol Hapus)
+                // Tambahkan CSS khusus
                 if (!document.getElementById("css-denah-interaktif")) {
                     const style = document.createElement('style');
                     style.id = "css-denah-interaktif";
@@ -680,24 +680,83 @@ document.addEventListener("DOMContentLoaded", () => {
                         [contenteditable="true"] { transition: all 0.2s; border-radius: 3px; }
                         [contenteditable="true"]:hover { outline: 2px dashed #ffc107 !important; background-color: rgba(255,193,7,0.1); cursor: text; }
                         [contenteditable="true"]:focus { outline: 2px solid #0d6efd !important; background-color: #fff; color: #000; }
-                        .seat-box { transition: transform 0.2s; position: relative; } /* Kunci untuk posisi tombol X */
+                        
+                        /* Kotak Siswa (Grid Swap) */
+                        .seat-box { transition: transform 0.2s; position: relative; } 
                         .seat-box:hover { transform: scale(1.02); box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 10; }
                         
-                        /* Tombol Hapus Merah (Muncul saat diarahkan mouse) */
+                        /* Tombol Hapus Merah */
                         .btn-hapus-kursi { position: absolute; top: -10px; right: -10px; background: #dc3545; color: white; border: 2px solid white; border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-weight: bold; cursor: pointer; display: none; justify-content: center; align-items: center; z-index: 20; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-                        .seat-box:hover .btn-hapus-kursi { display: flex; }
+                        .seat-box:hover .btn-hapus-kursi, .pengawas-box:hover .btn-hapus-kursi { display: flex; }
+                        
+                        /* Kotak Pengawas (Melayang Bebas) */
+                        .pengawas-box { position: absolute; z-index: 50; transition: box-shadow 0.2s; }
+                        .pengawas-box:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important; z-index: 100; }
+                        
+                        /* Gagang Tarikan Pengawas */
+                        .drag-handle { background: #0d6efd; color: white; font-size: 11px; padding: 4px; cursor: move; user-select: none; display: flex; justify-content: center; align-items: center; border-bottom: 2px solid black; font-weight: bold; }
+                        
+                        /* Sembunyikan gagang tarik dan tombol hapus saat diprint */
+                        @media print {
+                            .drag-handle { display: none !important; }
+                            .btn-hapus-kursi { display: none !important; }
+                            .pengawas-box { box-shadow: none !important; border: 2px solid black !important; }
+                            .seat-box { box-shadow: none !important; transform: none !important; }
+                        }
                     `;
                     document.head.appendChild(style);
                 }
 
-                // FUNGSI MENGHAPUS KURSI PERMANEN (Sembunyikan dari kertas)
+                // SCRIPT UNTUK MOUSE DRAG PENGAWAS SECARA BEBAS (Berjalan 1x saja)
+                if (!window.isPengawasDragInit) {
+                    window.isPengawasDragInit = true;
+                    let isDraggingPgw = false;
+                    let activePengawas = null;
+                    let pOffsetX = 0, pOffsetY = 0;
+
+                    document.addEventListener('mousedown', (e) => {
+                        if (e.target.closest('.drag-handle')) {
+                            activePengawas = e.target.closest('.pengawas-box');
+                            isDraggingPgw = true;
+                            let rect = activePengawas.getBoundingClientRect();
+                            pOffsetX = e.clientX - rect.left;
+                            pOffsetY = e.clientY - rect.top;
+                            activePengawas.style.zIndex = 1000;
+                            e.preventDefault(); // Cegah blok teks berwarna biru
+                        }
+                    });
+
+                    document.addEventListener('mousemove', (e) => {
+                        if (isDraggingPgw && activePengawas) {
+                            let parent = activePengawas.closest('.page-sheet');
+                            let parentRect = parent.getBoundingClientRect();
+                            
+                            // Kalkulasi posisi x dan y relatif terhadap kertas
+                            let newLeft = e.clientX - parentRect.left - pOffsetX;
+                            let newTop = e.clientY - parentRect.top - pOffsetY;
+                            
+                            activePengawas.style.left = newLeft + 'px';
+                            activePengawas.style.top = newTop + 'px';
+                        }
+                    });
+
+                    document.addEventListener('mouseup', () => {
+                        if (activePengawas) {
+                            activePengawas.style.zIndex = 50;
+                            isDraggingPgw = false;
+                            activePengawas = null;
+                        }
+                    });
+                }
+
+                // FUNGSI MENGHAPUS KURSI PERMANEN (Siswa KOSONG)
                 window.hapusKursiPermanen = function(btn) {
                     let box = btn.closest('.seat-box');
-                    box.innerHTML = ''; // Kosongkan isinya
-                    box.style.background = 'transparent'; // Buat tembus pandang
-                    box.style.border = 'none'; // Hilangkan garis
+                    box.innerHTML = ''; 
+                    box.style.background = 'transparent'; 
+                    box.style.border = 'none'; 
                     box.style.boxShadow = 'none';
-                    box.setAttribute('draggable', 'false'); // Matikan fungsi drag
+                    box.setAttribute('draggable', 'false'); 
                     box.style.cursor = 'default';
                 };
 
@@ -713,7 +772,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     const page = document.createElement("div");
                     page.className = "page-sheet";
-                    page.style.cssText = "background: white; width: 215mm; height: 330mm; padding: 10mm; box-sizing: border-box; font-family: Arial, sans-serif;";
+                    // Tambahkan position: relative dan overflow: hidden untuk membatasi pergerakan melayang
+                    page.style.cssText = "position: relative; overflow: hidden; background: white; width: 215mm; height: 330mm; padding: 10mm; box-sizing: border-box; font-family: Arial, sans-serif;";
 
                     // Header Denah
                     page.innerHTML = `
@@ -721,19 +781,20 @@ document.addEventListener("DOMContentLoaded", () => {
                             <h2 contenteditable="true" spellcheck="false" title="Klik untuk mengedit" style="margin:0; background: #0d6efd; color: white; padding: 5px; border: 2px solid black; border-bottom: none; outline:none;">DENAH KURSI RUANG UJIAN ${ruang}</h2>
                             <h3 contenteditable="true" spellcheck="false" title="Klik untuk mengedit" style="margin:0; background: #f8f9fa; padding: 5px; border: 2px solid black; outline:none;">${configKartu.sekolah} - ${configKartu.judul} ${configKartu.tahun}</h3>
                         </div>
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
-                            
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 500px; padding: 0 50px; box-sizing: border-box;">
-                                <div class="seat-box" draggable="true" style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px; cursor: grab;">
-                                    <button class="btn-hapus-kursi" onclick="hapusKursiPermanen(this)" title="Hapus Kotak">✖</button>
-                                    <div contenteditable="true" spellcheck="false" style="outline:none;" title="Klik untuk ubah">Pengawas 1</div>
-                                </div>
-                                <div class="seat-box" draggable="true" style="border: 2px solid black; background: #ddd; padding: 15px; text-align: center; font-weight: bold; font-size: 14px; cursor: grab;">
-                                    <button class="btn-hapus-kursi" onclick="hapusKursiPermanen(this)" title="Hapus Kotak">✖</button>
-                                    <div contenteditable="true" spellcheck="false" style="outline:none;" title="Klik untuk ubah">Pengawas 2</div>
-                                </div>
-                            </div>
-                            
+                        
+                        <div class="pengawas-box" style="top: 120px; left: 50px; width: 160px; border: 2px solid black; background: #ddd; text-align: center; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div class="drag-handle" title="Tahan dan geser kemana saja">✥ GESER BEBAS</div>
+                            <button class="btn-hapus-kursi" onclick="this.parentElement.remove()" title="Hapus Kotak">✖</button>
+                            <div contenteditable="true" spellcheck="false" style="padding: 15px; outline:none;" title="Klik untuk ubah">Pengawas 1</div>
+                        </div>
+
+                        <div class="pengawas-box" style="top: 120px; right: 50px; width: 160px; border: 2px solid black; background: #ddd; text-align: center; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div class="drag-handle" title="Tahan dan geser kemana saja">✥ GESER BEBAS</div>
+                            <button class="btn-hapus-kursi" onclick="this.parentElement.remove()" title="Hapus Kotak">✖</button>
+                            <div contenteditable="true" spellcheck="false" style="padding: 15px; outline:none;" title="Klik untuk ubah">Pengawas 2</div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px; margin-top: 110px;">
                             <div style="display: grid; grid-template-columns: repeat(${jmlKolom}, 1fr); gap: 15px; width: 100%; max-width: 700px; margin-top: 10px;" id="grid-denah-${ruang}">
                             </div>
                         </div>
