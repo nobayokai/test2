@@ -973,7 +973,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 dataSiswa.forEach(s => {
                     const page = document.createElement("div");
                     page.className = "page-sheet";
-                    page.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 25mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative;";
+                    page.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 5mm 20mm 25mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative;";
 
                     // Menyiapkan Foto Siswa
                     const linkFoto = formatDriveImage(s.foto);
