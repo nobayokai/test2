@@ -937,9 +937,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             };
 
-            // 2. Mesin Pencetak (Render) Desain Surat Resmi 
+           // 2. Mesin Pencetak (Render) Desain Surat Resmi (TERHUBUNG KE IDENTITAS KARTU)
             window.renderSuratKelulusan = function(container, dataSiswa, nomorSurat, tanggalSurat) {
-                // Tarik data config header sekolah (menggunakan pengaturan Kartu Ujian yang sudah ada)
+                // Tarik data Identitas Sekolah dari pengaturan Kartu Ujian
                 let configKartu = JSON.parse(localStorage.getItem('config_kartu_ujian')) || {};
 
                 // Suntikkan CSS Surat jika belum ada
@@ -973,15 +973,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 dataSiswa.forEach(s => {
                     const page = document.createElement("div");
                     page.className = "page-sheet";
-                    // Format Kertas F4/Folio standar sekolah atau A4
                     page.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 25mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative;";
 
+                    // Menyiapkan Foto Siswa
                     const linkFoto = formatDriveImage(s.foto);
-                    const fotoSiswa = linkFoto ? `<img src="${linkFoto}" style="width: 3cm; height: 4cm; object-fit: cover; border: 2px solid #333; padding: 2px; background: white;">` : `<div style="width: 3cm; height: 4cm; border: 1px solid black; display:flex; align-items:center; justify-content:center; text-align:center; font-size:10px; background: #f9f9f9; color: #888;">Pas Foto<br>3 x 4</div>`;
+                    const fotoSiswa = linkFoto ? `<img src="${linkFoto}" style="width: 3cm; height: 4cm; object-fit: cover; border: 2px solid #333; padding: 2px; background: white; position: relative; z-index: 20;">` : `<div style="width: 3cm; height: 4cm; border: 1px solid black; display:flex; align-items:center; justify-content:center; text-align:center; font-size:10px; background: #f9f9f9; color: #888;">Pas Foto<br>3 x 4</div>`;
                     
-                    const logoHtml = configKartu.logoUrl ? `<img src="${configKartu.logoUrl}" class="surat-logo">` : `<div class="surat-logo" style="border:1px solid #ccc; display:flex; align-items:center; justify-content:center; font-size:10px; background:#eee;">LOGO SEKOLAH</div>`;
+                    const logoHtml = configKartu.logoUrl ? `<img src="${configKartu.logoUrl}" class="surat-logo">` : `<div class="surat-logo" style="border:1px solid #ccc; display:flex; align-items:center; justify-content:center; font-size:10px; background:#eee;">LOGO<br>SEKOLAH</div>`;
                     
-                    const ttdHtml = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="height: 70px; object-fit: contain; margin: 5px 0;">` : `<div style="height: 70px; margin: 5px 0; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:10px;">(Tanda Tangan)</div>`;
+                    // --- KUNCI EFEK STEMPEL REALISTIS ---
+                    // Menggunakan mix-blend-mode: multiply dan position: absolute agar gambar melayang dan transparan
+                    const ttdHtml = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="position: absolute; top: 15px; left: -15px; width: 160px; height: 120px; object-fit: contain; z-index: 10; mix-blend-mode: multiply; pointer-events: none;">` : ``;
+                    
+                    const namaSekolah = configKartu.sekolah || "SDIT Hidayatut Taufiq";
+                    const alamatSekolah = configKartu.alamat || "Jl. Pasar Kranggan No. 25 Jatisampurna, Bekasi";
+                    const namaTandaTangan = configKartu.namaTtd || "....................................";
+                    const jabatanTandaTangan = configKartu.jabatan || "Kepala Sekolah";
 
                     page.innerHTML = `
                         <div class="surat-container">
@@ -989,10 +996,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="surat-header">
                                 ${logoHtml}
                                 <div style="flex:1; text-align: center; padding-left: 90px; padding-right: 20px;">
-                                    <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px;" contenteditable="true" spellcheck="false">SEKOLAH DASAR ISLAM TERPADU (S.D.I.T)</div>
-                                    <div style="font-size: 18pt; font-weight: bold; letter-spacing: 2px;" contenteditable="true" spellcheck="false">“ HIDAYATUT TAUFIQ ”</div>
-                                    <div style="font-size: 11pt; margin-top: 5px;" contenteditable="true" spellcheck="false">${configKartu.alamat || "Jl. Pasar Kranggan No. 25 Jatisampurna, Bekasi"}</div>
-                                    <div style="font-size: 10pt;" contenteditable="true" spellcheck="false">📞 0897-3484-884</div>
+                                    <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px;" contenteditable="true" spellcheck="false">${namaSekolah}</div>
+                                    <div style="font-size: 11pt; margin-top: 5px;" contenteditable="true" spellcheck="false">${alamatSekolah}</div>
+                                    <div style="font-size: 10pt;" contenteditable="true" spellcheck="false">${configKartu.kota || "Bekasi"}</div>
                                 </div>
                             </div>
 
@@ -1001,10 +1007,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                             <div style="margin-bottom: 5px;">Yang bertanda tangan di bawah ini:</div>
                             <table class="surat-table" style="width: 100%; margin-bottom: 15px; margin-left: 20px;">
-                                <tr><td style="width: 180px;">Nama</td><td style="width: 15px;">:</td><td><span contenteditable="true" spellcheck="false" style="font-weight:bold;">${configKartu.namaTtd || "......................................."}</span></td></tr>
+                                <tr><td style="width: 180px;">Nama</td><td style="width: 15px;">:</td><td><span contenteditable="true" spellcheck="false" style="font-weight:bold;">${namaTandaTangan}</span></td></tr>
                                 <tr><td>NIP</td><td>:</td><td><span contenteditable="true" spellcheck="false">-</span></td></tr>
-                                <tr><td>Jabatan</td><td>:</td><td><span contenteditable="true" spellcheck="false">${configKartu.jabatan || "Kepala Sekolah"}</span></td></tr>
-                                <tr><td>Alamat Sekolah</td><td>:</td><td><span contenteditable="true" spellcheck="false">${configKartu.alamat || "......................................."}</span></td></tr>
+                                <tr><td>Jabatan</td><td>:</td><td><span contenteditable="true" spellcheck="false">${jabatanTandaTangan}</span></td></tr>
+                                <tr><td>Alamat Sekolah</td><td>:</td><td><span contenteditable="true" spellcheck="false">${alamatSekolah}</span></td></tr>
                             </table>
 
                             <div style="margin-bottom: 5px;">Dengan ini menerangkan bahwa:</div>
@@ -1014,7 +1020,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <tr><td>NISN Siswa</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.noPeserta}</span></td></tr>
                                 <tr><td>Kelas</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.kelas}</span></td></tr>
                                 <tr><td>Status</td><td>:</td><td style="text-align: justify;"><span contenteditable="true" spellcheck="false">Masih Aktif sebagai peserta didik hingga semester genap Tahun Pelajaran ${configKartu.tahun || "2025/2026"}</span></td></tr>
-                                <tr><td>Asal Sekolah</td><td>:</td><td><span contenteditable="true" spellcheck="false">${configKartu.sekolah || "SDIT Hidayatut Taufiq"}</span></td></tr>
+                                <tr><td>Asal Sekolah</td><td>:</td><td><span contenteditable="true" spellcheck="false">${namaSekolah}</span></td></tr>
                                 <tr><td>Tahun Pelajaran</td><td>:</td><td><span contenteditable="true" spellcheck="false">${configKartu.tahun || "2025/2026"}</span></td></tr>
                             </table>
 
@@ -1038,12 +1044,17 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <div>
                                     ${fotoSiswa}
                                 </div>
-                                <div style="text-align: left; width: 280px;">
-                                    <div contenteditable="true" spellcheck="false">${tanggalSurat}</div>
-                                    <div contenteditable="true" spellcheck="false">${configKartu.jabatan || "Kepala Sekolah"}</div>
+                                
+                                <div style="text-align: left; width: 280px; position: relative;">
+                                    <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">${tanggalSurat}</div>
+                                    <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">${jabatanTandaTangan}</div>
+                                    
                                     ${ttdHtml}
-                                    <div contenteditable="true" spellcheck="false" style="font-weight: bold; text-decoration: underline;">${configKartu.namaTtd || "...................................."}</div>
-                                    <div contenteditable="true" spellcheck="false">NIP. <span style="font-weight:normal;">...........................................</span></div>
+                                    
+                                    <div style="height: 60px;"></div>
+                                    
+                                    <div contenteditable="true" spellcheck="false" style="font-weight: bold; text-decoration: underline; position: relative; z-index: 2;">${namaTandaTangan}</div>
+                                    <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">NIP. <span style="font-weight:normal;">...........................................</span></div>
                                 </div>
                             </div>
                             
@@ -1052,7 +1063,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     container.appendChild(page);
                 });
             };
-
             // ==========================================
             // --- LOGIKA UPLOAD & PREVIEW DATA SISWA ---
             // ==========================================
