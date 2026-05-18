@@ -833,6 +833,226 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("dashboard-kartu").style.display = "block";
             };
 
+
+            // =========================================================
+            // --- FITUR CETAK SURAT KETERANGAN LULUS (SKL) SEMENTARA ---
+            // =========================================================
+
+            // 1. Fungsi Menampilkan Jendela Pilihan Siswa
+            window.bukaModalSurat = function() {
+                if (!window.dataSiswaKartu || window.dataSiswaKartu.length === 0) { 
+                    alert("Harap tarik data siswa dari server terlebih dahulu!"); 
+                    return; 
+                }
+
+                // Saring siswa berdasarkan ruang yang sedang aktif di layar
+                const ruangFilter = document.getElementById("filter-ruang-kartu")?.value || "";
+                let dataCetak = window.dataSiswaKartu;
+                if (ruangFilter !== "") {
+                    dataCetak = window.dataSiswaKartu.filter(s => String(s.ruang).trim() === String(ruangFilter).trim());
+                }
+
+                if (dataCetak.length === 0) {
+                    alert(`Tidak ada siswa di Ruang ${ruangFilter}!`); return;
+                }
+
+                // Buat Popup Modal jika belum ada
+                let modalSurat = document.getElementById("modal-cetak-surat");
+                if (!modalSurat) {
+                    modalSurat = document.createElement("div");
+                    modalSurat.id = "modal-cetak-surat";
+                    modalSurat.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:999999; display:flex; justify-content:center; align-items:center;";
+                    document.body.appendChild(modalSurat);
+                }
+
+                // Render daftar siswa dengan Checkbox
+                let listHtml = "";
+                dataCetak.forEach((s, idx) => {
+                    listHtml += `
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                            <input type="checkbox" class="chk-surat-siswa" value="${s.noPeserta}" checked id="chk-s-${idx}" style="transform: scale(1.3); cursor: pointer;">
+                            <label for="chk-s-${idx}" style="cursor:pointer; flex:1; font-size: 14px;">${s.noPeserta} - <b>${s.nama}</b></label>
+                        </div>`;
+                });
+
+                // Tampilan Antarmuka Popup
+                modalSurat.innerHTML = `
+                    <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 550px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        <h3 style="margin-top:0; border-bottom: 3px solid #6f42c1; padding-bottom:10px; color: #6f42c1;">
+                            <i class="fa-solid fa-envelope-open-text"></i> Pengaturan Cetak SKL
+                        </h3>
+
+                        <div style="margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label style="font-size:12px; font-weight:bold; color:#555;">Nomor Surat:</label>
+                                <input type="text" id="surat-nomor" value="421.2/001/SDIT-HT/V/2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="font-size:12px; font-weight:bold; color:#555;">Tanggal Surat (Di TTD):</label>
+                                <input type="text" id="surat-tanggal" value="Bekasi, 18 Mei 2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; padding:10px 15px; border:1px solid #ccc; font-weight:bold; border-radius: 6px 6px 0 0;">
+                            <span>Pilih Siswa yang Dicetak:</span>
+                            <label style="cursor:pointer; color:#0d6efd;"><input type="checkbox" id="chk-all-surat" checked style="transform: scale(1.2);"> Centang Semua</label>
+                        </div>
+
+                        <div style="flex:1; overflow-y:auto; border:1px solid #ccc; border-top:none; padding:15px; margin-bottom:20px; border-radius: 0 0 6px 6px;">
+                            ${listHtml}
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="document.getElementById('modal-cetak-surat').style.display='none'" style="flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold;">Batal</button>
+                            <button id="btn-proses-cetak-surat" style="flex: 2; padding: 12px; background: #6f42c1; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold; box-shadow: 0 4px 0 #59359a;"><i class="fa-solid fa-print"></i> Generate Surat Terpilih</button>
+                        </div>
+                    </div>
+                `;
+                modalSurat.style.display = "flex";
+
+                // Logika Checkbox "Pilih Semua"
+                document.getElementById("chk-all-surat").addEventListener("change", function() {
+                    const isChecked = this.checked;
+                    document.querySelectorAll(".chk-surat-siswa").forEach(chk => chk.checked = isChecked);
+                });
+
+                // Eksekusi Generate HTML ke Print View
+                document.getElementById("btn-proses-cetak-surat").addEventListener("click", () => {
+                    const selectedIds = Array.from(document.querySelectorAll(".chk-surat-siswa:checked")).map(chk => chk.value);
+                    if (selectedIds.length === 0) { alert("Pilih minimal 1 siswa untuk dicetak!"); return; }
+
+                    const selectedData = dataCetak.filter(s => selectedIds.includes(s.noPeserta));
+                    const nomorSurat = document.getElementById("surat-nomor").value;
+                    const tanggalSurat = document.getElementById("surat-tanggal").value;
+
+                    modalSurat.style.display = "none";
+                    document.getElementById("dashboard-kartu").style.display = "none";
+                    document.getElementById("print-view").style.display = "block";
+
+                    const container = document.getElementById("print-container");
+                    container.innerHTML = "";
+                    
+                    // Panggil fungsi pembuat layout surat
+                    renderSuratKelulusan(container, selectedData, nomorSurat, tanggalSurat);
+                });
+            };
+
+            // 2. Mesin Pencetak (Render) Desain Surat Resmi 
+            window.renderSuratKelulusan = function(container, dataSiswa, nomorSurat, tanggalSurat) {
+                // Tarik data config header sekolah (menggunakan pengaturan Kartu Ujian yang sudah ada)
+                let configKartu = JSON.parse(localStorage.getItem('config_kartu_ujian')) || {};
+
+                // Suntikkan CSS Surat jika belum ada
+                if (!document.getElementById("css-surat-interaktif")) {
+                    const style = document.createElement('style');
+                    style.id = "css-surat-interaktif";
+                    style.innerHTML = `
+                        .surat-container { font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: black; }
+                        .surat-header { border-bottom: 3px solid black; padding-bottom: 10px; margin-bottom: 15px; display: flex; align-items: center; position: relative; }
+                        .surat-logo { width: 90px; height: 90px; object-fit: contain; position: absolute; left: 10px; }
+                        .surat-title { font-size: 13pt; font-weight: bold; text-align: center; text-decoration: underline; margin-bottom: 2px; }
+                        .surat-nomor { text-align: center; margin-bottom: 25px; font-size: 11pt; }
+                        .surat-table td { vertical-align: top; padding: 3px 0; }
+                        .surat-list { margin-top: 5px; padding-left: 25px; margin-bottom: 15px; }
+                        .surat-list li { margin-bottom: 5px; text-align: justify; }
+                        
+                        /* Efek Editable untuk Edit Cepat */
+                        [contenteditable="true"] { transition: all 0.2s; border-radius: 3px; }
+                        [contenteditable="true"]:hover { outline: 1px dashed #0d6efd; background: rgba(13,110,253,0.05); cursor: text; }
+                        [contenteditable="true"]:focus { outline: 2px solid #0d6efd !important; background-color: #fff; }
+                        
+                        /* Menghilangkan garis edit saat proses Print */
+                        @media print {
+                            [contenteditable="true"]:hover { outline: none; background: transparent; }
+                            [contenteditable="true"]:focus { outline: none; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                dataSiswa.forEach(s => {
+                    const page = document.createElement("div");
+                    page.className = "page-sheet";
+                    // Format Kertas F4/Folio standar sekolah atau A4
+                    page.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 25mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative;";
+
+                    const linkFoto = formatDriveImage(s.foto);
+                    const fotoSiswa = linkFoto ? `<img src="${linkFoto}" style="width: 3cm; height: 4cm; object-fit: cover; border: 2px solid #333; padding: 2px; background: white;">` : `<div style="width: 3cm; height: 4cm; border: 1px solid black; display:flex; align-items:center; justify-content:center; text-align:center; font-size:10px; background: #f9f9f9; color: #888;">Pas Foto<br>3 x 4</div>`;
+                    
+                    const logoHtml = configKartu.logoUrl ? `<img src="${configKartu.logoUrl}" class="surat-logo">` : `<div class="surat-logo" style="border:1px solid #ccc; display:flex; align-items:center; justify-content:center; font-size:10px; background:#eee;">LOGO SEKOLAH</div>`;
+                    
+                    const ttdHtml = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="height: 70px; object-fit: contain; margin: 5px 0;">` : `<div style="height: 70px; margin: 5px 0; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:10px;">(Tanda Tangan)</div>`;
+
+                    page.innerHTML = `
+                        <div class="surat-container">
+                            
+                            <div class="surat-header">
+                                ${logoHtml}
+                                <div style="flex:1; text-align: center; padding-left: 90px; padding-right: 20px;">
+                                    <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px;" contenteditable="true" spellcheck="false">SEKOLAH DASAR ISLAM TERPADU (S.D.I.T)</div>
+                                    <div style="font-size: 18pt; font-weight: bold; letter-spacing: 2px;" contenteditable="true" spellcheck="false">“ HIDAYATUT TAUFIQ ”</div>
+                                    <div style="font-size: 11pt; margin-top: 5px;" contenteditable="true" spellcheck="false">${configKartu.alamat || "Jl. Pasar Kranggan No. 25 Jatisampurna, Bekasi"}</div>
+                                    <div style="font-size: 10pt;" contenteditable="true" spellcheck="false">📞 0897-3484-884</div>
+                                </div>
+                            </div>
+
+                            <div class="surat-title" contenteditable="true" spellcheck="false">SURAT KETERANGAN PENGGANTI KELULUSAN SEMENTARA</div>
+                            <div class="surat-nomor">Nomor: <span contenteditable="true" spellcheck="false">${nomorSurat}</span></div>
+
+                            <div style="margin-bottom: 5px;">Yang bertanda tangan di bawah ini:</div>
+                            <table class="surat-table" style="width: 100%; margin-bottom: 15px; margin-left: 20px;">
+                                <tr><td style="width: 180px;">Nama</td><td style="width: 15px;">:</td><td><span contenteditable="true" spellcheck="false" style="font-weight:bold;">${configKartu.namaTtd || "......................................."}</span></td></tr>
+                                <tr><td>NIP</td><td>:</td><td><span contenteditable="true" spellcheck="false">-</span></td></tr>
+                                <tr><td>Jabatan</td><td>:</td><td><span contenteditable="true" spellcheck="false">${configKartu.jabatan || "Kepala Sekolah"}</span></td></tr>
+                                <tr><td>Alamat Sekolah</td><td>:</td><td><span contenteditable="true" spellcheck="false">${configKartu.alamat || "......................................."}</span></td></tr>
+                            </table>
+
+                            <div style="margin-bottom: 5px;">Dengan ini menerangkan bahwa:</div>
+                            <table class="surat-table" style="width: 100%; margin-bottom: 20px; margin-left: 20px;">
+                                <tr><td style="width: 180px;">Nama Siswa</td><td style="width: 15px;">:</td><td><b contenteditable="true" spellcheck="false" style="text-transform: uppercase;">${s.nama}</b></td></tr>
+                                <tr><td>Tempat, Tanggal Lahir</td><td>:</td><td><span contenteditable="true" spellcheck="false" style="text-transform: capitalize;">${s.ttl}</span></td></tr>
+                                <tr><td>NISN Siswa</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.noPeserta}</span></td></tr>
+                                <tr><td>Kelas</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.kelas}</span></td></tr>
+                                <tr><td>Status</td><td>:</td><td style="text-align: justify;"><span contenteditable="true" spellcheck="false">Masih Aktif sebagai peserta didik hingga semester genap Tahun Pelajaran ${configKartu.tahun || "2025/2026"}</span></td></tr>
+                                <tr><td>Asal Sekolah</td><td>:</td><td><span contenteditable="true" spellcheck="false">${configKartu.sekolah || "SDIT Hidayatut Taufiq"}</span></td></tr>
+                                <tr><td>Tahun Pelajaran</td><td>:</td><td><span contenteditable="true" spellcheck="false">${configKartu.tahun || "2025/2026"}</span></td></tr>
+                            </table>
+
+                            <div style="text-align: justify; margin-bottom: 15px; text-indent: 40px;" contenteditable="true" spellcheck="false">
+                                Siswa tersebut telah menyelesaikan seluruh program pembelajaran dan sedang dalam proses mengikuti Ujian Sekolah dan penerbitan ijazah resmi. Untuk keperluan administrasi dan pemenuhan syarat mengikuti Sistem Penerimaan Murid Baru (SPMB) Tahun Pelajaran 2026/2027 di Kota Bekasi, satuan pendidikan menerbitkan surat keterangan ini sebagai pengganti sementara ijazah/kelulusan.
+                            </div>
+
+                            <div style="margin-bottom: 5px;">Adapun kriteria yang telah dipenuhi siswa adalah sebagai berikut:</div>
+                            <ol class="surat-list" contenteditable="true" spellcheck="false">
+                                <li>Telah dinyatakan Aktif berdasarkan hasil rapat dewan guru dan evaluasi pembelajaran.</li>
+                                <li>Masih tercatat aktif sebagai peserta didik hingga semester genap Tahun Pelajaran 2025/2026.</li>
+                                <li>Telah menyelesaikan sebagian program pembelajaran sesuai kurikulum.</li>
+                                <li>Memiliki data nilai rapor dari semester 1 sampai dengan semester 5 sebagai data pendukung.</li>
+                            </ol>
+
+                            <div style="text-align: justify; margin-bottom: 40px; text-indent: 40px;" contenteditable="true" spellcheck="false">
+                                Demikian surat ini dibuat untuk digunakan sebagaimana mestinya sampai diterbitkannya dokumen ijazah resmi oleh instansi yang berwenang.
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 20px;">
+                                <div>
+                                    ${fotoSiswa}
+                                </div>
+                                <div style="text-align: left; width: 280px;">
+                                    <div contenteditable="true" spellcheck="false">${tanggalSurat}</div>
+                                    <div contenteditable="true" spellcheck="false">${configKartu.jabatan || "Kepala Sekolah"}</div>
+                                    ${ttdHtml}
+                                    <div contenteditable="true" spellcheck="false" style="font-weight: bold; text-decoration: underline;">${configKartu.namaTtd || "...................................."}</div>
+                                    <div contenteditable="true" spellcheck="false">NIP. <span style="font-weight:normal;">...........................................</span></div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    `;
+                    container.appendChild(page);
+                });
+            };
+
             // ==========================================
             // --- LOGIKA UPLOAD & PREVIEW DATA SISWA ---
             // ==========================================
