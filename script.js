@@ -937,7 +937,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             };
 
-           // 2. Mesin Pencetak (Render) Desain Surat Resmi (TERHUBUNG KE IDENTITAS KARTU)
+           // 2. Mesin Pencetak (Render) Desain Surat Resmi (KOP SURAT GAMBAR FULL)
             window.renderSuratKelulusan = function(container, dataSiswa, nomorSurat, tanggalSurat) {
                 // Tarik data Identitas Sekolah dari pengaturan Kartu Ujian
                 let configKartu = JSON.parse(localStorage.getItem('config_kartu_ujian')) || {};
@@ -979,28 +979,32 @@ document.addEventListener("DOMContentLoaded", () => {
                     const linkFoto = formatDriveImage(s.foto);
                     const fotoSiswa = linkFoto ? `<img src="${linkFoto}" style="width: 3cm; height: 4cm; object-fit: cover; border: 2px solid #333; padding: 2px; background: white; position: relative; z-index: 20;">` : `<div style="width: 3cm; height: 4cm; border: 1px solid black; display:flex; align-items:center; justify-content:center; text-align:center; font-size:10px; background: #f9f9f9; color: #888;">Pas Foto<br>3 x 4</div>`;
                     
-                    const logoHtml = configKartu.logoUrl ? `<img src="${configKartu.logoUrl}" class="surat-logo">` : `<div class="surat-logo" style="border:1px solid #ccc; display:flex; align-items:center; justify-content:center; font-size:10px; background:#eee;">LOGO<br>SEKOLAH</div>`;
-                    
-                    // --- KUNCI EFEK STEMPEL REALISTIS ---
-                    // Menggunakan mix-blend-mode: multiply dan position: absolute agar gambar melayang dan transparan
-                    const ttdHtml = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="position: absolute; top: 15px; left: -15px; width: 160px; height: 120px; object-fit: contain; z-index: 10; mix-blend-mode: multiply; pointer-events: none;">` : ``;
-                    
                     const namaSekolah = configKartu.sekolah || "SDIT Hidayatut Taufiq";
                     const alamatSekolah = configKartu.alamat || "Jl. Pasar Kranggan No. 25 Jatisampurna, Bekasi";
+                    
+                    // --- KUNCI: KOP SURAT GAMBAR PENUH ---
+                    // Jika ada gambar logo/kop yang diupload, gunakan sebagai gambar selebar 100%
+                    const kopSuratHtml = configKartu.logoUrl 
+                        ? `<img src="${configKartu.logoUrl}" style="width: 100%; height: auto; display: block; margin-bottom: 15px;">` 
+                        : `<div class="surat-header">
+                                <div class="surat-logo" style="border:1px solid #ccc; display:flex; align-items:center; justify-content:center; font-size:10px; background:#eee;">LOGO<br>SEKOLAH</div>
+                                <div style="flex:1; text-align: center; padding-left: 90px; padding-right: 20px;">
+                                    <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px;" contenteditable="true" spellcheck="false">${namaSekolah}</div>
+                                    <div style="font-size: 11pt; margin-top: 5px;" contenteditable="true" spellcheck="false">${alamatSekolah}</div>
+                                    <div style="font-size: 10pt;" contenteditable="true" spellcheck="false">${configKartu.kota || "Bekasi"}</div>
+                                </div>
+                           </div>`;
+                    
+                    // Stempel & Tanda Tangan Realistis
+                    const ttdHtml = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="position: absolute; top: 15px; left: -15px; width: 160px; height: 120px; object-fit: contain; z-index: 10; mix-blend-mode: multiply; pointer-events: none;">` : ``;
+                    
                     const namaTandaTangan = configKartu.namaTtd || "....................................";
                     const jabatanTandaTangan = configKartu.jabatan || "Kepala Sekolah";
 
                     page.innerHTML = `
                         <div class="surat-container">
                             
-                            <div class="surat-header">
-                                ${logoHtml}
-                                <div style="flex:1; text-align: center; padding-left: 90px; padding-right: 20px;">
-                                    <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px;" contenteditable="true" spellcheck="false">${namaSekolah}</div>
-                                    <div style="font-size: 11pt; margin-top: 5px;" contenteditable="true" spellcheck="false">${alamatSekolah}</div>
-                                    <div style="font-size: 10pt;" contenteditable="true" spellcheck="false">${configKartu.kota || "Bekasi"}</div>
-                                </div>
-                            </div>
+                            ${kopSuratHtml}
 
                             <div class="surat-title" contenteditable="true" spellcheck="false">SURAT KETERANGAN PENGGANTI KELULUSAN SEMENTARA</div>
                             <div class="surat-nomor">Nomor: <span contenteditable="true" spellcheck="false">${nomorSurat}</span></div>
