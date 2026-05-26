@@ -9,9 +9,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const contentArea = document.getElementById("content-area");
     const navItems = document.querySelectorAll(".nav-item");
     const btnLogoutNav = document.getElementById("tombol-logout-nav");
+    const rahasiaSatu = "QUl6YVN5QnlTaDl0V3N4MkJCYmR5c3NGaG51NUJBRklBem5XQVk0";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyBySh9tWsx2BBbdyssFhnu5BAFIAznWAY4",
+        apiKey: atob(rahasiaSatu),
         authDomain: "cbt-sekolah-game.firebaseapp.com",
         databaseURL: "https://cbt-sekolah-game-default-rtdb.asia-southeast1.firebasedatabase.app",
         projectId: "cbt-sekolah-game",
