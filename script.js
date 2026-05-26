@@ -1058,7 +1058,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <div style="height: 60px;"></div>
                                     
                                     <div contenteditable="true" spellcheck="false" style="font-weight: bold; text-decoration: underline; position: relative; z-index: 2;">${namaTandaTangan}</div>
-                                    <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">NIP. <span style="font-weight:normal;">...........................................</span></div>
+                                    
                                 </div>
                             </div>
                             
@@ -1221,7 +1221,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 
                                 <div style="height: 60px;"></div>
                                 <div contenteditable="true" spellcheck="false" style="font-weight: bold; text-decoration: underline; position: relative; z-index: 2;">${configKartu.namaTtd || "...................................."}</div>
-                                <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">NIP. <span style="font-weight:normal;">...........................................</span></div>
+                                
                             </div>
                         </div>
                     `;
