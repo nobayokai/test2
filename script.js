@@ -1160,6 +1160,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             };
 
+           // =========================================================
+            // --- MESIN RENDER SKL RESMI (DENGAN FOTO BEBAS GESER & BISA DISIMPAN) ---
+            // =========================================================
             window.renderTemplateSKLResmi = function(container, dataSiswa, noSurat, noRapat, titimangsa) {
                 let configKartu = JSON.parse(localStorage.getItem('config_kartu_ujian')) || {};
                 const namaSekolah = configKartu.sekolah || "SDIT Hidayatut Taufiq";
@@ -1167,7 +1170,70 @@ document.addEventListener("DOMContentLoaded", () => {
                     ? `<img src="${configKartu.logoUrl}" style="width: 100%; height: auto; display: block; margin-bottom: 20px;">` 
                     : `<div style="text-align:center; font-weight:bold; font-size:18pt; border-bottom:3px solid black; padding-bottom:10px; margin-bottom:20px;">${namaSekolah}</div>`;
                 
-                const ttdHtml = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="position: absolute; top: -10px; left: -20px; width: 170px; height: 130px; object-fit: contain; z-index: 10; mix-blend-mode: multiply; pointer-events: none;">` : ``;
+                const ttdHtml = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="position: absolute; top: -10px; left: -80px; width: 170px; height: 130px; object-fit: contain; z-index: 10; mix-blend-mode: multiply; pointer-events: none;">` : ``;
+
+                // 1. TAMBAHKAN CSS UNTUK FOTO YANG BISA DIGESER
+                if (!document.getElementById("css-skl-drag")) {
+                    const style = document.createElement('style');
+                    style.id = "css-skl-drag";
+                    style.innerHTML = `
+                        .foto-draggable { cursor: grab; border: 2px dashed transparent; transition: border 0.2s; }
+                        .foto-draggable:hover { border: 2px dashed #0d6efd; z-index: 100 !important; }
+                        .foto-draggable:active { cursor: grabbing; }
+                        .drag-hint-foto { display: none; position: absolute; top: -20px; left: 0; background: #0d6efd; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; white-space: nowrap; font-weight: bold; pointer-events: none; }
+                        .foto-draggable:hover .drag-hint-foto { display: block; }
+                        
+                        /* Sembunyikan garis putus-putus dan hint saat di-Print */
+                        @media print {
+                            .foto-draggable { border: none !important; }
+                            .drag-hint-foto { display: none !important; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                // 2. LOGIKA DRAG & DROP FOTO (DAN SIMPAN POSISI)
+                if (!window.isFotoDragInit) {
+                    window.isFotoDragInit = true;
+                    window.mulaiDragFoto = function(e, el) {
+                        e.preventDefault();
+                        let startX = e.clientX;
+                        let startY = e.clientY;
+                        let startLeft = el.offsetLeft;
+                        let startTop = el.offsetTop;
+
+                        function mouseMove(e) {
+                            let dx = e.clientX - startX;
+                            let dy = e.clientY - startY;
+                            el.style.left = (startLeft + dx) + 'px';
+                            el.style.top = (startTop + dy) + 'px';
+                        }
+
+                        function mouseUp() {
+                            document.removeEventListener('mousemove', mouseMove);
+                            document.removeEventListener('mouseup', mouseUp);
+                            
+                            // Simpan posisi terakhir ke memori Browser
+                            localStorage.setItem('skl_foto_pos', JSON.stringify({
+                                left: el.style.left,
+                                top: el.style.top
+                            }));
+
+                            // SINKRONISASI: Buat semua foto di kertas siswa lain ikut bergeser secara realtime!
+                            let allFotos = document.querySelectorAll('.foto-draggable');
+                            allFotos.forEach(f => {
+                                f.style.left = el.style.left;
+                                f.style.top = el.style.top;
+                            });
+                        }
+
+                        document.addEventListener('mousemove', mouseMove);
+                        document.addEventListener('mouseup', mouseUp);
+                    };
+                }
+
+                // Tarik posisi foto yang pernah disimpan sebelumnya (jika tidak ada, gunakan posisi default)
+                let savedPos = JSON.parse(localStorage.getItem('skl_foto_pos')) || { left: '-130px', top: '10px' };
 
                 dataSiswa.forEach(s => {
                     const page = document.createElement("div");
@@ -1175,7 +1241,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     page.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 5mm 20mm 25mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; font-family: 'Times New Roman', Times, serif; font-size: 11.5pt; line-height: 1.5; color: black;";
 
                     const linkFoto = formatDriveImage(s.foto);
-                    const fotoSiswa = linkFoto ? `<img src="${linkFoto}" style="width: 3cm; height: 4cm; object-fit: cover; border: 2px solid #333; padding: 2px; background: white; position: relative; z-index: 20;">` : `<div style="width: 3cm; height: 4cm; border: 1px solid black; display:flex; align-items:center; justify-content:center; text-align:center; font-size:10px; background: #f9f9f9; color: #888;">Pas Foto<br>3 x 4</div>`;
+                    // Catatan: draggable="false" pada img agar browser tidak melakukan drag gambar bawaan HTML, melainkan drag elemen CSS kita
+                    const fotoSiswa = linkFoto ? `<img src="${linkFoto}" draggable="false" style="width: 3cm; height: 4cm; object-fit: cover; border: 2px solid #333; padding: 2px; background: white; pointer-events: none;">` : `<div style="width: 3cm; height: 4cm; border: 1px solid black; display:flex; align-items:center; justify-content:center; text-align:center; font-size:10px; background: #f9f9f9; color: #888; pointer-events:none;">Pas Foto<br>3 x 4</div>`;
 
                     page.innerHTML = `
                         ${kopSuratHtml}
@@ -1211,21 +1278,23 @@ document.addEventListener("DOMContentLoaded", () => {
                             Demikian surat keterangan ini dibuat dengan sebenamya agar dapat dipergunakan sebagaimana mestinya.
                         </div>
 
-                        <div style="display: flex; justify-content: flex-end; align-items: flex-end; gap: 15px; padding: 0 20px;">
-                            
-                            <div style="margin-bottom: 15px;">
-                                ${fotoSiswa}
-                            </div>
+                        <div style="display: flex; justify-content: flex-end; align-items: flex-end; padding: 0 20px; position: relative;">
                             
                             <div style="text-align: left; width: 280px; position: relative;">
+                                
+                                <div class="foto-draggable" style="position: absolute; left: ${savedPos.left}; top: ${savedPos.top}; z-index: 15;" onmousedown="window.mulaiDragFoto(event, this)">
+                                    <div class="drag-hint-foto">✥ Geser Foto</div>
+                                    ${fotoSiswa}
+                                </div>
+                                
                                 <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">${titimangsa}</div>
                                 <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">${configKartu.jabatan || "Kepala Sekolah"}</div>
                                 
-                                ${ttdHtml.replace('left: -20px', 'left: -80px')} 
+                                ${ttdHtml}
+                                
                                 <div style="height: 60px;"></div>
                                 <div contenteditable="true" spellcheck="false" style="font-weight: bold; text-decoration: underline; position: relative; z-index: 2;">${configKartu.namaTtd || "...................................."}</div>
-                                
-                            </div>
+                               
                         </div>
                     `;
                     container.appendChild(page);
