@@ -1170,7 +1170,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     ? `<img src="${configKartu.logoUrl}" style="width: 100%; height: auto; display: block; margin-bottom: 20px;">` 
                     : `<div style="text-align:center; font-weight:bold; font-size:18pt; border-bottom:3px solid black; padding-bottom:10px; margin-bottom:20px;">${namaSekolah}</div>`;
                 
-                const ttdHtml = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="position: absolute; top: -10px; left: -80px; width: 170px; height: 130px; object-fit: contain; z-index: 10; mix-blend-mode: multiply; pointer-events: none;">` : ``;
+                const ttdHtml = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="position: absolute; top: -10px; left: -80px; width: 170px; height: 130px; object-fit: contain; z-index: 50; mix-blend-mode: multiply; pointer-events: none;">` : ``;
 
                 // 1. TAMBAHKAN CSS UNTUK FOTO YANG BISA DIGESER
                 if (!document.getElementById("css-skl-drag")) {
