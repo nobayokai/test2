@@ -1070,7 +1070,7 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             // =========================================================
-            // --- FITUR CETAK SKL RESMI (DENGAN NOMOR RAPAT & NIS) ---
+            // --- FITUR CETAK SKL RESMI (DENGAN AUTO-SAVE & AUTO-FILL) ---
             // =========================================================
 
             window.bukaModalSKLResmi = function() {
@@ -1093,9 +1093,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 let listHtml = "";
                 dataCetak.forEach((s, idx) => {
+                    // KUNCI: Centang default dimatikan (checked dihilangkan)
                     listHtml += `
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:5px;">
-                            <input type="checkbox" class="chk-skl-siswa" value="${s.noPeserta}" checked id="chk-skl-${idx}" style="transform: scale(1.3); cursor: pointer;">
+                            <input type="checkbox" class="chk-skl-siswa" value="${s.noPeserta}" id="chk-skl-${idx}" style="transform: scale(1.3); cursor: pointer;">
                             <label for="chk-skl-${idx}" style="cursor:pointer; flex:1; font-size: 14px;">${s.noPeserta} - <b>${s.nama}</b></label>
                         </div>`;
                 });
@@ -1109,21 +1110,21 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div style="margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                             <div>
                                 <label style="font-size:12px; font-weight:bold; color:#555;">Nomor Surat:</label>
-                                <input type="text" id="skl-nomor" value="421.2/........../SD-     /2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+                                <input type="text" id="skl-nomor" placeholder="Cth: 421.2/.../2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
                             </div>
                             <div>
                                 <label style="font-size:12px; font-weight:bold; color:#555;">Nomor Rapat Kelulusan:</label>
-                                <input type="text" id="skl-rapat" value="....... Nomor ........" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+                                <input type="text" id="skl-rapat" placeholder="Cth: ....... Nomor ........" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
                             </div>
                             <div style="grid-column: span 2;">
                                 <label style="font-size:12px; font-weight:bold; color:#555;">Titimangsa (Tanggal di TTD):</label>
-                                <input type="text" id="skl-titimangsa" value="Bekasi, 15 Juni 2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+                                <input type="text" id="skl-titimangsa" placeholder="Cth: Bekasi, 15 Juni 2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
                             </div>
                         </div>
 
                         <div style="display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; padding:10px 15px; border:1px solid #ccc; font-weight:bold; border-radius: 6px 6px 0 0;">
                             <span>Pilih Siswa:</span>
-                            <label style="cursor:pointer; color:#0d6efd;"><input type="checkbox" id="chk-all-skl" checked style="transform: scale(1.2);"> Centang Semua</label>
+                            <label style="cursor:pointer; color:#0d6efd;"><input type="checkbox" id="chk-all-skl" style="transform: scale(1.2);"> Centang Semua</label>
                         </div>
                         <div style="flex:1; overflow-y:auto; border:1px solid #ccc; border-top:none; padding:15px; margin-bottom:20px; border-radius: 0 0 6px 6px;">
                             ${listHtml}
@@ -1131,33 +1132,87 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         <div style="display: flex; gap: 10px;">
                             <button onclick="document.getElementById('modal-cetak-skl-resmi').style.display='none'" style="flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold;">Batal</button>
-                            <button id="btn-proses-skl" style="flex: 2; padding: 12px; background: #198754; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold; box-shadow: 0 4px 0 #146c43;"><i class="fa-solid fa-print"></i> Generate SKL Resmi</button>
+                            <button id="btn-proses-skl" style="flex: 2; padding: 12px; background: #198754; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold; box-shadow: 0 4px 0 #146c43;"><i class="fa-solid fa-print"></i> Generate & Simpan</button>
                         </div>
                     </div>
                 `;
                 modalSurat.style.display = "flex";
+
+                // --- LOGIKA AUTO-FILL SAAT SISWA DICENTANG ---
+                document.querySelectorAll(".chk-skl-siswa").forEach(chk => {
+                    chk.addEventListener("change", function() {
+                        if (this.checked) {
+                            const student = dataCetak.find(s => s.noPeserta === this.value);
+                            if (student) {
+                                // Jika data surat pernah disimpan, otomatis isikan ke kolom!
+                                if (student.noSurat) document.getElementById("skl-nomor").value = student.noSurat;
+                                if (student.noRapat) document.getElementById("skl-rapat").value = student.noRapat;
+                                if (student.titimangsa) document.getElementById("skl-titimangsa").value = student.titimangsa;
+                            }
+                        }
+                    });
+                });
 
                 document.getElementById("chk-all-skl").addEventListener("change", function() {
                     const isChecked = this.checked;
                     document.querySelectorAll(".chk-skl-siswa").forEach(chk => chk.checked = isChecked);
                 });
 
-                document.getElementById("btn-proses-skl").addEventListener("click", () => {
+                // --- EKSEKUSI GENERATE & AUTO-SAVE ---
+                document.getElementById("btn-proses-skl").addEventListener("click", async () => {
                     const selectedIds = Array.from(document.querySelectorAll(".chk-skl-siswa:checked")).map(chk => chk.value);
                     if (selectedIds.length === 0) { alert("Pilih minimal 1 siswa!"); return; }
 
-                    const selectedData = dataCetak.filter(s => selectedIds.includes(s.noPeserta));
                     const noSurat = document.getElementById("skl-nomor").value;
                     const noRapat = document.getElementById("skl-rapat").value;
                     const titimangsa = document.getElementById("skl-titimangsa").value;
 
+                    // 1. Bungkus data untuk disimpan ke Server Google Sheets
+                    const dataUpdate = selectedIds.map(id => ({
+                        noPeserta: id,
+                        noSurat: noSurat,
+                        noRapat: noRapat,
+                        titimangsa: titimangsa
+                    }));
+
+                    const btn = document.getElementById("btn-proses-skl");
+                    const teksAwal = btn.innerHTML;
+                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+                    btn.disabled = true;
+
+                    try {
+                        // 2. Kirim Background Request ke Google Sheets
+                        await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify({ action: "update_data_skl", data_update: dataUpdate })
+                        });
+                        
+                        // 3. Update memori lokal browser agar sinkron (tanpa perlu ditarik ulang)
+                        dataUpdate.forEach(u => {
+                            const s = window.dataSiswaKartu.find(x => x.noPeserta === u.noPeserta);
+                            if (s) {
+                                s.noSurat = u.noSurat;
+                                s.noRapat = u.noRapat;
+                                s.titimangsa = u.titimangsa;
+                            }
+                        });
+                    } catch (e) {
+                        console.log("Error Jaringan saat menyimpan database (diabaikan untuk lanjut render)");
+                    }
+
+                    // 4. Lanjut ke Render PDF Preview
                     modalSurat.style.display = "none";
                     document.getElementById("dashboard-kartu").style.display = "none";
                     document.getElementById("print-view").style.display = "block";
 
                     const container = document.getElementById("print-container");
                     container.innerHTML = "";
+                    
+                    const selectedData = dataCetak.filter(s => selectedIds.includes(s.noPeserta));
                     renderTemplateSKLResmi(container, selectedData, noSurat, noRapat, titimangsa);
+                    
+                    btn.innerHTML = teksAwal;
+                    btn.disabled = false;
                 });
             };
 
