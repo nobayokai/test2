@@ -1067,6 +1067,168 @@ document.addEventListener("DOMContentLoaded", () => {
                     container.appendChild(page);
                 });
             };
+
+            // =========================================================
+            // --- FITUR CETAK SKL RESMI (DENGAN NOMOR RAPAT & NIS) ---
+            // =========================================================
+
+            window.bukaModalSKLResmi = function() {
+                if (!window.dataSiswaKartu || window.dataSiswaKartu.length === 0) { 
+                    alert("Harap tarik data siswa dari server terlebih dahulu!"); return; 
+                }
+
+                const ruangFilter = document.getElementById("filter-ruang-kartu")?.value || "";
+                let dataCetak = window.dataSiswaKartu;
+                if (ruangFilter !== "") dataCetak = window.dataSiswaKartu.filter(s => String(s.ruang).trim() === String(ruangFilter).trim());
+                if (dataCetak.length === 0) { alert(`Tidak ada siswa di Ruang ${ruangFilter}!`); return; }
+
+                let modalSurat = document.getElementById("modal-cetak-skl-resmi");
+                if (!modalSurat) {
+                    modalSurat = document.createElement("div");
+                    modalSurat.id = "modal-cetak-skl-resmi";
+                    modalSurat.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:999999; display:flex; justify-content:center; align-items:center;";
+                    document.body.appendChild(modalSurat);
+                }
+
+                let listHtml = "";
+                dataCetak.forEach((s, idx) => {
+                    listHtml += `
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                            <input type="checkbox" class="chk-skl-siswa" value="${s.noPeserta}" checked id="chk-skl-${idx}" style="transform: scale(1.3); cursor: pointer;">
+                            <label for="chk-skl-${idx}" style="cursor:pointer; flex:1; font-size: 14px;">${s.noPeserta} - <b>${s.nama}</b></label>
+                        </div>`;
+                });
+
+                modalSurat.innerHTML = `
+                    <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        <h3 style="margin-top:0; border-bottom: 3px solid #198754; padding-bottom:10px; color: #198754;">
+                            <i class="fa-solid fa-graduation-cap"></i> Cetak SKL Resmi
+                        </h3>
+
+                        <div style="margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label style="font-size:12px; font-weight:bold; color:#555;">Nomor Surat:</label>
+                                <input type="text" id="skl-nomor" value="421.2/........../SD-     /2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="font-size:12px; font-weight:bold; color:#555;">Nomor Rapat Kelulusan:</label>
+                                <input type="text" id="skl-rapat" value="....... Nomor ........" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+                            </div>
+                            <div style="grid-column: span 2;">
+                                <label style="font-size:12px; font-weight:bold; color:#555;">Titimangsa (Tanggal di TTD):</label>
+                                <input type="text" id="skl-titimangsa" value="Bekasi, 15 Juni 2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; padding:10px 15px; border:1px solid #ccc; font-weight:bold; border-radius: 6px 6px 0 0;">
+                            <span>Pilih Siswa:</span>
+                            <label style="cursor:pointer; color:#0d6efd;"><input type="checkbox" id="chk-all-skl" checked style="transform: scale(1.2);"> Centang Semua</label>
+                        </div>
+                        <div style="flex:1; overflow-y:auto; border:1px solid #ccc; border-top:none; padding:15px; margin-bottom:20px; border-radius: 0 0 6px 6px;">
+                            ${listHtml}
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="document.getElementById('modal-cetak-skl-resmi').style.display='none'" style="flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold;">Batal</button>
+                            <button id="btn-proses-skl" style="flex: 2; padding: 12px; background: #198754; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold; box-shadow: 0 4px 0 #146c43;"><i class="fa-solid fa-print"></i> Generate SKL Resmi</button>
+                        </div>
+                    </div>
+                `;
+                modalSurat.style.display = "flex";
+
+                document.getElementById("chk-all-skl").addEventListener("change", function() {
+                    const isChecked = this.checked;
+                    document.querySelectorAll(".chk-skl-siswa").forEach(chk => chk.checked = isChecked);
+                });
+
+                document.getElementById("btn-proses-skl").addEventListener("click", () => {
+                    const selectedIds = Array.from(document.querySelectorAll(".chk-skl-siswa:checked")).map(chk => chk.value);
+                    if (selectedIds.length === 0) { alert("Pilih minimal 1 siswa!"); return; }
+
+                    const selectedData = dataCetak.filter(s => selectedIds.includes(s.noPeserta));
+                    const noSurat = document.getElementById("skl-nomor").value;
+                    const noRapat = document.getElementById("skl-rapat").value;
+                    const titimangsa = document.getElementById("skl-titimangsa").value;
+
+                    modalSurat.style.display = "none";
+                    document.getElementById("dashboard-kartu").style.display = "none";
+                    document.getElementById("print-view").style.display = "block";
+
+                    const container = document.getElementById("print-container");
+                    container.innerHTML = "";
+                    renderTemplateSKLResmi(container, selectedData, noSurat, noRapat, titimangsa);
+                });
+            };
+
+            window.renderTemplateSKLResmi = function(container, dataSiswa, noSurat, noRapat, titimangsa) {
+                let configKartu = JSON.parse(localStorage.getItem('config_kartu_ujian')) || {};
+                const namaSekolah = configKartu.sekolah || "SDIT Hidayatut Taufiq";
+                const kopSuratHtml = configKartu.logoUrl 
+                    ? `<img src="${configKartu.logoUrl}" style="width: 100%; height: auto; display: block; margin-bottom: 20px;">` 
+                    : `<div style="text-align:center; font-weight:bold; font-size:18pt; border-bottom:3px solid black; padding-bottom:10px; margin-bottom:20px;">${namaSekolah}</div>`;
+                
+                const ttdHtml = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="position: absolute; top: -10px; left: -20px; width: 170px; height: 130px; object-fit: contain; z-index: 10; mix-blend-mode: multiply; pointer-events: none;">` : ``;
+
+                dataSiswa.forEach(s => {
+                    const page = document.createElement("div");
+                    page.className = "page-sheet";
+                    page.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 5mm 20mm 25mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; font-family: 'Times New Roman', Times, serif; font-size: 11.5pt; line-height: 1.5; color: black;";
+
+                    const linkFoto = formatDriveImage(s.foto);
+                    const fotoSiswa = linkFoto ? `<img src="${linkFoto}" style="width: 3cm; height: 4cm; object-fit: cover; border: 2px solid #333; padding: 2px; background: white; position: relative; z-index: 20;">` : `<div style="width: 3cm; height: 4cm; border: 1px solid black; display:flex; align-items:center; justify-content:center; text-align:center; font-size:10px; background: #f9f9f9; color: #888;">Pas Foto<br>3 x 4</div>`;
+
+                    page.innerHTML = `
+                        ${kopSuratHtml}
+
+                        <div style="text-align: center; font-size: 13pt; font-weight: bold; text-decoration: underline; margin-bottom: 2px;" contenteditable="true" spellcheck="false">SURAT KETERANGAN KELULUSAN TAHUN PELAJARAN ${configKartu.tahun || "2025-2026"}</div>
+                        <div style="text-align: center; margin-bottom: 25px;" contenteditable="true" spellcheck="false">Nomor : ${noSurat}</div>
+
+                        <div style="margin-bottom: 10px; text-align: justify;" contenteditable="true" spellcheck="false">Yang bertanda tangan di bawah ini , Kepala Sekolah Dasar <b>${namaSekolah}</b> menerangkan bahwa :</div>
+                        
+                        <table style="width: 100%; margin-bottom: 20px; margin-left: 20px;">
+                            <tr><td style="width: 210px;">Nama</td><td style="width: 15px;">:</td><td><b contenteditable="true" spellcheck="false" style="text-transform: uppercase;">${s.nama}</b></td></tr>
+                            <tr><td>Tempat Tanggal Lahir</td><td>:</td><td><span contenteditable="true" spellcheck="false" style="text-transform: capitalize;">${s.ttl}</span></td></tr>
+                            <tr><td>Nomor Induk Siswa (NIS)</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.nis || "............................."}</span></td></tr>
+                            <tr><td>NISN</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.nisn || "............................."}</span></td></tr>
+                            <tr><td>Nomor Peserta Ujian</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.noPeserta}</span></td></tr>
+                            <tr><td>Nama Sekolah</td><td>:</td><td><span contenteditable="true" spellcheck="false">${namaSekolah}</span></td></tr>
+                            <tr><td>Kurikulum yang digunakan</td><td>:</td><td><span contenteditable="true" spellcheck="false">Kurikulum Merdeka</span></td></tr>
+                        </table>
+
+                        <div style="text-align: justify; margin-bottom: 20px;" contenteditable="true" spellcheck="false">
+                            Berdasarkan hasil rapat kelulusan dewan guru di <b>${namaSekolah}</b> Nomor <b>${noRapat}</b> mengacu kepada Peraturan Menteri Pendididikan dan Kebudayaan Riset Teknologi Nomor 21 Tahun 2022 tentang Standar Penilaian Pada Pendidikan Anak Usia Dini, Jenjang Pendidikan Dasar, dan Jenjang Pendidikan Menengah, Petunjuk Teknis Penilaian Sumatif Akhir Jenjang SD Tahun Ajaran ${configKartu.tahun || "2025/2026"} nomor : 400.3/6565/DISDlK.Pemb.SD dinyatakan:
+                        </div>
+
+                        <div style="text-align: center; font-size: 22pt; font-weight: bold; margin: 25px 0; letter-spacing: 2px;" contenteditable="true" spellcheck="false">
+                            LULUS / <del style="color:#888;">TIDAK LULUS</del>
+                        </div>
+
+                        <div style="text-align: justify; margin-bottom: 10px;" contenteditable="true" spellcheck="false">
+                            Surat Keterangan Kelulusan ini diberikan untuk dipergunakan sebagaimana mestinya sampai dengan diterbitkannya ijazah resmi.
+                        </div>
+
+                        <div style="text-align: justify; margin-bottom: 40px;" contenteditable="true" spellcheck="false">
+                            Demikian surat keterangan ini dibuat dengan sebenamya agar dapat dipergunakan sebagaimana mestinya.
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 20px;">
+                            <div>${fotoSiswa}</div>
+                            <div style="text-align: left; width: 280px; position: relative;">
+                                <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">${titimangsa}</div>
+                                <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">${configKartu.jabatan || "Kepala Sekolah"}</div>
+                                
+                                ${ttdHtml}
+                                
+                                <div style="height: 60px;"></div>
+                                <div contenteditable="true" spellcheck="false" style="font-weight: bold; text-decoration: underline; position: relative; z-index: 2;">${configKartu.namaTtd || "...................................."}</div>
+                                <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">NIP. <span style="font-weight:normal;">...........................................</span></div>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(page);
+                });
+            };
+            
             // ==========================================
             // --- LOGIKA UPLOAD & PREVIEW DATA SISWA ---
             // ==========================================
