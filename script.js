@@ -1313,7 +1313,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             <tr><td>Tempat Tanggal Lahir</td><td>:</td><td><span contenteditable="true" spellcheck="false" style="text-transform: capitalize;">${s.ttl}</span></td></tr>
                             <tr><td>Nomor Induk Siswa (NIS)</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.nis || "............................."}</span></td></tr>
                             <tr><td>NISN</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.nisn || "............................."}</span></td></tr>
-                            <tr><td>Nomor Peserta Ujian</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.noPeserta}</span></td></tr>
                             <tr><td>Nama Sekolah</td><td>:</td><td><span contenteditable="true" spellcheck="false">${namaSekolah}</span></td></tr>
                             <tr><td>Kurikulum yang digunakan</td><td>:</td><td><span contenteditable="true" spellcheck="false">Kurikulum Merdeka</span></td></tr>
                         </table>
