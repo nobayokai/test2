@@ -1211,14 +1211,17 @@ document.addEventListener("DOMContentLoaded", () => {
                             Demikian surat keterangan ini dibuat dengan sebenamya agar dapat dipergunakan sebagaimana mestinya.
                         </div>
 
-                        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 20px;">
-                            <div>${fotoSiswa}</div>
+                        <div style="display: flex; justify-content: flex-end; align-items: flex-end; gap: 15px; padding: 0 20px;">
+                            
+                            <div style="margin-bottom: 15px;">
+                                ${fotoSiswa}
+                            </div>
+                            
                             <div style="text-align: left; width: 280px; position: relative;">
                                 <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">${titimangsa}</div>
                                 <div contenteditable="true" spellcheck="false" style="position: relative; z-index: 2;">${configKartu.jabatan || "Kepala Sekolah"}</div>
                                 
-                                ${ttdHtml}
-                                
+                                ${ttdHtml.replace('left: -20px', 'left: -80px')} 
                                 <div style="height: 60px;"></div>
                                 <div contenteditable="true" spellcheck="false" style="font-weight: bold; text-decoration: underline; position: relative; z-index: 2;">${configKartu.namaTtd || "...................................."}</div>
                                 
