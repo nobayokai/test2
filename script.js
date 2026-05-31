@@ -1303,13 +1303,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     page.innerHTML = `
                         ${kopSuratHtml}
 
-                        <div style="text-align: center; font-size: 13pt; font-weight: bold; text-decoration: underline; margin-bottom: 2px;" contenteditable="true" spellcheck="false">SURAT KETERANGAN KELULUSAN TAHUN PELAJARAN ${configKartu.tahun || "2025-2026"}</div>
+                        <div style="text-align: center; font-size: 13pt; font-weight: bold; margin-bottom: 2px;" contenteditable="true" spellcheck="false">SURAT KETERANGAN KELULUSAN</div>
+                        <div style="text-align: center; font-size: 13pt; font-weight: bold; margin-bottom: 2px;" contenteditable="true" spellcheck="false">TAHUN PELAJARAN ${configKartu.tahun || "2025-2026"}</div>
                         <div style="text-align: center; margin-bottom: 25px;" contenteditable="true" spellcheck="false">Nomor : ${noSurat}</div>
 
                         <div style="margin-bottom: 10px; text-align: justify;" contenteditable="true" spellcheck="false">Yang bertanda tangan di bawah ini , Kepala Sekolah Dasar <b>${namaSekolah}</b> menerangkan bahwa :</div>
                         
                         <table style="width: 100%; margin-bottom: 20px; margin-left: 20px;">
-                            <tr><td style="width: 210px;">Nama</td><td style="width: 15px;">:</td><td><b contenteditable="true" spellcheck="false" style="text-transform: uppercase;">${s.nama}</b></td></tr>
+                            <tr><td style="width: 210px;">Nama</td><td style="width: 15px;">:</td><td><span contenteditable="true" spellcheck="false" style="text-transform: uppercase;">${s.nama}</b></td></tr>
                             <tr><td>Tempat Tanggal Lahir</td><td>:</td><td><span contenteditable="true" spellcheck="false" style="text-transform: capitalize;">${s.ttl}</span></td></tr>
                             <tr><td>Nomor Induk Siswa (NIS)</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.nis || "............................."}</span></td></tr>
                             <tr><td>NISN</td><td>:</td><td><span contenteditable="true" spellcheck="false">${s.nisn || "............................."}</span></td></tr>
