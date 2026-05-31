@@ -1331,7 +1331,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
 
                         <div style="text-align: justify; margin-bottom: 40px;" contenteditable="true" spellcheck="false">
-                            Demikian surat keterangan ini dibuat dengan sebenamya agar dapat dipergunakan sebagaimana mestinya.
+                            Demikian surat keterangan ini dibuat dengan sebenarnya agar dapat dipergunakan sebagaimana mestinya.
                         </div>
 
                         <div style="display: flex; justify-content: flex-end; align-items: flex-end; padding: 0 20px; position: relative;">
