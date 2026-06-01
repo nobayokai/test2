@@ -115,6 +115,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const menuGame = document.getElementById("menu-edu-game");
             if (menuGame) menuGame.style.display = "block";
         }
+
+        if (savedRole.toLowerCase() === "admin") {
+            const menuDapodik = document.getElementById("menu-dapodik");
+            if (menuDapodik) menuDapodik.style.display = "inline-block";
+        }
     }
     // -----------------------------------------------------
 
@@ -178,6 +183,12 @@ document.addEventListener("DOMContentLoaded", () => {
                             const menuGame = document.getElementById("menu-edu-game");
                             if (menuGame) menuGame.style.display = "block";
                         }
+
+                        if (result.role.toLowerCase() === "admin") {
+                            const menuDapodik = document.getElementById("menu-dapodik");
+                            if (menuDapodik) menuDapodik.style.display = "inline-block";
+                        }
+                    
                     // Sembunyikan tombol login di navbar karena sudah masuk
                     document.getElementById("tombol-login-nav").style.display = "none";
                     document.getElementById("tombol-logout-nav").style.display = "block"; // Munculkan tombol logout
@@ -2013,7 +2024,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const menuGame = document.getElementById("menu-edu-game");
             if (menuGame) menuGame.style.display = "none";
-            
+
+            const menuDapodik = document.getElementById("menu-dapodik");
+            if (menuDapodik) menuDapodik.style.display = "none";
             
             // 3. Munculkan Kembali Menu Publik (Visi Misi & Profil)
             const menuVisiMisi = document.querySelector('[data-page="visi-misi"]');
