@@ -253,7 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
                 
                 // Membuka tab baru secara otomatis yang dipicu oleh klik JS
-                window.open("https://dap-od-ik.novaharyanto.my.id", "_blank");
+                window.open("http://dap-od-ik.novaharyanto.my.id", "_blank");
                 
                 // Mengembalikan halaman utama ke "beranda" setelah 2.5 detik agar rapi
                 setTimeout(() => {
