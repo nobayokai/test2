@@ -238,6 +238,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
                 return; // Hentikan fungsi di sini agar tidak menjalankan fetch di bawah
             }
+
+            // --- LOGIKA KHUSUS UNTUK MENU DAPODIK (Iframe) ---
+            if (page === "dapodik") {
+                contentArea.innerHTML = `
+                    <iframe 
+                        src="https://dap-od-ik.novaharyanto.my.id" 
+                        style="width: 100%; height: 85vh; border: none; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" 
+                        title="Portal Dapodik">
+                    </iframe>
+                `;
+                return; // Hentikan fungsi di sini
+            }
+            // -------------------------------------------------
             
             // LOGIKA UNTUK HALAMAN LAIN (beranda, profil, dll)
             const response = await fetch(`pages/${page}.html`);
