@@ -239,15 +239,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 return; // Hentikan fungsi di sini agar tidak menjalankan fetch di bawah
             }
 
-            // --- LOGIKA KHUSUS UNTUK MENU DAPODIK (Iframe) ---
+            // --- LOGIKA KHUSUS UNTUK MENU DAPODIK (Tab Baru Aman) ---
             if (page === "dapodik") {
                 contentArea.innerHTML = `
-                    <iframe 
-                        src="https://dap-od-ik.novaharyanto.my.id" 
-                        style="width: 100%; height: 85vh; border: none; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" 
-                        title="Portal Dapodik">
-                    </iframe>
+                    <div style="text-align: center; padding: 80px 20px;">
+                        <i class="fa-solid fa-server fa-bounce" style="font-size: 60px; color: #198754; margin-bottom: 20px;"></i>
+                        <h3 style="color: #333;">Mengalihkan ke Portal Dapodik...</h3>
+                        <p style="color: #666; font-size: 15px; max-width: 500px; margin: 0 auto;">
+                            Sistem keamanan kementerian mengharuskan Dapodik dibuka di jendela terpisah. 
+                            <br>Pastikan Anda mengizinkan <i>pop-up</i> jika browser memintanya.
+                        </p>
+                    </div>
                 `;
+                
+                // Membuka tab baru secara otomatis yang dipicu oleh klik JS
+                window.open("https://dap-od-ik.novaharyanto.my.id", "_blank");
+                
+                // Mengembalikan halaman utama ke "beranda" setelah 2.5 detik agar rapi
+                setTimeout(() => {
+                    loadPage("beranda");
+                }, 2500);
+                
                 return; // Hentikan fungsi di sini
             }
             // -------------------------------------------------
