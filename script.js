@@ -1501,14 +1501,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 const alamatSekolah = configKartu.alamat || "Jl. Pasar Kranggan No. 25";
                 const kota = configKartu.kota || "Bekasi";
                 const tahunAjaran = configKartu.tahun || "2025/2026";
-                const namaKepsek = configKartu.namaTtd // Nama KEPSEK SWASTA tanpa NIP
+                
+                // --- KUNCI PERBAIKAN 1: Beri pengaman teks alternatif dan titik koma ---
+                const namaKepsek = configKartu.namaTtd || "Ghoniyah Nasrullah S.Pd., Gr."; 
                 
                 // --- Logika Hitung Jumlah Laki-laki & Perempuan (Sistem Cerdas) ---
                 let jumlahL = 0;
                 let jumlahP = 0;
                 dataSiswa.forEach(s => {
-                    // Deteksi cerdas: Hapus spasi dan jadikan huruf besar semua
-                    let jk = s.jk.toString().trim().toUpperCase();
+                    // --- KUNCI PERBAIKAN 2: Beri pengaman (s.jk || "-") agar tidak crash ---
+                    let jk = (s.jk || "-").toString().trim().toUpperCase();
                     
                     if (jk.startsWith('L')) {
                         jumlahL++;
