@@ -1392,6 +1392,353 @@ document.addEventListener("DOMContentLoaded", () => {
                     container.appendChild(page);
                 });
             };
+
+            // =========================================================
+            // --- FITUR CETAK SK PENETAPAN KELULUSAN (3 HALAMAN+) ---
+            // =========================================================
+
+            window.bukaModalSKPenetapan = function() {
+                if (!window.dataSiswaKartu || window.dataSiswaKartu.length === 0) {
+                    alert("Harap tarik data siswa dari server terlebih dahulu!"); return;
+                }
+
+                // Ambil filter ruang yang sedang aktif
+                const ruangFilter = document.getElementById("filter-ruang-kartu")?.value || "";
+                let dataCetak = window.dataSiswaKartu;
+                if (ruangFilter !== "") {
+                    dataCetak = window.dataSiswaKartu.filter(s => String(s.ruang).trim() === String(ruangFilter).trim());
+                }
+
+                if (dataCetak.length === 0) { alert(`Tidak ada siswa di Ruang ${ruangFilter}!`); return; }
+
+                // Buat Modal Jika Belum Ada
+                let modalSK = document.getElementById("modal-cetak-sk-penetapan");
+                if (!modalSK) {
+                    modalSK = document.createElement("div");
+                    modalSK.id = "modal-cetak-sk-penetapan";
+                    modalSK.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:999999; display:flex; justify-content:center; align-items:center;";
+                    document.body.appendChild(modalSK);
+                }
+
+                // Render Checklist Siswa
+                let listHtml = "";
+                dataCetak.forEach((s, idx) => {
+                    listHtml += `
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                            <input type="checkbox" class="chk-sk-siswa" value="${s.noPeserta}" checked id="chk-sk-${idx}" style="transform: scale(1.3); cursor: pointer;">
+                            <label for="chk-sk-${idx}" style="cursor:pointer; flex:1; font-size: 14px;">${s.noPeserta} - <b>${s.nama}</b></label>
+                        </div>`;
+                });
+
+                modalSK.innerHTML = `
+                    <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 650px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        <h3 style="margin-top:0; border-bottom: 3px solid #0d6efd; padding-bottom:10px; color: #0d6efd;">
+                            <i class="fa-solid fa-file-signature"></i> Cetak SK Penetapan Kelulusan
+                        </h3>
+
+                        <div style="margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label style="font-size:12px; font-weight:bold; color:#555;">Nomor SK:</label>
+                                <input type="text" id="sk-nomor" value="421.2/...../C.10/D.a.VI.01/2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+                            </div>
+                            <div>
+                                <label style="font-size:12px; font-weight:bold; color:#555;">Tgl Rapat Dewan Guru:</label>
+                                <input type="text" id="sk-tgl-rapat" value="10 Juni 2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+                            </div>
+                            <div style="grid-column: span 2;">
+                                <label style="font-size:12px; font-weight:bold; color:#555;">Ditetapkan Tanggal (Titimangsa):</label>
+                                <input type="text" id="sk-titimangsa" value="10 Juni 2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; padding:10px 15px; border:1px solid #ccc; font-weight:bold; border-radius: 6px 6px 0 0;">
+                            <span>Pilih Siswa yang Masuk Lampiran:</span>
+                            <label style="cursor:pointer; color:#0d6efd;"><input type="checkbox" id="chk-all-sk" checked style="transform: scale(1.2);"> Centang Semua</label>
+                        </div>
+                        <div style="flex:1; overflow-y:auto; border:1px solid #ccc; border-top:none; padding:15px; margin-bottom:20px; border-radius: 0 0 6px 6px;">
+                            ${listHtml}
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="document.getElementById('modal-cetak-sk-penetapan').style.display='none'" style="flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold;">Batal</button>
+                            <button id="btn-proses-sk" style="flex: 2; padding: 12px; background: #0d6efd; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold;"><i class="fa-solid fa-print"></i> Generate SK Lengkap</button>
+                        </div>
+                    </div>
+                `;
+                modalSK.style.display = "flex";
+
+                // Logika Checkbox
+                document.getElementById("chk-all-sk").addEventListener("change", function() {
+                    const isChecked = this.checked;
+                    document.querySelectorAll(".chk-sk-siswa").forEach(chk => chk.checked = isChecked);
+                });
+
+                // Tombol Proses
+                document.getElementById("btn-proses-sk").addEventListener("click", () => {
+                    const selectedIds = Array.from(document.querySelectorAll(".chk-sk-siswa:checked")).map(chk => chk.value);
+                    if (selectedIds.length === 0) { alert("Pilih minimal 1 siswa!"); return; }
+
+                    const noSK = document.getElementById("sk-nomor").value;
+                    const tglRapat = document.getElementById("sk-tgl-rapat").value;
+                    const titimangsa = document.getElementById("sk-titimangsa").value;
+
+                    modalSK.style.display = "none";
+                    document.getElementById("dashboard-kartu").style.display = "none";
+                    document.getElementById("print-view").style.display = "block";
+
+                    const container = document.getElementById("print-container");
+                    container.innerHTML = "";
+                    
+                    const selectedData = dataCetak.filter(s => selectedIds.includes(s.noPeserta));
+                    renderTemplateSKPenetapan(container, selectedData, noSK, tglRapat, titimangsa);
+                });
+            };
+
+            // MESIN RENDER SK PENETAPAN (3 HALAMAN / LEBIH)
+            window.renderTemplateSKPenetapan = function(container, dataSiswa, noSK, tglRapat, titimangsa) {
+                let configKartu = JSON.parse(localStorage.getItem('config_kartu_ujian')) || {};
+                const namaSekolah = configKartu.sekolah || "SD NEGERI ....................";
+                const alamatSekolah = configKartu.alamat || "Jln. ........................";
+                const kota = configKartu.kota || "Bekasi";
+                const tahunAjaran = configKartu.tahun || "2025/2026";
+                const namaKepsek = configKartu.namaTtd || "......................";
+                const nipKepsek = configKartu.nip || "......................";
+                
+                // --- Logika Hitung Jumlah Laki-laki & Perempuan ---
+                // (Mencari di kolom jk, jenis_kelamin, atau dari default Database)
+                let jumlahL = 0;
+                let jumlahP = 0;
+                dataSiswa.forEach(s => {
+                    let jk = (s.jk || s.jenisKelamin || s.jenis_kelamin || "-").toUpperCase();
+                    if (jk === 'L' || jk === 'LAKI-LAKI') jumlahL++;
+                    else if (jk === 'P' || jk === 'PEREMPUAN') jumlahP++;
+                });
+                const totalSiswa = dataSiswa.length;
+
+                // --- Generate Kop Surat Cerdas ---
+                const kopSuratHtml = configKartu.logoUrl 
+                    ? `<img src="${configKartu.logoUrl}" style="width: 100%; height: auto; display: block; margin-bottom: 20px;">` 
+                    : `<div style="display:flex; align-items:center; border-bottom:3px solid black; padding-bottom:10px; margin-bottom:20px;">
+                            <div style="width:80px; height:80px; border:1px solid #000; display:flex; align-items:center; justify-content:center; font-size:10px; background:#eee;">LOGO</div>
+                            <div style="flex:1; text-align:center;">
+                                <div style="font-size:14pt;">PEMERINTAH KABUPATEN/KOTA ${kota.toUpperCase()}</div>
+                                <div style="font-size:14pt;">DINAS PENDIDIKAN DAN KEBUDAYAAN</div>
+                                <div style="font-size:16pt; font-weight:bold;">${namaSekolah.toUpperCase()}</div>
+                                <div style="font-size:10pt;">${alamatSekolah}</div>
+                            </div>
+                       </div>`;
+
+                // ==========================================
+                // HALAMAN 1: SURAT KEPUTUSAN KELULUSAN
+                // ==========================================
+                const page1 = document.createElement("div");
+                page1.className = "page-sheet";
+                page1.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 15mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: black;";
+                
+                page1.innerHTML = `
+                    ${kopSuratHtml}
+                    <div style="text-align: center; font-weight: bold; font-size: 12pt; text-decoration: underline; margin-bottom: 2px;" contenteditable="true">SURAT KEPUTUSAN</div>
+                    <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 2px;" contenteditable="true">KEPALA ${namaSekolah.toUpperCase()}</div>
+                    <div style="text-align: center; margin-bottom: 15px;">Nomor: <span contenteditable="true">${noSK}</span></div>
+                    
+                    <div style="text-align: center; margin-bottom: 20px;">Tentang<br><b contenteditable="true">KELULUSAN PESERTA DIDIK KELAS VI<br>TAHUN PELAJARAN ${tahunAjaran}</b></div>
+                    
+                    <table style="width: 100%; margin-bottom: 10px;">
+                        <tr><td style="width: 110px; vertical-align: top;">Menimbang</td><td style="width: 15px; vertical-align: top;">:</td><td style="text-align: justify; vertical-align: top;" contenteditable="true">Bahwa dengan telah selesainya masa pembelajaran di Kelas VI dan pelaksanaan ujian sekolah Tahun Pelajaran ${tahunAjaran}, maka untuk kepentingan tertib administrasi sekolah, perlu ditetapkan kelulusan peserta didik dengan surat keputusan.</td></tr>
+                    </table>
+                    <table style="width: 100%; margin-bottom: 10px;">
+                        <tr><td style="width: 110px; vertical-align: top;">Mengingat</td><td style="width: 15px; vertical-align: top;">:</td><td style="text-align: justify; vertical-align: top;" contenteditable="true">
+                            <ol style="margin-top: 0; padding-left: 20px;">
+                                <li>Undang-Undang Nomor 20 Tahun 2003 tentang Sistem Pendidikan Nasional;</li>
+                                <li>Peraturan Pemerintah Nomor 19 Tahun 2005 tentang Standar Nasional Pendidikan, sebagaimana terakhir kalinya telah diubah dalam Peraturan Pemerintah Nomor 4 Tahun 2022;</li>
+                                <li>Peraturan Menteri Pendidikan, Kebudayaan, Riset dan Teknologi, Nomor 9 Tahun 2022 tentang Sistem Evaluasi Pendidikan;</li>
+                                <li>Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 21 Tahun 2022 tentang Standar Penilaian Pendidikan.</li>
+                            </ol>
+                        </td></tr>
+                    </table>
+                    <table style="width: 100%; margin-bottom: 20px;">
+                        <tr><td style="width: 110px; vertical-align: top;">Memperhatikan</td><td style="width: 15px; vertical-align: top;">:</td><td style="text-align: justify; vertical-align: top;" contenteditable="true">Hasil Rapat Dewan Guru ${namaSekolah} tanggal ${tglRapat}.</td></tr>
+                    </table>
+
+                    <div style="text-align: center; font-weight: bold; margin-bottom: 15px;" contenteditable="true">MEMUTUSKAN</div>
+                    <table style="width: 100%; margin-bottom: 15px;">
+                        <tr><td style="width: 110px; vertical-align: top;">Menetapkan</td><td style="width: 15px; vertical-align: top;">:</td><td style="vertical-align: top;"></td></tr>
+                        <tr><td style="vertical-align: top;">PERTAMA</td><td style="vertical-align: top;">:</td><td style="text-align: justify; vertical-align: top;" contenteditable="true">Nama-nama peserta didik Kelas VI tahun pelajaran ${tahunAjaran}, sebagaimana Daftar (terlampir), dinyatakan <b>LULUS</b> dari ${namaSekolah};</td></tr>
+                        <tr><td style="vertical-align: top;">KEDUA</td><td style="vertical-align: top;">:</td><td style="text-align: justify; vertical-align: top;" contenteditable="true">Nama-nama peserta didik Kelas VI tahun pelajaran ${tahunAjaran} yang dinyatakan lulus akan mendapatkan Surat Keterangan Lulus dan Ijazah sesuai ketentuan yang berlaku.</td></tr>
+                        <tr><td style="vertical-align: top;">KETIGA</td><td style="vertical-align: top;">:</td><td style="text-align: justify; vertical-align: top;" contenteditable="true">Surat Keputusan ini dibuat apabila terjadi kekeliruan akan ditinjau dan diperbaiki sebagaimana mestinya.</td></tr>
+                    </table>
+
+                    <div style="float: right; width: 250px; margin-top: 20px;">
+                        <table style="width: 100%;">
+                            <tr><td>Ditetapkan di</td><td>:</td><td contenteditable="true">${kota}</td></tr>
+                            <tr><td>Pada Tanggal</td><td>:</td><td contenteditable="true">${titimangsa}</td></tr>
+                        </table>
+                        <div style="margin-bottom: 70px; margin-top: 5px;" contenteditable="true">Kepala Sekolah</div>
+                        <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
+                        <div contenteditable="true">NIP. ${nipKepsek}</div>
+                    </div>
+                `;
+                container.appendChild(page1);
+
+                // ==========================================
+                // HALAMAN 2: BERITA ACARA & DAFTAR HADIR
+                // ==========================================
+                const page2 = document.createElement("div");
+                page2.className = "page-sheet";
+                page2.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 15mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: black;";
+                
+                // Buat 15 baris kosong untuk daftar hadir
+                let barisDaftarHadir = "";
+                for(let i=1; i<=15; i++) {
+                    barisDaftarHadir += `<tr>
+                        <td style="border: 1px solid black; padding: 5px; text-align: center;">${i}</td>
+                        <td style="border: 1px solid black; padding: 5px;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 5px;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 5px;" contenteditable="true"></td>
+                    </tr>`;
+                }
+
+                page2.innerHTML = `
+                    ${kopSuratHtml}
+                    <div style="text-align: center; font-weight: bold; font-size: 12pt; text-decoration: underline; margin-bottom: 15px;" contenteditable="true">BERITA ACARA RAPAT KELULUSAN</div>
+                    
+                    <div style="text-align: justify; margin-bottom: 15px;" contenteditable="true">
+                        Pada hari ini, bertempat di ${namaSekolah}, telah diadakan Rapat Penentuan Kelulusan Peserta Didik Kelas VI Tahun Pelajaran ${tahunAjaran}, dengan hasil sebagai berikut:
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; text-align: center;">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" style="border: 1px solid black; padding: 5px;">Kelas</th>
+                                <th colspan="3" style="border: 1px solid black; padding: 5px;">Jumlah Peserta Ujian</th>
+                                <th rowspan="2" style="border: 1px solid black; padding: 5px;">Keterangan</th>
+                            </tr>
+                            <tr>
+                                <th style="border: 1px solid black; padding: 5px;">Laki-laki</th>
+                                <th style="border: 1px solid black; padding: 5px;">Perempuan</th>
+                                <th style="border: 1px solid black; padding: 5px;">Jumlah</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid black; padding: 5px;" contenteditable="true">Kelas VI</td>
+                                <td style="border: 1px solid black; padding: 5px; color:#0d6efd;" contenteditable="true" title="Bisa diedit manual jika data dari sistem kosong">${jumlahL}</td>
+                                <td style="border: 1px solid black; padding: 5px; color:#0d6efd;" contenteditable="true" title="Bisa diedit manual jika data dari sistem kosong">${jumlahP}</td>
+                                <td style="border: 1px solid black; padding: 5px; font-weight: bold;" contenteditable="true">${totalSiswa}</td>
+                                <td style="border: 1px solid black; padding: 5px;" contenteditable="true">LULUS 100%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="text-align: justify; margin-bottom: 30px;" contenteditable="true">
+                        Demikian Berita Acara Rapat Kelulusan ini dibuat untuk dapat dipergunakan seperlunya.
+                    </div>
+
+                    <div style="float: right; width: 250px; margin-bottom: 20px;">
+                        <div style="margin-bottom: 70px;" contenteditable="true">Kepala ${namaSekolah}</div>
+                        <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
+                        <div contenteditable="true">NIP. ${nipKepsek}</div>
+                    </div>
+                    <div style="clear: both;"></div>
+                    
+                    <hr style="border: 1px solid black; margin: 15px 0;">
+
+                    <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 5px;" contenteditable="true">Daftar Hadir</div>
+                    <div style="text-align: center; font-weight: bold; margin-bottom: 5px;" contenteditable="true">Rapat Penentuan Kelulusan Kelas VI Tahun Pelajaran ${tahunAjaran}</div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <table style="width: 100%;">
+                            <tr><td style="width: 80px;">Tanggal</td><td>: <span contenteditable="true">${tglRapat}</span></td></tr>
+                            <tr><td>Tempat</td><td>: <span contenteditable="true">${namaSekolah}</span></td></tr>
+                        </table>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background:#f8f9fa;">
+                                <th style="border: 1px solid black; padding: 5px; width: 40px;">No</th>
+                                <th style="border: 1px solid black; padding: 5px;">Nama Lengkap</th>
+                                <th style="border: 1px solid black; padding: 5px;">Jabatan</th>
+                                <th style="border: 1px solid black; padding: 5px;">Tanda Tangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${barisDaftarHadir}
+                        </tbody>
+                    </table>
+                `;
+                container.appendChild(page2);
+
+                // ==========================================
+                // HALAMAN 3 (Dan seterusnya): LAMPIRAN SISWA
+                // ==========================================
+                const chunkSize = 30; // Maksimal 30 anak per halaman agar rapi
+                for (let i = 0; i < dataSiswa.length; i += chunkSize) {
+                    const chunk = dataSiswa.slice(i, i + chunkSize);
+                    
+                    let barisSiswa = "";
+                    chunk.forEach((s, idx) => {
+                        let jk = (s.jk || s.jenisKelamin || s.jenis_kelamin || "-").toUpperCase();
+                        barisSiswa += `<tr>
+                            <td style="border: 1px solid black; padding: 4px; text-align: center;">${i + idx + 1}</td>
+                            <td style="border: 1px solid black; padding: 4px; text-transform: uppercase;">${s.nama}</td>
+                            <td style="border: 1px solid black; padding: 4px; text-align: center;" contenteditable="true">${jk}</td>
+                            <td style="border: 1px solid black; padding: 4px;" contenteditable="true">${s.ttl}</td>
+                            <td style="border: 1px solid black; padding: 4px; text-align: center; font-weight:bold;" contenteditable="true">LULUS</td>
+                        </tr>`;
+                    });
+
+                    const page3 = document.createElement("div");
+                    page3.className = "page-sheet";
+                    page3.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 15mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: black;";
+                    
+                    let headerLampiran = "";
+                    if (i === 0) { // Hanya munculkan header lampiran di lembar pertama tabel
+                        headerLampiran = `
+                            <div style="font-size: 10pt; margin-bottom: 15px;">
+                                <table style="width: 100%;">
+                                    <tr><td style="width: 70px; vertical-align: top;">Lampiran</td><td style="width: 10px; vertical-align: top;">:</td><td style="vertical-align: top;" contenteditable="true">Surat Keputusan Kepala Sekolah</td></tr>
+                                    <tr><td>Nomor</td><td>:</td><td contenteditable="true">${noSK}</td></tr>
+                                    <tr><td>Tanggal</td><td>:</td><td contenteditable="true">${titimangsa}</td></tr>
+                                    <tr><td style="vertical-align: top;">Tentang</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;" contenteditable="true">Kelulusan Peserta Didik Kelas VI Tahun Pelajaran ${tahunAjaran}</td></tr>
+                                </table>
+                            </div>
+                            <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 2px;" contenteditable="true">Daftar Nama Peserta Didik Kelas VI yang Dinyatakan Lulus</div>
+                            <div style="text-align: center; font-weight: bold; font-size: 11pt; margin-bottom: 15px;" contenteditable="true">dari ${namaSekolah}, Tahun Pelajaran ${tahunAjaran}</div>
+                        `;
+                    }
+
+                    page3.innerHTML = `
+                        ${headerLampiran}
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10pt;">
+                            <thead>
+                                <tr style="background:#f8f9fa;">
+                                    <th style="border: 1px solid black; padding: 5px; width: 30px;">No.</th>
+                                    <th style="border: 1px solid black; padding: 5px;">Nama Peserta Didik</th>
+                                    <th style="border: 1px solid black; padding: 5px; width: 90px;">L/P</th>
+                                    <th style="border: 1px solid black; padding: 5px;">Tempat & Tanggal Lahir</th>
+                                    <th style="border: 1px solid black; padding: 5px; width: 80px;">Keterangan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${barisSiswa}
+                            </tbody>
+                        </table>
+                        
+                        <div style="float: right; width: 250px; margin-top: 10px;">
+                            <table style="width: 100%;">
+                                <tr><td>Ditetapkan di</td><td>:</td><td contenteditable="true">${kota}</td></tr>
+                                <tr><td>Pada Tanggal</td><td>:</td><td contenteditable="true">${titimangsa}</td></tr>
+                            </table>
+                            <div style="margin-bottom: 70px; margin-top: 5px;" contenteditable="true">Kepala Sekolah</div>
+                            <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
+                            <div contenteditable="true">NIP. ${nipKepsek}</div>
+                        </div>
+                        <div style="clear: both;"></div>
+                    `;
+                    container.appendChild(page3);
+                }
+            };
             
             // ==========================================
             // --- LOGIKA UPLOAD & PREVIEW DATA SISWA ---
@@ -1443,10 +1790,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         
                         window.previewDataSiswa.push({
                             id: Date.now() + i,
-                            nama: row[0] || "", noPeserta: row[1] || "", ttl: row[2] || "", // <-- UBAH KE TTL
-                            kelas: row[3] || "", ruang: row[4] || "",
+                            nama: row[0] || "", 
+                            noPeserta: row[1] || "", 
+                            jk: row[2] || "",            // <--- TAMBAHAN KOLOM L/P
+                            ttl: row[3] || "", 
+                            kelas: row[4] || "", 
+                            ruang: row[5] || "",
                             imgBase64: "", imgMime: "", imgName: ""
-                        });
+});
                     }
                     renderPreviewSiswaTable();
                 };
@@ -1471,6 +1822,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <td style="padding: 5px; text-align:center;">${idx + 1}</td>
                             <td style="padding: 5px;"><input type="text" value="${s.noPeserta}" class="s-nopes" style="width:100%; border:1px solid #ccc; padding:4px;"></td>
                             <td style="padding: 5px;"><input type="text" value="${s.nama}" class="s-nama" style="width:100%; border:1px solid #ccc; padding:4px; text-transform:uppercase;"></td>
+                            <td style="padding: 5px;"><input type="text" value="${s.jk || ''}" class="s-jk" style="width:40px; border:1px solid #ccc; padding:4px; text-transform:uppercase;" placeholder="L/P"></td>
                            <td style="padding: 5px;"><input type="text" value="${s.ttl}" class="s-ttl" style="width:100%; border:1px solid #ccc; padding:4px;"></td>
                             <td style="padding: 5px;"><input type="text" value="${s.kelas}" class="s-kls" style="width:50px; border:1px solid #ccc; padding:4px;"></td>
                             <td style="padding: 5px;"><input type="text" value="${s.ruang}" class="s-rng" style="width:50px; border:1px solid #ccc; padding:4px;"></td>
@@ -1527,6 +1879,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         finalPayload.push({
                             nama: row.querySelector('.s-nama').value.toUpperCase(),
                             noPeserta: row.querySelector('.s-nopes').value,
+                            jk: row.querySelector('.s-jk').value.toUpperCase(),
                             ttl: row.querySelector('.s-ttl').value.toUpperCase(),
                             kelas: row.querySelector('.s-kls').value,
                             ruang: row.querySelector('.s-rng').value,
