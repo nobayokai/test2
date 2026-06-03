@@ -1019,12 +1019,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     const namaSekolah = configKartu.sekolah || "SDIT Hidayatut Taufiq";
                     const alamatSekolah = configKartu.alamat || "Jl. Pasar Kranggan No. 25 Jatisampurna, Bekasi";
                     
-                    // --- KUNCI: KOP SURAT GAMBAR PENUH ---
-                    // Jika ada gambar logo/kop yang diupload, gunakan sebagai gambar selebar 100%
+                    
+                    // --- KUNCI: KOP SURAT GAMBAR PENUH (DIPERLEBAR) ---
                     const kopSuratHtml = configKartu.logoUrl 
-                        ? `<img src="${configKartu.logoUrl}" style="width: 100%; height: auto; display: block; margin-bottom: 15px;">` 
-                        : `<div class="surat-header">
-                                <div class="surat-logo" style="border:1px solid #ccc; display:flex; align-items:center; justify-content:center; font-size:10px; background:#eee;">LOGO<br>SEKOLAH</div>
+                        ? `<img src="${configKartu.logoUrl}" style="width: calc(100% + 36mm); height: auto; display: block; margin-bottom: 15px; margin-left: -18mm; margin-right: -18mm; margin-top: -3mm;">` 
+                        : `<div class="surat-header" style="margin-left: -18mm; margin-right: -18mm; margin-top: -3mm; width: calc(100% + 36mm);">
+                                <div class="surat-logo" style="border:1px solid #ccc; display:flex; align-items:center; justify-content:center; font-size:10px; background:#eee; margin-left: 20px;">LOGO<br>SEKOLAH</div>
                                 <div style="flex:1; text-align: center; padding-left: 90px; padding-right: 20px;">
                                     <div style="font-size: 16pt; font-weight: bold; letter-spacing: 1px;" contenteditable="true" spellcheck="false">${namaSekolah}</div>
                                     <div style="font-size: 11pt; margin-top: 5px;" contenteditable="true" spellcheck="false">${alamatSekolah}</div>
@@ -1259,8 +1259,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 let configKartu = JSON.parse(localStorage.getItem('config_kartu_ujian')) || {};
                 const namaSekolah = configKartu.sekolah || "SDIT Hidayatut Taufiq";
                 const kopSuratHtml = configKartu.logoUrl 
-                    ? `<img src="${configKartu.logoUrl}" style="width: 100%; height: auto; display: block; margin-bottom: 20px;">` 
-                    : `<div style="text-align:center; font-weight:bold; font-size:18pt; border-bottom:3px solid black; padding-bottom:10px; margin-bottom:20px;">${namaSekolah}</div>`;
+                    ? `<img src="${configKartu.logoUrl}" style="width: calc(100% + 36mm); height: auto; display: block; margin-bottom: 20px; margin-left: -18mm; margin-right: -18mm; margin-top: -3mm;">` 
+                    : `<div style="text-align:center; font-weight:bold; font-size:18pt; border-bottom:3px solid black; padding-bottom:10px; margin-bottom:20px; margin-left: -18mm; margin-right: -18mm; margin-top: -3mm; width: calc(100% + 36mm);">${namaSekolah}</div>`;
                 
                 const ttdHtml = configKartu.ttdUrl ? `<img src="${configKartu.ttdUrl}" style="position: absolute; top: -10px; left: -80px; width: 170px; height: 130px; object-fit: contain; z-index: 50; mix-blend-mode: multiply; pointer-events: none;">` : ``;
 
@@ -1610,9 +1610,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // --- Generate Kop Surat ---
                 const kopSuratHtml = configKartu.logoUrl 
-                    ? `<img src="${configKartu.logoUrl}" style="width: 100%; height: auto; display: block; margin-bottom: 20px;">` 
-                    : `<div style="display:flex; align-items:center; border-bottom:3px solid black; padding-bottom:10px; margin-bottom:20px;">
-                            <div style="width:80px; height:80px; border:1px solid #000; display:flex; align-items:center; justify-content:center; font-size:10px; background:#eee;">LOGO</div>
+                    ? `<img src="${configKartu.logoUrl}" style="width: calc(100% + 36mm); height: auto; display: block; margin-bottom: 20px; margin-left: -18mm; margin-right: -18mm; margin-top: -12mm;">` 
+                    : `<div style="display:flex; align-items:center; border-bottom:3px solid black; padding-bottom:10px; margin-bottom:20px; margin-left: -18mm; margin-right: -18mm; margin-top: -12mm; width: calc(100% + 36mm);">
+                            <div style="width:80px; height:80px; border:1px solid #000; display:flex; align-items:center; justify-content:center; font-size:10px; background:#eee; margin-left: 20px;">LOGO</div>
                             <div style="flex:1; text-align:center;">
                                 <div style="font-size:14pt;">PEMERINTAH KABUPATEN/KOTA ${kota.toUpperCase()}</div>
                                 <div style="font-size:14pt;">DINAS PENDIDIKAN DAN KEBUDAYAAN</div>
