@@ -1490,13 +1490,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 // --- LOGIKA AUTO-FILL JIKA DATA SUDAH ADA DI DATABASE ---
-                const firstSaved = dataCetak.find(s => s.noSurat || s.titimangsa);
+                const firstSaved = dataCetak.find(s => s.noSkep || s.tglskep);
                 if (firstSaved) {
-                    if (firstSaved.noSurat) document.getElementById("sk-nomor").value = firstSaved.noSurat;
-                    if (firstSaved.titimangsa) {
-                        document.getElementById("sk-titimangsa").value = firstSaved.titimangsa;
-                        // Karena tanggal rapat sama dengan titimangsa, kita copy otomatis!
-                        document.getElementById("sk-tgl-rapat").value = firstSaved.titimangsa; 
+                    if (firstSaved.noSkep) document.getElementById("sk-nomor").value = firstSaved.noSkep;
+                    if (firstSaved.tglskep) {
+                        document.getElementById("sk-titimangsa").value = firstSaved.tglskep;
+                        document.getElementById("sk-tgl-rapat").value = firstSaved.tglskep; 
                     }
                 }
 
@@ -1507,11 +1506,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         
                         if (this.checked) {
                             const student = dataCetak.find(s => s.noPeserta === this.value);
-                            if (student && (student.noSurat || student.titimangsa)) {
-                                if (student.noSurat) document.getElementById("sk-nomor").value = student.noSurat;
-                                if (student.titimangsa) {
-                                    document.getElementById("sk-titimangsa").value = student.titimangsa;
-                                    document.getElementById("sk-tgl-rapat").value = student.titimangsa;
+                            if (student && (student.noSkep || student.tglskep)) {
+                                if (student.noSkep) document.getElementById("sk-nomor").value = student.noSkep;
+                                if (student.tglskep) {
+                                    document.getElementById("sk-titimangsa").value = student.tglskep;
+                                    document.getElementById("sk-tgl-rapat").value = student.tglskep;
                                 }
                             }
                         }
@@ -1537,11 +1536,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     const tglRapat = document.getElementById("sk-tgl-rapat").value;
                     const titimangsa = document.getElementById("sk-titimangsa").value;
 
-                    // 1. Bungkus data untuk disimpan ke Server (Hanya No Surat & Titimangsa)
+                    // 1. Bungkus data untuk disimpan ke Server (MENGGUNAKAN VARIABEL BARU)
                     const dataUpdate = selectedIds.map(id => ({
                         noPeserta: id,
-                        noSurat: noSK,
-                        titimangsa: titimangsa
+                        noSkep: noSK,         // <--- UBAH DI SINI
+                        tglskep: titimangsa   // <--- UBAH DI SINI
                     }));
 
                     const btn = document.getElementById("btn-proses-sk");
@@ -1560,9 +1559,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         dataUpdate.forEach(u => {
                             const s = window.dataSiswaKartu.find(x => x.noPeserta === u.noPeserta);
                             if (s) {
-                                s.noSurat = u.noSurat;
-                                s.titimangsa = u.titimangsa;
-                                delete s.noRapat; // hapus tanggal rapat dari memori agar menyesuaikan titimangsa
+                                s.noSkep = u.noSkep;      // <--- UBAH DI SINI
+                                s.tglskep = u.tglskep;    // <--- UBAH DI SINI
+                                delete s.noRapat;
                             }
                         });
                     } catch (e) {
@@ -1586,7 +1585,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     btn.innerHTML = teksAwal;
                     btn.disabled = false;
                 });
-            };
 
             // MESIN RENDER SK PENETAPAN (MULTI HALAMAN & TERPISAH)
             window.renderTemplateSKPenetapan = function(container, dataSiswa, noSK, tglRapat, titimangsa) {
