@@ -1501,14 +1501,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 const alamatSekolah = configKartu.alamat || "Jl. Pasar Kranggan No. 25";
                 const kota = configKartu.kota || "Bekasi";
                 const tahunAjaran = configKartu.tahun || "2025/2026";
-                const namaKepsek = "Ghoniyah Nasrullah S.Pd., Gr."; // Nama KEPSEK SWASTA tanpa NIP
+                const namaKepsek = configKartu.namaTtd // Nama KEPSEK SWASTA tanpa NIP
                 
                 // --- Logika Hitung Jumlah Laki-laki & Perempuan (Sistem Cerdas) ---
                 let jumlahL = 0;
                 let jumlahP = 0;
                 dataSiswa.forEach(s => {
                     // Deteksi cerdas: Hapus spasi dan jadikan huruf besar semua
-                    let jk = (s.jk || s.jenisKelamin || s.jenis_kelamin || "").toString().trim().toUpperCase();
+                    let jk = s.jk.toString().trim().toUpperCase();
                     
                     if (jk.startsWith('L')) {
                         jumlahL++;
@@ -1710,7 +1710,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         barisSiswa += `<tr>
                             <td style="border: 1px solid black; padding: 4px; text-align: center;">${i + idx + 1}</td>
                             <td style="border: 1px solid black; padding: 4px; text-transform: uppercase;">${s.nama}</td>
-                            <td style="border: 1px solid black; padding: 4px; text-align: center;" contenteditable="true">${s.jkDisplay}</td>
+                            <td style="border: 1px solid black; padding: 4px; text-align: center;" contenteditable="true">${s.jk}</td>
                             <td style="border: 1px solid black; padding: 4px;" contenteditable="true">${s.ttl}</td>
                             <td style="border: 1px solid black; padding: 4px; text-align: center; font-weight:bold;" contenteditable="true">LULUS</td>
                         </tr>`;
