@@ -1585,6 +1585,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     btn.innerHTML = teksAwal;
                     btn.disabled = false;
                 });
+            };
 
             // MESIN RENDER SK PENETAPAN (MULTI HALAMAN & TERPISAH)
             window.renderTemplateSKPenetapan = function(container, dataSiswa, noSK, tglRapat, titimangsa) {
