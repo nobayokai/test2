@@ -1393,10 +1393,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             };
 
-            // =========================================================
-            // --- FITUR CETAK SK PENETAPAN KELULUSAN (3 HALAMAN+) ---
-            // =========================================================
-
             window.bukaModalSKPenetapan = function() {
                 if (!window.dataSiswaKartu || window.dataSiswaKartu.length === 0) {
                     alert("Harap tarik data siswa dari server terlebih dahulu!"); return;
@@ -1449,7 +1445,16 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <label style="font-size:12px; font-weight:bold; color:#555;">Ditetapkan Tanggal (Titimangsa):</label>
                                 <input type="text" id="sk-titimangsa" value="10 Juni 2026" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
                             </div>
-                        </div>
+                            
+                            <div>
+                                <label style="font-size:12px; font-weight:bold; color:#555;">Jumlah Siswa Laki-Laki:</label>
+                                <input type="text" id="sk-jumlah-l" readonly style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; background:#e9ecef; font-weight:bold; color:#0d6efd; text-align:center;">
+                            </div>
+                            <div>
+                                <label style="font-size:12px; font-weight:bold; color:#555;">Jumlah Siswa Perempuan:</label>
+                                <input type="text" id="sk-jumlah-p" readonly style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; background:#e9ecef; font-weight:bold; color:#dc3545; text-align:center;">
+                            </div>
+                            </div>
 
                         <div style="display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; padding:10px 15px; border:1px solid #ccc; font-weight:bold; border-radius: 6px 6px 0 0;">
                             <span>Pilih Siswa yang Masuk Lampiran:</span>
@@ -1461,20 +1466,70 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         <div style="display: flex; gap: 10px;">
                             <button onclick="document.getElementById('modal-cetak-sk-penetapan').style.display='none'" style="flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold;">Batal</button>
-                            <button id="btn-proses-sk" style="flex: 2; padding: 12px; background: #0d6efd; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold;"><i class="fa-solid fa-print"></i> Generate SK Lengkap</button>
+                            <button id="btn-proses-sk" style="flex: 2; padding: 12px; background: #0d6efd; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight:bold; box-shadow: 0 4px 0 #0a58ca;"><i class="fa-solid fa-print"></i> Generate & Simpan DB</button>
                         </div>
                     </div>
                 `;
                 modalSK.style.display = "flex";
 
-                // Logika Checkbox
+                // --- FUNGSI AUTO-HITUNG REALTIME L/P ---
+                function updateCountLP() {
+                    let jmlL = 0;
+                    let jmlP = 0;
+                    const selectedIds = Array.from(document.querySelectorAll(".chk-sk-siswa:checked")).map(chk => chk.value);
+                    const selectedData = dataCetak.filter(s => selectedIds.includes(s.noPeserta));
+                    
+                    selectedData.forEach(s => {
+                        let jk = (s.jk || "-").toString().trim().toUpperCase();
+                        if (jk.startsWith('L')) jmlL++;
+                        else if (jk.startsWith('P')) jmlP++;
+                    });
+                    
+                    document.getElementById("sk-jumlah-l").value = jmlL + " Orang";
+                    document.getElementById("sk-jumlah-p").value = jmlP + " Orang";
+                }
+
+                // --- LOGIKA AUTO-FILL JIKA DATA SUDAH ADA DI DATABASE ---
+                const firstSaved = dataCetak.find(s => s.noSurat || s.titimangsa);
+                if (firstSaved) {
+                    if (firstSaved.noSurat) document.getElementById("sk-nomor").value = firstSaved.noSurat;
+                    if (firstSaved.titimangsa) {
+                        document.getElementById("sk-titimangsa").value = firstSaved.titimangsa;
+                        // Karena tanggal rapat sama dengan titimangsa, kita copy otomatis!
+                        document.getElementById("sk-tgl-rapat").value = firstSaved.titimangsa; 
+                    }
+                }
+
+                // Logika Perubahan Centang Checkbox (Siswa Satuan)
+                document.querySelectorAll(".chk-sk-siswa").forEach(chk => {
+                    chk.addEventListener("change", function() {
+                        updateCountLP();
+                        
+                        if (this.checked) {
+                            const student = dataCetak.find(s => s.noPeserta === this.value);
+                            if (student && (student.noSurat || student.titimangsa)) {
+                                if (student.noSurat) document.getElementById("sk-nomor").value = student.noSurat;
+                                if (student.titimangsa) {
+                                    document.getElementById("sk-titimangsa").value = student.titimangsa;
+                                    document.getElementById("sk-tgl-rapat").value = student.titimangsa;
+                                }
+                            }
+                        }
+                    });
+                });
+
+                // Logika Checkbox "Centang Semua"
                 document.getElementById("chk-all-sk").addEventListener("change", function() {
                     const isChecked = this.checked;
                     document.querySelectorAll(".chk-sk-siswa").forEach(chk => chk.checked = isChecked);
+                    updateCountLP();
                 });
 
-                // Tombol Proses
-                document.getElementById("btn-proses-sk").addEventListener("click", () => {
+                // Hitung pertama kali secara otomatis saat layar Popup baru saja terbuka
+                updateCountLP();
+
+                // --- TOMBOL PROSES GENERATE & SIMPAN KE DATABASE ---
+                document.getElementById("btn-proses-sk").addEventListener("click", async () => {
                     const selectedIds = Array.from(document.querySelectorAll(".chk-sk-siswa:checked")).map(chk => chk.value);
                     if (selectedIds.length === 0) { alert("Pilih minimal 1 siswa!"); return; }
 
@@ -1482,6 +1537,39 @@ document.addEventListener("DOMContentLoaded", () => {
                     const tglRapat = document.getElementById("sk-tgl-rapat").value;
                     const titimangsa = document.getElementById("sk-titimangsa").value;
 
+                    // 1. Bungkus data untuk disimpan ke Server (Hanya No Surat & Titimangsa)
+                    const dataUpdate = selectedIds.map(id => ({
+                        noPeserta: id,
+                        noSurat: noSK,
+                        titimangsa: titimangsa
+                    }));
+
+                    const btn = document.getElementById("btn-proses-sk");
+                    const teksAwal = btn.innerHTML;
+                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+                    btn.disabled = true;
+
+                    try {
+                        // 2. Kirim ke AppScript dengan Sandi Khusus: update_data_sk_penetapan
+                        await fetch(SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify({ action: "update_data_sk_penetapan", data_update: dataUpdate })
+                        });
+                        
+                        // 3. Update memori lokal browser agar sinkron
+                        dataUpdate.forEach(u => {
+                            const s = window.dataSiswaKartu.find(x => x.noPeserta === u.noPeserta);
+                            if (s) {
+                                s.noSurat = u.noSurat;
+                                s.titimangsa = u.titimangsa;
+                                delete s.noRapat; // hapus tanggal rapat dari memori agar menyesuaikan titimangsa
+                            }
+                        });
+                    } catch (e) {
+                        console.log("Error Jaringan saat menyimpan database (diabaikan untuk lanjut render)");
+                    }
+
+                    // 4. Lanjutkan Render Kertas HTML
                     modalSK.style.display = "none";
                     document.getElementById("dashboard-kartu").style.display = "none";
                     document.getElementById("print-view").style.display = "block";
@@ -1490,7 +1578,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     container.innerHTML = "";
                     
                     const selectedData = dataCetak.filter(s => selectedIds.includes(s.noPeserta));
+                    
+                    // Panggil mesin pembuat Kertas A4
                     renderTemplateSKPenetapan(container, selectedData, noSK, tglRapat, titimangsa);
+                    
+                    // Kembalikan tombol seperti semula
+                    btn.innerHTML = teksAwal;
+                    btn.disabled = false;
                 });
             };
 
