@@ -1494,24 +1494,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             };
 
-            // MESIN RENDER SK PENETAPAN (3 HALAMAN / LEBIH)
+            // MESIN RENDER SK PENETAPAN (MULTI HALAMAN & TERPISAH)
             window.renderTemplateSKPenetapan = function(container, dataSiswa, noSK, tglRapat, titimangsa) {
                 let configKartu = JSON.parse(localStorage.getItem('config_kartu_ujian')) || {};
-                const namaSekolah = configKartu.sekolah || "SD NEGERI ....................";
-                const alamatSekolah = configKartu.alamat || "Jln. ........................";
+                const namaSekolah = configKartu.sekolah || "SDIT Hidayatut Taufiq";
+                const alamatSekolah = configKartu.alamat || "Jl. Pasar Kranggan No. 25";
                 const kota = configKartu.kota || "Bekasi";
                 const tahunAjaran = configKartu.tahun || "2025/2026";
-                const namaKepsek = configKartu.namaTtd || "......................";
-                const nipKepsek = configKartu.nip || "......................";
+                const namaKepsek = "Ghoniyah Nasrullah S.Pd., Gr."; // Nama KEPSEK SWASTA tanpa NIP
                 
-                // --- Logika Hitung Jumlah Laki-laki & Perempuan ---
-                // (Mencari di kolom jk, jenis_kelamin, atau dari default Database)
+                // --- Logika Hitung Jumlah Laki-laki & Perempuan (Sistem Cerdas) ---
                 let jumlahL = 0;
                 let jumlahP = 0;
                 dataSiswa.forEach(s => {
-                    let jk = (s.jk || s.jenisKelamin || s.jenis_kelamin || "-").toUpperCase();
-                    if (jk === 'L' || jk === 'LAKI-LAKI') jumlahL++;
-                    else if (jk === 'P' || jk === 'PEREMPUAN') jumlahP++;
+                    // Deteksi cerdas: Hapus spasi dan jadikan huruf besar semua
+                    let jk = (s.jk || s.jenisKelamin || s.jenis_kelamin || "").toString().trim().toUpperCase();
+                    
+                    if (jk.startsWith('L')) {
+                        jumlahL++;
+                        s.jkDisplay = 'L';
+                    } else if (jk.startsWith('P')) {
+                        jumlahP++;
+                        s.jkDisplay = 'P';
+                    } else {
+                        s.jkDisplay = '-';
+                    }
                 });
                 const totalSiswa = dataSiswa.length;
 
@@ -1575,28 +1582,17 @@ document.addEventListener("DOMContentLoaded", () => {
                         </table>
                         <div style="margin-bottom: 70px; margin-top: 5px;" contenteditable="true">Kepala Sekolah</div>
                         <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
-                        <div contenteditable="true">NIP. ${nipKepsek}</div>
                     </div>
+                    <div style="clear: both;"></div>
                 `;
                 container.appendChild(page1);
 
                 // ==========================================
-                // HALAMAN 2: BERITA ACARA & DAFTAR HADIR
+                // HALAMAN 2: BERITA ACARA (TERPISAH DARI DAFTAR HADIR)
                 // ==========================================
                 const page2 = document.createElement("div");
                 page2.className = "page-sheet";
                 page2.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 15mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: black;";
-                
-                // Buat 15 baris kosong untuk daftar hadir
-                let barisDaftarHadir = "";
-                for(let i=1; i<=15; i++) {
-                    barisDaftarHadir += `<tr>
-                        <td style="border: 1px solid black; padding: 5px; text-align: center;">${i}</td>
-                        <td style="border: 1px solid black; padding: 5px;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 5px;" contenteditable="true"></td>
-                        <td style="border: 1px solid black; padding: 5px;" contenteditable="true"></td>
-                    </tr>`;
-                }
 
                 page2.innerHTML = `
                     ${kopSuratHtml}
@@ -1622,8 +1618,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         <tbody>
                             <tr>
                                 <td style="border: 1px solid black; padding: 5px;" contenteditable="true">Kelas VI</td>
-                                <td style="border: 1px solid black; padding: 5px; color:#0d6efd;" contenteditable="true" title="Bisa diedit manual jika data dari sistem kosong">${jumlahL}</td>
-                                <td style="border: 1px solid black; padding: 5px; color:#0d6efd;" contenteditable="true" title="Bisa diedit manual jika data dari sistem kosong">${jumlahP}</td>
+                                <td style="border: 1px solid black; padding: 5px; color:#0d6efd;" contenteditable="true">${jumlahL}</td>
+                                <td style="border: 1px solid black; padding: 5px; color:#0d6efd;" contenteditable="true">${jumlahP}</td>
                                 <td style="border: 1px solid black; padding: 5px; font-weight: bold;" contenteditable="true">${totalSiswa}</td>
                                 <td style="border: 1px solid black; padding: 5px;" contenteditable="true">LULUS 100%</td>
                             </tr>
@@ -1635,16 +1631,39 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
 
                     <div style="float: right; width: 250px; margin-bottom: 20px;">
-                        <div style="margin-bottom: 70px;" contenteditable="true">Kepala ${namaSekolah}</div>
+                        <table style="width: 100%;">
+                            <tr><td>Ditetapkan di</td><td>:</td><td contenteditable="true">${kota}</td></tr>
+                            <tr><td>Pada Tanggal</td><td>:</td><td contenteditable="true">${titimangsa}</td></tr>
+                        </table>
+                        <div style="margin-bottom: 70px; margin-top: 5px;" contenteditable="true">Kepala Sekolah</div>
                         <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
-                        <div contenteditable="true">NIP. ${nipKepsek}</div>
                     </div>
                     <div style="clear: both;"></div>
-                    
-                    <hr style="border: 1px solid black; margin: 15px 0;">
+                `;
+                container.appendChild(page2);
 
-                    <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 5px;" contenteditable="true">Daftar Hadir</div>
-                    <div style="text-align: center; font-weight: bold; margin-bottom: 5px;" contenteditable="true">Rapat Penentuan Kelulusan Kelas VI Tahun Pelajaran ${tahunAjaran}</div>
+                // ==========================================
+                // HALAMAN 3: DAFTAR HADIR GURU (20 Baris)
+                // ==========================================
+                const page3 = document.createElement("div");
+                page3.className = "page-sheet";
+                page3.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 15mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: black;";
+                
+                // Buat 20 baris kosong untuk daftar hadir
+                let barisDaftarHadir = "";
+                for(let i=1; i<=20; i++) {
+                    barisDaftarHadir += `<tr>
+                        <td style="border: 1px solid black; padding: 5px; text-align: center;">${i}</td>
+                        <td style="border: 1px solid black; padding: 5px;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 5px;" contenteditable="true"></td>
+                        <td style="border: 1px solid black; padding: 5px;" contenteditable="true"></td>
+                    </tr>`;
+                }
+
+                page3.innerHTML = `
+                    ${kopSuratHtml}
+                    <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 5px;" contenteditable="true">DAFTAR HADIR</div>
+                    <div style="text-align: center; font-weight: bold; margin-bottom: 15px;" contenteditable="true">Rapat Penentuan Kelulusan Kelas VI Tahun Pelajaran ${tahunAjaran}</div>
                     
                     <div style="margin-bottom: 10px;">
                         <table style="width: 100%;">
@@ -1653,7 +1672,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </table>
                     </div>
 
-                    <table style="width: 100%; border-collapse: collapse;">
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                         <thead>
                             <tr style="background:#f8f9fa;">
                                 <th style="border: 1px solid black; padding: 5px; width: 40px;">No</th>
@@ -1666,11 +1685,21 @@ document.addEventListener("DOMContentLoaded", () => {
                             ${barisDaftarHadir}
                         </tbody>
                     </table>
+
+                    <div style="float: right; width: 250px; margin-top: 10px;">
+                        <table style="width: 100%;">
+                            <tr><td>Ditetapkan di</td><td>:</td><td contenteditable="true">${kota}</td></tr>
+                            <tr><td>Pada Tanggal</td><td>:</td><td contenteditable="true">${titimangsa}</td></tr>
+                        </table>
+                        <div style="margin-bottom: 70px; margin-top: 5px;" contenteditable="true">Kepala Sekolah</div>
+                        <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
+                    </div>
+                    <div style="clear: both;"></div>
                 `;
-                container.appendChild(page2);
+                container.appendChild(page3);
 
                 // ==========================================
-                // HALAMAN 3 (Dan seterusnya): LAMPIRAN SISWA
+                // HALAMAN 4 (Dan seterusnya): LAMPIRAN SISWA
                 // ==========================================
                 const chunkSize = 30; // Maksimal 30 anak per halaman agar rapi
                 for (let i = 0; i < dataSiswa.length; i += chunkSize) {
@@ -1678,22 +1707,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     let barisSiswa = "";
                     chunk.forEach((s, idx) => {
-                        let jk = (s.jk || s.jenisKelamin || s.jenis_kelamin || "-").toUpperCase();
                         barisSiswa += `<tr>
                             <td style="border: 1px solid black; padding: 4px; text-align: center;">${i + idx + 1}</td>
                             <td style="border: 1px solid black; padding: 4px; text-transform: uppercase;">${s.nama}</td>
-                            <td style="border: 1px solid black; padding: 4px; text-align: center;" contenteditable="true">${jk}</td>
+                            <td style="border: 1px solid black; padding: 4px; text-align: center;" contenteditable="true">${s.jkDisplay}</td>
                             <td style="border: 1px solid black; padding: 4px;" contenteditable="true">${s.ttl}</td>
                             <td style="border: 1px solid black; padding: 4px; text-align: center; font-weight:bold;" contenteditable="true">LULUS</td>
                         </tr>`;
                     });
 
-                    const page3 = document.createElement("div");
-                    page3.className = "page-sheet";
-                    page3.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 15mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: black;";
+                    const page4 = document.createElement("div");
+                    page4.className = "page-sheet";
+                    page4.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 15mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: black;";
                     
                     let headerLampiran = "";
-                    if (i === 0) { // Hanya munculkan header lampiran di lembar pertama tabel
+                    if (i === 0) { // Hanya munculkan header kop lampiran di lembar pertama tabel
                         headerLampiran = `
                             <div style="font-size: 10pt; margin-bottom: 15px;">
                                 <table style="width: 100%;">
@@ -1708,14 +1736,29 @@ document.addEventListener("DOMContentLoaded", () => {
                         `;
                     }
 
-                    page3.innerHTML = `
+                    // --- LOGIKA TANDA TANGAN HANYA DI LEMBAR TERAKHIR LAMPIRAN ---
+                    let signatureLampiran = "";
+                    if (i + chunkSize >= dataSiswa.length) { 
+                        signatureLampiran = `
+                        <div style="float: right; width: 250px; margin-top: 10px;">
+                            <table style="width: 100%;">
+                                <tr><td>Ditetapkan di</td><td>:</td><td contenteditable="true">${kota}</td></tr>
+                                <tr><td>Pada Tanggal</td><td>:</td><td contenteditable="true">${titimangsa}</td></tr>
+                            </table>
+                            <div style="margin-bottom: 70px; margin-top: 5px;" contenteditable="true">Kepala Sekolah</div>
+                            <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
+                        </div>
+                        <div style="clear: both;"></div>`;
+                    }
+
+                    page4.innerHTML = `
                         ${headerLampiran}
                         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10pt;">
                             <thead>
                                 <tr style="background:#f8f9fa;">
                                     <th style="border: 1px solid black; padding: 5px; width: 30px;">No.</th>
                                     <th style="border: 1px solid black; padding: 5px;">Nama Peserta Didik</th>
-                                    <th style="border: 1px solid black; padding: 5px; width: 90px;">L/P</th>
+                                    <th style="border: 1px solid black; padding: 5px; width: 50px;">L/P</th>
                                     <th style="border: 1px solid black; padding: 5px;">Tempat & Tanggal Lahir</th>
                                     <th style="border: 1px solid black; padding: 5px; width: 80px;">Keterangan</th>
                                 </tr>
@@ -1725,18 +1768,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             </tbody>
                         </table>
                         
-                        <div style="float: right; width: 250px; margin-top: 10px;">
-                            <table style="width: 100%;">
-                                <tr><td>Ditetapkan di</td><td>:</td><td contenteditable="true">${kota}</td></tr>
-                                <tr><td>Pada Tanggal</td><td>:</td><td contenteditable="true">${titimangsa}</td></tr>
-                            </table>
-                            <div style="margin-bottom: 70px; margin-top: 5px;" contenteditable="true">Kepala Sekolah</div>
-                            <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
-                            <div contenteditable="true">NIP. ${nipKepsek}</div>
-                        </div>
-                        <div style="clear: both;"></div>
+                        ${signatureLampiran}
                     `;
-                    container.appendChild(page3);
+                    container.appendChild(page4);
                 }
             };
             
