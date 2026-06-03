@@ -1587,7 +1587,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             };
 
-            // MESIN RENDER SK PENETAPAN (MULTI HALAMAN & TERPISAH)
+            // MESIN RENDER SK PENETAPAN (MULTI HALAMAN & TERPISAH DENGAN TTD DRAG)
             window.renderTemplateSKPenetapan = function(container, dataSiswa, noSK, tglRapat, titimangsa) {
                 let configKartu = JSON.parse(localStorage.getItem('config_kartu_ujian')) || {};
                 const namaSekolah = configKartu.sekolah || "SDIT Hidayatut Taufiq";
@@ -1595,29 +1595,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 const kota = configKartu.kota || "Bekasi";
                 const tahunAjaran = configKartu.tahun || "2025/2026";
                 
-                // --- KUNCI PERBAIKAN 1: Beri pengaman teks alternatif dan titik koma ---
                 const namaKepsek = configKartu.namaTtd || "Ghoniyah Nasrullah S.Pd., Gr."; 
                 
-                // --- Logika Hitung Jumlah Laki-laki & Perempuan (Sistem Cerdas) ---
+                // --- Logika Hitung Jumlah Laki-laki & Perempuan ---
                 let jumlahL = 0;
                 let jumlahP = 0;
                 dataSiswa.forEach(s => {
-                    // --- KUNCI PERBAIKAN 2: Beri pengaman (s.jk || "-") agar tidak crash ---
                     let jk = (s.jk || "-").toString().trim().toUpperCase();
-                    
-                    if (jk.startsWith('L')) {
-                        jumlahL++;
-                        s.jkDisplay = 'L';
-                    } else if (jk.startsWith('P')) {
-                        jumlahP++;
-                        s.jkDisplay = 'P';
-                    } else {
-                        s.jkDisplay = '-';
-                    }
+                    if (jk.startsWith('L')) { jumlahL++; s.jkDisplay = 'L'; } 
+                    else if (jk.startsWith('P')) { jumlahP++; s.jkDisplay = 'P'; } 
+                    else { s.jkDisplay = '-'; }
                 });
                 const totalSiswa = dataSiswa.length;
 
-                // --- Generate Kop Surat Cerdas ---
+                // --- Generate Kop Surat ---
                 const kopSuratHtml = configKartu.logoUrl 
                     ? `<img src="${configKartu.logoUrl}" style="width: 100%; height: auto; display: block; margin-bottom: 20px;">` 
                     : `<div style="display:flex; align-items:center; border-bottom:3px solid black; padding-bottom:10px; margin-bottom:20px;">
@@ -1629,6 +1620,68 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <div style="font-size:10pt;">${alamatSekolah}</div>
                             </div>
                        </div>`;
+
+                // --- 1. TAMBAHKAN CSS UNTUK TTD YANG BISA DIGESER ---
+                if (!document.getElementById("css-ttd-drag")) {
+                    const style = document.createElement('style');
+                    style.id = "css-ttd-drag";
+                    style.innerHTML = `
+                        .ttd-draggable { cursor: grab; border: 2px dashed transparent; transition: border 0.2s; position: absolute; z-index: 50; mix-blend-mode: multiply; }
+                        .ttd-draggable:hover { border: 2px dashed #dc3545; z-index: 100 !important; }
+                        .ttd-draggable:active { cursor: grabbing; }
+                        .drag-hint-ttd { display: none; position: absolute; top: -20px; left: 0; background: #dc3545; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; white-space: nowrap; font-weight: bold; pointer-events: none; }
+                        .ttd-draggable:hover .drag-hint-ttd { display: block; }
+                        @media print {
+                            .ttd-draggable { border: none !important; }
+                            .drag-hint-ttd { display: none !important; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                // --- 2. LOGIKA DRAG & DROP TTD ---
+                if (!window.isTtdDragInit) {
+                    window.isTtdDragInit = true;
+                    window.mulaiDragTtd = function(e, el) {
+                        e.preventDefault();
+                        let startX = e.clientX;
+                        let startY = e.clientY;
+                        let startLeft = el.offsetLeft;
+                        let startTop = el.offsetTop;
+
+                        function mouseMove(e) {
+                            let dx = e.clientX - startX;
+                            let dy = e.clientY - startY;
+                            el.style.left = (startLeft + dx) + 'px';
+                            el.style.top = (startTop + dy) + 'px';
+                        }
+
+                        function mouseUp() {
+                            document.removeEventListener('mousemove', mouseMove);
+                            document.removeEventListener('mouseup', mouseUp);
+                            // Simpan ke memory
+                            localStorage.setItem('sk_ttd_pos', JSON.stringify({ left: el.style.left, top: el.style.top }));
+                            // SINKRONISASI: Semua lembar ikut bergerak!
+                            document.querySelectorAll('.ttd-draggable').forEach(t => {
+                                t.style.left = el.style.left;
+                                t.style.top = el.style.top;
+                            });
+                        }
+                        document.addEventListener('mousemove', mouseMove);
+                        document.addEventListener('mouseup', mouseUp);
+                    };
+                }
+
+                // Tarik memori posisi, atau set default
+                let savedTtdPos = JSON.parse(localStorage.getItem('sk_ttd_pos')) || { left: '-30px', top: '10px' };
+                
+                // Elemen TTD HTML
+                let ttdHtml = configKartu.ttdUrl ? `
+                    <div class="ttd-draggable" style="left: ${savedTtdPos.left}; top: ${savedTtdPos.top}; width: 170px; height: 120px;" onmousedown="window.mulaiDragTtd(event, this)">
+                        <div class="drag-hint-ttd">✥ Geser Tanda Tangan</div>
+                        <img src="${configKartu.ttdUrl}" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;">
+                    </div>
+                ` : '';
 
                 // ==========================================
                 // HALAMAN 1: SURAT KEPUTUSAN KELULUSAN
@@ -1670,13 +1723,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         <tr><td style="vertical-align: top;">KETIGA</td><td style="vertical-align: top;">:</td><td style="text-align: justify; vertical-align: top;" contenteditable="true">Surat Keputusan ini dibuat apabila terjadi kekeliruan akan ditinjau dan diperbaiki sebagaimana mestinya.</td></tr>
                     </table>
 
-                    <div style="float: right; width: 250px; margin-top: 20px;">
+                    <div style="float: right; width: 250px; margin-top: 20px; position: relative;">
                         <table style="width: 100%;">
                             <tr><td>Ditetapkan di</td><td>:</td><td contenteditable="true">${kota}</td></tr>
                             <tr><td>Pada Tanggal</td><td>:</td><td contenteditable="true">${titimangsa}</td></tr>
                         </table>
                         <div style="margin-bottom: 70px; margin-top: 5px;" contenteditable="true">Kepala Sekolah</div>
-                        <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
+                        
+                        ${ttdHtml}
+                        
+                        <div style="font-weight: bold; text-decoration: underline; position: relative; z-index: 2;" contenteditable="true">${namaKepsek}</div>
                     </div>
                     <div style="clear: both;"></div>
                 `;
@@ -1725,13 +1781,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         Demikian Berita Acara Rapat Kelulusan ini dibuat untuk dapat dipergunakan seperlunya.
                     </div>
 
-                    <div style="float: right; width: 250px; margin-bottom: 20px;">
+                    <div style="float: right; width: 250px; margin-bottom: 20px; position: relative;">
                         <table style="width: 100%;">
                             <tr><td>Ditetapkan di</td><td>:</td><td contenteditable="true">${kota}</td></tr>
                             <tr><td>Pada Tanggal</td><td>:</td><td contenteditable="true">${titimangsa}</td></tr>
                         </table>
                         <div style="margin-bottom: 70px; margin-top: 5px;" contenteditable="true">Kepala Sekolah</div>
-                        <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
+                        
+                        ${ttdHtml}
+                        
+                        <div style="font-weight: bold; text-decoration: underline; position: relative; z-index: 2;" contenteditable="true">${namaKepsek}</div>
                     </div>
                     <div style="clear: both;"></div>
                 `;
@@ -1744,7 +1803,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 page3.className = "page-sheet";
                 page3.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 15mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: black;";
                 
-                // Buat 20 baris kosong untuk daftar hadir
                 let barisDaftarHadir = "";
                 for(let i=1; i<=20; i++) {
                     barisDaftarHadir += `<tr>
@@ -1781,13 +1839,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         </tbody>
                     </table>
 
-                    <div style="float: right; width: 250px; margin-top: 10px;">
+                    <div style="float: right; width: 250px; margin-top: 10px; position: relative;">
                         <table style="width: 100%;">
                             <tr><td>Ditetapkan di</td><td>:</td><td contenteditable="true">${kota}</td></tr>
                             <tr><td>Pada Tanggal</td><td>:</td><td contenteditable="true">${titimangsa}</td></tr>
                         </table>
                         <div style="margin-bottom: 70px; margin-top: 5px;" contenteditable="true">Kepala Sekolah</div>
-                        <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
+                        
+                        ${ttdHtml}
+                        
+                        <div style="font-weight: bold; text-decoration: underline; position: relative; z-index: 2;" contenteditable="true">${namaKepsek}</div>
                     </div>
                     <div style="clear: both;"></div>
                 `;
@@ -1796,7 +1857,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // ==========================================
                 // HALAMAN 4 (Dan seterusnya): LAMPIRAN SISWA
                 // ==========================================
-                const chunkSize = 30; // Maksimal 30 anak per halaman agar rapi
+                const chunkSize = 30; // Maksimal 30 anak per halaman
                 for (let i = 0; i < dataSiswa.length; i += chunkSize) {
                     const chunk = dataSiswa.slice(i, i + chunkSize);
                     
@@ -1805,7 +1866,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         barisSiswa += `<tr>
                             <td style="border: 1px solid black; padding: 4px; text-align: center;">${i + idx + 1}</td>
                             <td style="border: 1px solid black; padding: 4px; text-transform: uppercase;">${s.nama}</td>
-                            <td style="border: 1px solid black; padding: 4px; text-align: center;" contenteditable="true">${s.jk}</td>
+                            <td style="border: 1px solid black; padding: 4px; text-align: center;" contenteditable="true">${s.jkDisplay}</td>
                             <td style="border: 1px solid black; padding: 4px;" contenteditable="true">${s.ttl}</td>
                             <td style="border: 1px solid black; padding: 4px; text-align: center; font-weight:bold;" contenteditable="true">LULUS</td>
                         </tr>`;
@@ -1816,7 +1877,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     page4.style.cssText = "background: white; width: 210mm; min-height: 297mm; padding: 15mm 20mm; box-sizing: border-box; margin-bottom: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: black;";
                     
                     let headerLampiran = "";
-                    if (i === 0) { // Hanya munculkan header kop lampiran di lembar pertama tabel
+                    if (i === 0) { 
                         headerLampiran = `
                             <div style="font-size: 10pt; margin-bottom: 15px;">
                                 <table style="width: 100%;">
@@ -1835,13 +1896,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     let signatureLampiran = "";
                     if (i + chunkSize >= dataSiswa.length) { 
                         signatureLampiran = `
-                        <div style="float: right; width: 250px; margin-top: 10px;">
+                        <div style="float: right; width: 250px; margin-top: 10px; position: relative;">
                             <table style="width: 100%;">
                                 <tr><td>Ditetapkan di</td><td>:</td><td contenteditable="true">${kota}</td></tr>
                                 <tr><td>Pada Tanggal</td><td>:</td><td contenteditable="true">${titimangsa}</td></tr>
                             </table>
                             <div style="margin-bottom: 70px; margin-top: 5px;" contenteditable="true">Kepala Sekolah</div>
-                            <div style="font-weight: bold; text-decoration: underline;" contenteditable="true">${namaKepsek}</div>
+                            
+                            ${ttdHtml}
+                            
+                            <div style="font-weight: bold; text-decoration: underline; position: relative; z-index: 2;" contenteditable="true">${namaKepsek}</div>
                         </div>
                         <div style="clear: both;"></div>`;
                     }
@@ -1862,7 +1926,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                 ${barisSiswa}
                             </tbody>
                         </table>
-                        
                         ${signatureLampiran}
                     `;
                     container.appendChild(page4);
