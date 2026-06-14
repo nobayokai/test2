@@ -230,13 +230,25 @@ document.addEventListener("DOMContentLoaded", () => {
             // LOGIKA KHUSUS UNTUK MENU RAPOR (Menggunakan Iframe)
             if (page === "nilai") {
                 contentArea.innerHTML = `
-                    <iframe 
-                        src="https://erapor.novaharyanto.my.id/" 
-                        style="width: 100%; height: 85vh; border: none; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" 
-                        title="Aplikasi e-Rapor">
-                    </iframe>
+                    <div style="text-align: center; padding: 80px 20px;">
+                        <i class="fa-solid fa-server fa-bounce" style="font-size: 60px; color: #198754; margin-bottom: 20px;"></i>
+                        <h3 style="color: #333;">Mengalihkan ke Portal Erapor...</h3>
+                        <p style="color: #666; font-size: 15px; max-width: 500px; margin: 0 auto;">
+                            Sistem keamanan kementerian mengharuskan Erapor dibuka di jendela terpisah. 
+                            <br>Pastikan Anda mengizinkan <i>pop-up</i> jika browser memintanya.
+                        </p>
+                    </div>
                 `;
-                return; // Hentikan fungsi di sini agar tidak menjalankan fetch di bawah
+                
+                // Membuka tab baru secara otomatis yang dipicu oleh klik JS
+                window.open("http://erapor.novaharyanto.my.id", "_blank");
+                
+                // Mengembalikan halaman utama ke "beranda" setelah 2.5 detik agar rapi
+                setTimeout(() => {
+                    loadPage("beranda");
+                }, 2500);
+                
+                return; // Hentikan fungsi di sini
             }
 
             // --- LOGIKA KHUSUS UNTUK MENU DAPODIK (Tab Baru Aman) ---
